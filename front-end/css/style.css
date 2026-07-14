@@ -24,9 +24,9 @@
 }
 /* Classe Utilitária para Controle de Telas */
 
-/*.booking-section.hidden {
+.booking-section.hidden {
     display: none !important;
-}*/
+}
 
 /* ESTILOS BASE DO DOCUMENTO */
 body {

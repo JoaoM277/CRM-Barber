@@ -34,7 +34,7 @@ const dbBarbeiros = [
     { id: 103, nome: "Lucas Ferreira" }
 ];
 
-const dbHorariosDisponiveis = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
+const dbHorariosDisponiveis = ["08:00","09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
 
 // ==========================================================================
 // 3. RENDERIZADORES DINÂMICOS
@@ -232,13 +232,43 @@ document.getElementById("btn-next").addEventListener("click", () => {
         currentStep++;
         updateFlowUI();
     } else {
-        // Captura os dados do formulário final
+        // 1. Captura os dados do formulário final
         agendamento.cliente.nome = document.getElementById("client-name").value;
         agendamento.cliente.telefone = document.getElementById("client-phone").value;
         agendamento.cliente.notas = document.getElementById("client-notes").value;
 
-        console.log("ENVIANDO AGENDAMENTO COMPLETO PARA O BANCO (SEQUELIZE):", agendamento);
-        alert("Agendamento Finalizado com Sucesso! Verifique o console do navegador.");
+        // 2. Formata a estrutura exata (Payload) que o Sequelize vai receber no Back-End
+        const payloadParaOExpress = {
+            barbeiroId: agendamento.barbeiroId,
+            servicosIds: agendamento.servicos, // Envia o array de IDs ex: [1, 4]
+            dataAgendamento: agendamento.data.toISOString().split('T')[0], // Converte de Objeto Date para "YYYY-MM-DD"
+            horario: agendamento.hora,
+            clienteNome: agendamento.cliente.nome,
+            clienteTelefone: agendamento.cliente.telefone,
+            observacoes: agendamento.cliente.notes
+        };
+
+        console.log("🚀 Payload estruturado pronto para a API:", payloadParaOExpress);
+
+        /* ==========================================================================
+        CONEXÃO REAL COM O BACK-END (Descomente quando criarmos as rotas no Express)
+        ==========================================================================
+        fetch("http://localhost:3000/api/agendamentos", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payloadParaOExpress)
+        })
+        .then(response => response.json())
+        .then(dados => {
+            alert("Agendamento gravado com sucesso no banco de dados!");
+        })
+        .catch(erro => console.error("Erro ao salvar no banco:", erro));
+        */
+
+        // Alerta visual temporário para você testar no navegador
+        alert(`Perfeito, ${payloadParaOExpress.clienteNome}!\nAgendamento simulado. Abra o Console (F12) para ver o JSON estruturado para o Sequelize.`);
     }
 });
 
@@ -250,8 +280,9 @@ document.getElementById("btn-prev").addEventListener("click", () => {
 });
 
 window.addEventListener("DOMContentLoaded", () => {
-    renderServicos();
+    // Mantemos a ordem correta de inicialização
     renderBarbeiros();
+    renderServicos();
     renderCalendario(currentDateObj);
     renderHorarios();
     updateFlowUI();
