@@ -212,3 +212,45 @@ body {
     font-weight: 600;
     color: var(--text-white);
 }
+/* Botões de Navegação do Fluxo */
+.controls-container {
+    max-width: var(--max-width);
+    margin: 30px auto 50px auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.control-btn {
+    padding: 16px 32px;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.prev-btn {
+    background-color: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+}
+
+.prev-btn:hover {
+    color: var(--text-white);
+    border-color: var(--text-white);
+}
+
+.next-btn {
+    background-color: var(--primary);
+    color: var(--bg-main);
+    margin-left: auto; /* Empurra o botão Continuar para a direita quando o Voltar está escondido */
+}
+
+.next-btn:disabled {
+    background-color: var(--primary-disabled);
+    color: var(--text-disabled);
+    cursor: not-allowed;
+}
