@@ -254,3 +254,133 @@ body {
     color: var(--text-disabled);
     cursor: not-allowed;
 }
+/*8. COMPONENTE: FORMULÁRIO E RESUMO DE CONFIRMAÇÃO */
+
+.confirmation-container {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr; /* Formulário maior à esquerda, resumo menor à direita */
+    gap: 32px;
+    align-items: start;
+}
+
+/* Formulário de dados */
+.client-form {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-white);
+}
+
+.input-group input, .input-group textarea {
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    color: var(--text-white);
+    padding: 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s ease;
+}
+
+.input-group input:focus, .input-group textarea:focus {
+    outline: none;
+    border-color: var(--primary); /* Foca com a borda dourada */
+}
+
+/* Card de Resumo Lateral */
+.summary-card {
+    background-color: #1A1712; /* Fundo levemente dourado dark */
+    border: 1px solid var(--primary); /* Borda dourada em destaque */
+    border-radius: 8px;
+    padding: 24px;
+}
+
+.summary-card h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 20px;
+    border-bottom: 1px solid #2C261F;
+    padding-bottom: 12px;
+}
+
+.summary-block {
+    margin-bottom: 16px;
+}
+
+.summary-block h4 {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.summary-block p, .summary-services-list li {
+    font-size: 15px;
+    color: var(--text-white);
+    font-weight: 500;
+}
+
+.summary-services-list {
+    list-style: none;
+    padding: 0;
+}
+
+.summary-services-list li {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+/* Caixa de Totalizadores */
+.summary-total-box {
+    margin-top: 24px;
+    border-top: 1px dashed var(--border-color);
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.total-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.total-price {
+    font-size: 22px;
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.text-muted-line {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* Layout responsivo para telas pequenas (Celular) */
+@media (max-width: 768px) {
+    .confirmation-container {
+        grid-template-columns: 1fr; /* Quebra em uma única coluna no celular */
+    }
+}
