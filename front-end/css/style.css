@@ -1,0 +1,37 @@
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+:root {
+    /* Cores de Fundo */
+    --bg-main: #0B0A08;          /* Fundo preto absoluto de fundo */
+    --bg-card: #14120E;          /* Fundo cinza-escuro/marrom quente dos cards */
+    
+    /* Cores de Destaque */
+    --primary: #C89B3C;          /* O dourado principal da La Palmas */
+    --primary-disabled: #3E3522; /* Dourado escuro para elementos desativados */
+    --border-color: #24201A;     /* Cor das bordas sutis dos cards */
+    
+    /* Cores de Texto */
+    --text-white: #FFFFFF;       /* Títulos principais e textos em destaque */
+    --text-muted: #8F887C;       /* Subtítulos e descrições secundárias */
+    --text-disabled: #4E473D;    /* Dias passados ou botões inativos */
+    
+    /* Tipografia e Estrutura */
+    --font-primary: 'Inter', 'Segoe UI', Arial, sans-serif;
+    --max-width: 1000px;         /* Limite de largura do miolo do site */
+}
+
+/* ==========================================================================
+   3. ESTILOS BASE DO DOCUMENTO
+   ========================================================================== */
+body {
+    background-color: var(--bg-main);
+    color: var(--text-white);
+    font-family: var(--font-primary);
+    -webkit-font-smoothing: antialiased; /* Deixa as fontes mais nítidas e elegantes */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
