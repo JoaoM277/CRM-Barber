@@ -561,3 +561,89 @@ body {
         grid-template-columns: repeat(3, 1fr); /* 3 colunas no celular */
     }
 }
+/* ==========================================================================
+   X. COMPONENTE: GRADE DE SERVIÇOS (ESTILO FIGMA)
+   ========================================================================== */
+
+/* Define que os cards fiquem em colunas que se adaptam à tela */
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 colunas idênticas no Desktop */
+    gap: 20px; /* Espaço entre os cards */
+    margin-top: 24px;
+}
+
+/* O Card de Serviço Individual */
+.service-card {
+    background-color: #110E0A; /* Fundo escuro idêntico ao calendário */
+    border: 1px solid #221F1A; /* Borda sutil */
+    border-radius: 8px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    text-align: left;
+}
+
+/* Hover simples para dar feedback ao passar o mouse */
+.service-card:hover {
+    border-color: #3E3930;
+}
+
+/* Card Selecionado (Destaque Dourado do Figma) */
+.service-card.selected {
+    border-color: var(--primary);
+    background-color: #16130E; /* Um leve toque quente no fundo */
+}
+
+/* Ícone do serviço (Emoji ou caractere) */
+.service-icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+/* Título do Serviço */
+.service-card h3 {
+    color: #FFFFFF;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Bloco com Preço e Tempo alinhados lado a lado */
+.service-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: auto; /* Empurra as informações para o rodapé do card */
+}
+
+/* Preço em Destaque */
+.service-info .price {
+    color: #FFFFFF;
+    font-weight: 700;
+    font-size: 15px;
+}
+
+/* Duração com a cor mais sutil (muted) */
+.service-info .duration {
+    color: #8E8A83;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Layout responsivo para telas menores (Celular e Tablets) */
+@media (max-width: 900px) {
+    .services-grid {
+        grid-template-columns: repeat(2, 1fr); /* 2 colunas em telas médias */
+    }
+}
+
+@media (max-width: 600px) {
+    .services-grid {
+        grid-template-columns: 1fr; /* 1 única coluna no celular */
+        gap: 16px;
+    }
+}
