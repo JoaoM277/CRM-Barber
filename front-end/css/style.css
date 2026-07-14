@@ -23,9 +23,7 @@
     --max-width: 1000px;         /* Limite de largura do miolo do site */
 }
 
-/* ==========================================================================
-   3. ESTILOS BASE DO DOCUMENTO
-   ========================================================================== */
+/* ESTILOS BASE DO DOCUMENTO */
 body {
     background-color: var(--bg-main);
     color: var(--text-white);
