@@ -19,7 +19,7 @@
             </div>
             <div class="location-box">
                 <span class="pin-icon">📍</span>
-                <span class="location-text">São Paulo, SP</span>
+                <span class="location-text">CIDADE, ESTADO</span>
             </div>
         </div>
 
@@ -90,7 +90,62 @@
                 </div>
             </div>
         </section>
+        <section id="step-confirmacao" class="booking-section hidden">
+            <div class="section-intro">
+                <h2>Já estamos terminando!</h2>
+                <p>Preencha seus dados para confirmar o agendamento</p>
+            </div>
 
+            <div class="confirmation-container">
+                <form id="client-form" class="client-form">
+                    <div class="input-group">
+                        <label for="client-name">Nome Completo *</label>
+                        <input type="text" id="client-name" placeholder="Digite seu nome completo" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="client-phone">WhatsApp / Telefone *</label>
+                        <input type="tel" id="client-phone" placeholder="(11) 99999-9999" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="client-notes">Observações adicionais (Opcional)</label>
+                        <textarea id="client-notes" rows="4" placeholder="Alguma restrição, cabelo lavado, preferência, etc..."></textarea>
+                    </div>
+                </form>
+
+                <div class="summary-card">
+                    <h3>Resumo do Agendamento</h3>
+                    
+                    <div class="summary-block">
+                        <h4>Serviço(s) Escolhido(s):</h4>
+                        <ul id="summary-services-list" class="summary-services-list">
+                            </ul>
+                    </div>
+
+                    <div class="summary-block">
+                        <h4>Profissional:</h4>
+                        <p id="summary-barber-name">Não selecionado</p>
+                    </div>
+
+                    <div class="summary-block">
+                        <h4>Data e Horário:</h4>
+                        <p id="summary-date-time">Não selecionado</p>
+                    </div>
+
+                    <div class="summary-total-box">
+                        <div class="total-line">
+                            <span>Preço Total:</span>
+                            <span id="summary-total-price" class="total-price">R$ 0</span>
+                        </div>
+                        <div class="total-line text-muted-line">
+                            <span>Tempo Estimado:</span>
+                            <span id="summary-total-duration">0 min</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <div class="controls-container">
