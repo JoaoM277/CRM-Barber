@@ -22,6 +22,11 @@
     --font-primary: 'Inter', 'Segoe UI', Arial, sans-serif;
     --max-width: 1000px;         /* Limite de largura do miolo do site */
 }
+/* Classe Utilitária para Controle de Telas */
+
+/*.booking-section.hidden {
+    display: none !important;
+}*/
 
 /* ESTILOS BASE DO DOCUMENTO */
 body {
@@ -142,4 +147,15 @@ body {
 
 .step-num {
     font-family: monospace;
+}
+/* Estado do Card SELECIONADO (Figma Ativo) */
+.service-card.selected {
+    border-color: var(--primary);
+    background-color: #1A1712; /* Um tom sutilmente mais claro de dourado dark de fundo */
+    box-shadow: 0 0 12px rgba(200, 155, 60, 0.2); /* Brilho neon dourado sutil */
+}
+
+/* Alterando o ícone do card selecionado para combinar */
+.service-card.selected .service-icon {
+    color: var(--primary);
 }
