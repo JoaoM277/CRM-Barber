@@ -10,7 +10,7 @@ const agendamento = {
 };
 
 let currentStep = 1;
-let currentDateObj = new Date(2026, 6, 14); // 14 de Julho de 2026
+let currentDateObj = new Date(); // 14 de Julho de 2026
 
 // ==========================================================================
 // 2. SIMULAÇÃO DE DADOS DO BANCO
@@ -29,9 +29,21 @@ const dbServicos = [
 ];
 
 const dbBarbeiros = [
-    { id: 101, nome: "Rafael Mendes" },
-    { id: 102, nome: "Diego Costa" },
-    { id: 103, nome: "Lucas Ferreira" }
+    { 
+        id: 101, 
+        nome: "Rafael Mendes", 
+        avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop&q=80", 
+    },
+    { 
+        id: 102, 
+        nome: "Diego Costa", 
+        avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80" 
+    },
+    { 
+        id: 103, 
+        nome: "Lucas Ferreira",  
+        avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80"
+    }
 ];
 
 const dbHorariosDisponiveis = ["08:00","09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
@@ -109,45 +121,140 @@ function renderBarbeiros() {
         container.appendChild(card);
     });
 }
-
 function renderCalendario(date) {
+    const container = document.getElementById("step-agenda");
+    if (!container) return;
+
+    // Injeta a estrutura HTML respeitando as classes do seu CSS externo
+    container.innerHTML = `
+        <h2>Selecione o dia e horário</h2>
+        <p class="subtitle">Escolha a melhor data para o seu atendimento</p>
+        
+        <div class="calendar-wrapper">
+            <div class="calendar-header">
+                <button type="button" class="cal-btn" id="cal-prev">‹</button>
+                <span class="current-month" id="calendar-month-year"></span>
+                <button type="button" class="cal-btn" id="cal-next">›</button>
+            </div>
+            
+            <div class="weekdays-grid">
+                <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+            </div>
+            
+            <div class="days-grid" id="calendar-days"></div>
+        </div>
+
+        <div class="time-slots-wrapper">
+            <div class="time-period">
+                <h4>Horários Disponíveis</h4>
+                <div class="slots-grid" id="slots-container"></div>
+            </div>
+        </div>
+    `;
+
     const calendarDays = document.getElementById("calendar-days");
     const monthYearText = document.getElementById("calendar-month-year");
-    calendarDays.innerHTML = "";
+
     const year = date.getFullYear();
     const month = date.getMonth();
-    const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-    monthYearText.textContent = `${meses[month]} de ${year}`;
+    const meses = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"];
+    monthYearText.textContent = `${meses[month]} ${year}`;
 
     const firstDayIndex = new Date(year, month, 1).getDay();
     const lastDay = new Date(year, month + 1, 0).getDate();
 
+    // Dias vazios do mês anterior
     for (let i = 0; i < firstDayIndex; i++) {
         const emptySpan = document.createElement("span");
         emptySpan.className = "day empty";
         calendarDays.appendChild(emptySpan);
     }
 
+    // Dias numéricos ativos
     for (let day = 1; day <= lastDay; day++) {
         const dayBtn = document.createElement("button");
+        dayBtn.type = "button";
         dayBtn.className = "day";
         dayBtn.textContent = day;
-        const loopDate = new Date(year, month, day);
-        const today = new Date(2026, 6, 14);
 
-        if (loopDate < today.setHours(0,0,0,0)) dayBtn.classList.add("disabled");
-        if (agendamento.data && agendamento.data.toDateString() === loopDate.toDateString()) dayBtn.classList.add("selected");
+        const loopDate = new Date(year, month, day);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        // Bloqueia dias que já passaram do dia atual do sistema
+        if (loopDate < today) {
+            dayBtn.classList.add("disabled");
+        }
+        
+        // Mantém a bordinha dourada se for o dia selecionado
+        if (agendamento.data && agendamento.data.toDateString() === loopDate.toDateString()) {
+            dayBtn.classList.add("selected");
+        }
 
         dayBtn.addEventListener("click", () => {
+            if (loopDate < today) return; // Impede clique em dias passados
             agendamento.data = loopDate;
-            agendamento.hora = null;
+            agendamento.hora = null; // Reseta o horário para obrigar a escolher de novo
             renderCalendario(date);
-            renderHorarios();
             validateStep();
         });
+
         calendarDays.appendChild(dayBtn);
     }
+
+    // Ouvintes das setas atualizando o objeto de data correto
+    document.getElementById("cal-prev").addEventListener("click", () => {
+        currentDateObj.setMonth(currentDateObj.getMonth() - 1);
+        renderCalendario(currentDateObj);
+    });
+    
+    document.getElementById("cal-next").addEventListener("click", () => {
+        currentDateObj.setMonth(currentDateObj.getMonth() + 1);
+        renderCalendario(currentDateObj);
+    });
+
+    renderHorarios();
 }
+
+// ==========================================================================
+// ESCUTADORES E VALIDAÇÕES DO FORMULÁRIO FINAL
+// ==========================================================================
+
+// Bloqueia letras no campo de telefone em tempo real e valida o formulário
+// ==========================================================================
+// MÁSCARA DE TELEFONE: (XX) XXXXX-XXXX
+// ==========================================================================
+document.getElementById("client-form").addEventListener("input", (e) => {
+    if (e.target.id === "client-phone") {
+        // 1. Remove tudo o que não for número
+        let valor = e.target.value.replace(/\D/g, "");
+        
+        // 2. Limita o máximo em 11 dígitos (padrão celular com DDD)
+        if (valor.length > 11) {
+            valor = valor.slice(0, 11);
+        }
+
+        // 3. Aplica a formatação em pedaços conforme a digitação
+        if (valor.length > 0) {
+            // Adiciona os parênteses do DDD: (XX
+            valor = "(" + valor;
+        }
+        if (valor.length > 3) {
+            // Fecha o parêntese e põe o espaço: (XX) X
+            valor = valor.slice(0, 3) + ") " + valor.slice(3);
+        }
+        if (valor.length > 10) {
+            // Encaixa o hífen no meio do número: (XX) XXXXX-XXXX
+            valor = valor.slice(0, 10) + "-" + valor.slice(10);
+        }
+
+        // 4. Devolve o valor formatado para o input
+        e.target.value = valor;
+    }
+    
+    // Roda a validação padrão para liberar o botão de avançar
+    validateStep();
+});
 
 function renderHorarios() {
     const container = document.getElementById("slots-container");
