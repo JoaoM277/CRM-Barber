@@ -67,21 +67,45 @@ function renderServicos() {
 
 function renderBarbeiros() {
     const container = document.getElementById("barbers-container");
+    if (!container) return;
+    
     container.innerHTML = "";
+    container.className = "barbers-list"; 
+
     dbBarbeiros.forEach(barbeiro => {
         const card = document.createElement("article");
-        card.className = `barber-card ${agendamento.barbeiroId === barbeiro.id ? 'selected' : ''}`;
+        
+        // CORREÇÃO AQUI: Verifica se este barbeiro é o selecionado no estado global
+        // Se for, adiciona a classe 'selected' que ativa o CSS dourado do seu arquivo
+        if (agendamento.barbeiroId === barbeiro.id) {
+            card.className = "barber-card selected";
+        } else {
+            card.className = "barber-card";
+        }
+        
+        const tagsHTML = barbeiro.tags ? barbeiro.tags.map(tag => `<span class="barber-tag">${tag}</span>`).join("") : "";
+
         card.innerHTML = `
             <div class="barber-profile">
-                <div class="barber-avatar"><span>👤</span></div>
-                <div class="barber-details"><h3>${barbeiro.nome}</h3></div>
+                <div class="barber-avatar">
+                    <img src="${barbeiro.avatar}" alt="${barbeiro.nome}" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div class="barber-details">
+                    <h3>${barbeiro.nome}</h3>
+                    <span class="barber-role" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">${barbeiro.cargo || 'BARBER'}</span>
+                    <div class="barber-tags-box" style="display: flex; gap: 6px; margin-top: 6px;">${tagsHTML}</div>
+                </div>
             </div>
+           
         `;
+
+        // Evento de clique para selecionar o barbeiro e remontar a lista atualizada
         card.addEventListener("click", () => {
             agendamento.barbeiroId = barbeiro.id;
-            renderBarbeiros();
-            validateStep();
+            renderBarbeiros(); // Redesenha a lista para aplicar a classe 'selected' no elemento clicado
+            validateStep();    // Libera o botão "Continuar"
         });
+
         container.appendChild(card);
     });
 }
