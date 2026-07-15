@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo|La Palmas</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-logo">LP</div>
+                <div class="brand-text">
+                    <h2>La Palmas</h2>
+                    <p>Painel Master</p>
+                </div>   
+            </div>
+            <nav class="sidebar-menu">
+                <button class="menu-item active" data-tab="agenda">
+                    <span class="menu-icon">📅</span> Agenda de Clientes
+                </button>
+                <button class="menu-item" data-tab="serviços">
+                    <span class="menu-icon">✂️</span> Serviços
+                </button>
+                <button class="menu-item" data-tab="barbeiros">
+                    <span class="menu-icon">💈</span> Profissionais
+                </button>
+                <button class="menu-icon" data-tab="horarios">
+                    <span>⏱️</span> Configurar Horários
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn-logout">🚪</button> Sair do Painel
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="admin-header">
+                <div class="header-tittle">
+                    <h1 id="page-title">Agenda de Clientes</h1>
+                    <p id="page subtitle">Gerencie e acompanhe os agendamentos em tempo real</p>
+                </div>
+                <div class="admin-profile">
+                    <span>Olá, <strong>Administrador</strong></span>
+                    <div class="admin-avatar">A</div>
+                </div>
+            </header>
+
+            <section class="content-body" id="admin-content">
+                <div class="tab-panel active" id="panel-agenda">
+                    <div class="panel-header">
+                        <h2>Visão Geral da Agenda</h2>
+                        <div class="panel-actions">
+                            <input type="date" class="admin-input" id="filter-date">
+                            <button class="btn-priamry">Filtrar</button> 
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Serviço</th>
+                                    <th>Profissional</th>
+                                    <th>Data e Hora</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agenda-table-body">
+                                <tbody id="agenda-table-body">
+                                    
+                                </tbody>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+
+    <script src="js/admin.js"></script>
+</body>
+</html>
