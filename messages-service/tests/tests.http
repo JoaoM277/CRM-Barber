@@ -4,5 +4,5 @@ Content-Type: application/json
 {
     "number": "(99)98400-7168",
     "name": "Joao",
-    "message": "Mensagem de teste"
+    "type": "1"
 }
