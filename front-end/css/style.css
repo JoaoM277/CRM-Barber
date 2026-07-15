@@ -568,86 +568,114 @@ body {
 /* ==========================================================================
    X. COMPONENTE: GRADE DE SERVIÇOS (ESTILO FIGMA)
    ========================================================================== */
+/* ==========================================================================
+   COMPONENTE: SERVIÇOS (LAYOUT 1 - DESKTOP E TABLET)
+   ========================================================================== */
 
-/* Define que os cards fiquem em colunas que se adaptam à tela */
+/* Este é o estilo padrão. Ele será aplicado em computadores, notebooks e tablets */
 .services-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 colunas idênticas no Desktop */
-    gap: 20px; /* Espaço entre os cards */
-    margin-top: 24px;
+    grid-template-columns: repeat(3, 1fr); /* 3 colunas no PC */
+    gap: 16px;
+    margin: 24px auto 0 auto;
+    width: 100%;
+    max-width: 650px; /* Um tamanho confortável para o PC */
 }
 
-/* O Card de Serviço Individual */
+/* Card para o computador (ligeiramente maior e com mais espaçamento) */
 .service-card {
-    background-color: #110E0A; /* Fundo escuro idêntico ao calendário */
-    border: 1px solid #221F1A; /* Borda sutil */
+    background-color: #110E0A;
+    border: 1px solid #221F1A;
     border-radius: 8px;
-    padding: 24px;
+    padding: 20px; /* Mais espaço interno no PC */
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
-    text-align: left;
+    aspect-ratio: 1.1 / 1; /* Um retângulo quase quadrado, muito elegante no PC */
+    width: 100%;
 }
 
-/* Hover simples para dar feedback ao passar o mouse */
 .service-card:hover {
     border-color: #3E3930;
+    background-color: #14110C;
 }
 
-/* Card Selecionado (Destaque Dourado do Figma) */
 .service-card.selected {
     border-color: var(--primary);
-    background-color: #16130E; /* Um leve toque quente no fundo */
+    background-color: #16130E;
+    box-shadow: 0 0 12px rgba(200, 155, 60, 0.15);
 }
 
-/* Ícone do serviço (Emoji ou caractere) */
+/* Ícone no PC */
 .service-icon {
-    font-size: 24px;
-    margin-bottom: 4px;
+    font-size: 28px; /* Ícone grande e imponente */
+    margin-bottom: 10px;
+    color: var(--text-muted);
 }
 
-/* Título do Serviço */
+.service-card.selected .service-icon {
+    color: var(--primary);
+}
+
+/* Título no PC */
 .service-card h3 {
     color: #FFFFFF;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
-    margin: 0;
+    margin: 0 0 6px 0;
+    line-height: 1.3;
 }
 
-/* Bloco com Preço e Tempo alinhados lado a lado */
+/* Preço e tempo no PC */
 .service-info {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
-    margin-top: auto; /* Empurra as informações para o rodapé do card */
+    gap: 2px;
+    margin-top: auto;
+    width: 100%;
 }
 
-/* Preço em Destaque */
 .service-info .price {
-    color: #FFFFFF;
+    color: var(--primary);
     font-weight: 700;
-    font-size: 15px;
+    font-size: 14px;
 }
 
-/* Duração com a cor mais sutil (muted) */
 .service-info .duration {
-    color: #8E8A83;
-    font-size: 13px;
-    font-weight: 500;
+    color: var(--text-disabled);
+    font-size: 11px;
 }
 
-/* Layout responsivo para telas menores (Celular e Tablets) */
-@media (max-width: 900px) {
+
+/* ==========================================================================
+   COMPONENTE: SERVIÇOS (LAYOUT 2 - DISPOSITIVOS MÓVEIS / ATÉ 480PX)
+   ========================================================================== */
+
+/* Quando a tela for menor ou igual a 480px, o CSS abaixo entra em ação 
+   e substitui as propriedades lá de cima! */
+@media (max-width: 480px) {
+    
     .services-grid {
-        grid-template-columns: repeat(2, 1fr); /* 2 colunas em telas médias */
+        grid-template-columns: repeat(2, 1fr); /* Muda para 2 colunas no celular */
+        gap: 10px; 
     }
 }
+/* Ajuste de espaçamento para o menu de progresso no celular */
+@media (max-width: 480px) {
+    .progress-container {
+        flex-wrap: wrap; /* Permite que os itens quebrem linha se faltar espaço */
+        justify-content: center; /* Centraliza as etapas na tela */
+        gap: 12px 18px; /* Adiciona espaçamento vertical (12px) e horizontal (18px) entre as etapas */
+        padding: 12px 10px; /* Ajusta o respiro interno do contêiner */
+    }
 
-@media (max-width: 600px) {
-    .services-grid {
-        grid-template-columns: 1fr; /* 1 única coluna no celular */
-        gap: 16px;
+    .step {
+        padding: 6px 0; /* Diminui a altura individual para o bloco não ficar gigante */
+        font-size: 11px; /* Diminui ligeiramente a fonte para caber melhor lado a lado */
     }
 }
