@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barbearia La Palmas</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-box">
+                <div class="logo-icon"><span>✂</span></div>
+                <div class="logo-text">
+                    <h1>LA PALMAS</h1>
+                    <p>BARBEARIA</p>
+                </div>
+            </div>
+            <div class="location-box">
+                <span class="pin-icon">📍</span>
+                <span class="location-text">CIDADE, ESTADO</span>
+            </div>
+        </div>
+
+        <nav class="progress-nav">
+            <div class="progress-container">
+                <div class="step active" id="nav-step-1">
+                    <span class="step-num">01</span>
+                    <span class="step-name">SERVIÇO</span>
+                </div>
+                <div class="step" id="nav-step-2">
+                    <span class="step-num">02</span>
+                    <span class="step-name">BARBEIRO</span>
+                </div>
+                <div class="step" id="nav-step-3">
+                    <span class="step-num">03</span>
+                    <span class="step-name">HORÁRIO</span>
+                </div>
+                <div class="step" id="nav-step-4">
+                    <span class="step-num">04</span>
+                    <span class="step-name">CONFIRMAR</span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content">
+
+        <section id="step-servicos" class="booking-section">
+            <div class="section-intro">
+                <h2>Qual serviço?</h2>
+                <p>Selecione um ou mais serviços desejados</p>
+            </div>
+            <div id="services-container" class="services-grid"></div>
+        </section>
+
+        <section id="step-barbeiros" class="booking-section hidden">
+            <div class="section-intro">
+                <h2>Escolha seu barbeiro</h2>
+                <p>Selecione com quem quer ser atendido</p>
+            </div>
+            <div id="barbers-container" class="barbers-list"></div>
+        </section>
+
+        <section id="step-agenda" class="booking-section hidden">
+            <div class="section-intro">
+                <h2>Selecione o dia e horário</h2>
+                <p>Escolha a melhor data para o seu atendimento</p>
+            </div>
+
+            <div class="calendar-wrapper">
+                <div class="calendar-header">
+                    <button class="cal-btn" id="prev-month">‹</button>
+                    <span class="current-month" id="calendar-month-year"></span>
+                    <button class="cal-btn" id="next-month">›</button>
+                </div>
+
+                <div class="weekdays-grid">
+                    <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+                </div>
+
+                <div id="calendar-days" class="days-grid"></div>
+            </div>
+
+            <div class="time-slots-wrapper">
+                <div class="time-period">
+                    <h4>Horários Disponíveis</h4>
+                    <div id="slots-container" class="slots-grid"></div>
+                </div>
+            </div>
+        </section>
+        <section id="step-confirmacao" class="booking-section hidden">
+            <div class="section-intro">
+                <h2>Já estamos terminando!</h2>
+                <p>Preencha seus dados para confirmar o agendamento</p>
+            </div>
+
+            <div class="confirmation-container">
+                <form id="client-form" class="client-form">
+                    <div class="input-group">
+                        <label for="client-name">Nome Completo *</label>
+                        <input type="text" id="client-name" placeholder="Digite seu nome completo" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="client-phone">WhatsApp / Telefone *</label>
+                        <input type="tel" id="client-phone" placeholder="(11) 99999-9999" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="client-notes">Observações adicionais (Opcional)</label>
+                        <textarea id="client-notes" rows="4" placeholder="Alguma restrição, cabelo lavado, preferência, etc..."></textarea>
+                    </div>
+                </form>
+
+                <div class="summary-card">
+                    <h3>Resumo do Agendamento</h3>
+                    
+                    <div class="summary-block">
+                        <h4>Serviço(s) Escolhido(s):</h4>
+                        <ul id="summary-services-list" class="summary-services-list">
+                            </ul>
+                    </div>
+
+                    <div class="summary-block">
+                        <h4>Profissional:</h4>
+                        <p id="summary-barber-name">Não selecionado</p>
+                    </div>
+
+                    <div class="summary-block">
+                        <h4>Data e Horário:</h4>
+                        <p id="summary-date-time">Não selecionado</p>
+                    </div>
+
+                    <div class="summary-total-box">
+                        <div class="total-line">
+                            <span>Preço Total:</span>
+                            <span id="summary-total-price" class="total-price">R$ 0</span>
+                        </div>
+                        <div class="total-line text-muted-line">
+                            <span>Tempo Estimado:</span>
+                            <span id="summary-total-duration">0 min</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="controls-container">
+        <button id="btn-prev" class="control-btn prev-btn hidden">Voltar</button>
+        <button id="btn-next" class="control-btn next-btn" disabled>Continuar</button>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>

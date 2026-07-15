@@ -1,0 +1,653 @@
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+:root {
+    /* Cores de Fundo */
+    --bg-main: #0B0A08;          /* Fundo preto absoluto de fundo */
+    --bg-card: #14120E;          /* Fundo cinza-escuro/marrom quente dos cards */
+    
+    /* Cores de Destaque */
+    --primary: #C89B3C;          /* O dourado principal da La Palmas */
+    --primary-disabled: #3E3522; /* Dourado escuro para elementos desativados */
+    --border-color: #24201A;     /* Cor das bordas sutis dos cards */
+    
+    /* Cores de Texto */
+    --text-white: #FFFFFF;       /* Títulos principais e textos em destaque */
+    --text-muted: #8F887C;       /* Subtítulos e descrições secundárias */
+    --text-disabled: #4E473D;    /* Dias passados ou botões inativos */
+    
+    /* Tipografia e Estrutura */
+    --font-primary: 'Inter', 'Segoe UI', Arial, sans-serif;
+    --max-width: 1000px;         /* Limite de largura do miolo do site */
+}
+/* Classe Utilitária para Controle de Telas */
+
+.booking-section.hidden {
+    display: none !important;
+}
+
+/* ESTILOS BASE DO DOCUMENTO */
+body {
+    background-color: var(--bg-main);
+    color: var(--text-white);
+    font-family: var(--font-primary);
+    -webkit-font-smoothing: antialiased; /* Deixa as fontes mais nítidas e elegantes */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+/* 4. COMPONENTE: HEADER & PROGRESSO */
+
+/* Container de Alinhamento */
+.header-container, .progress-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Linha Superior do Header */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 24px;
+    padding-bottom: 24px;
+}
+
+/* Bloco da Logo */
+.logo-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    background-color: var(--primary);
+    color: var(--bg-main);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border-radius: 4px;
+}
+
+.logo-text h1 {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    line-height: 1.1;
+}
+
+.logo-text p {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+}
+
+/* Bloco da Localização */
+.location-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-family: monospace; /* Estilo técnico do Figma */
+}
+
+/* Barra de Progresso */
+.progress-nav {
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    margin-top: 8px;
+}
+
+.progress-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Cada Etapa individual */
+.step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-disabled);
+    letter-spacing: 1px;
+    position: relative;
+}
+
+/* Etapa Ativa (Dourada) */
+.step.active {
+    color: var(--primary);
+}
+
+.step.active .step-num {
+    color: var(--primary);
+    border-bottom: 2px solid var(--primary);
+}
+
+/* Linha Indicadora do Passo Ativo */
+.step.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; /* Encaixa exatamente em cima da borda inferior do nav */
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--primary);
+}
+
+.step-num {
+    font-family: monospace;
+}
+/* Estado do Card SELECIONADO (Figma Ativo) */
+.service-card.selected {
+    border-color: var(--primary);
+    background-color: #1A1712; /* Um tom sutilmente mais claro de dourado dark de fundo */
+    box-shadow: 0 0 12px rgba(200, 155, 60, 0.2); /* Brilho neon dourado sutil */
+}
+
+/* Alterando o ícone do card selecionado para combinar */
+.service-card.selected .service-icon {
+    color: var(--primary);
+}
+/* ==========================================================================
+   6. COMPONENTE: ESCOLHA DO BARBEIRO (LISTA HORIZONTAL LIMPA)
+   ========================================================================== */
+
+/* Container da lista (empilha os cards um embaixo do outro) */
+.barbers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Card Principal do Barbeiro (Simplificado) */
+.barber-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px 20px; /* Reduzimos um pouco o padding para ficar mais elegante */
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.barber-card.selected {
+    border-color: var(--primary);
+    background-color: #1A1712;
+    box-shadow: 0 0 12px rgba(200, 155, 60, 0.2);
+}
+.barber-card:hover {
+    border-color: var(--primary);
+}
+
+/* Alinhamento do Perfil (Avatar + Nome) */
+.barber-profile {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Caixa da foto do barbeiro */
+.barber-avatar {
+    width: 56px; /* Reduzimos um pouco o tamanho por não ter tantos textos ao lado */
+    height: 56px;
+    background-color: #24201A;
+    border-radius: 50%; /* Deixamos a foto perfeitamente redonda para um visual clean */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    overflow: hidden;
+}
+
+/* Nome do Barbeiro */
+.barber-details h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-white);
+}
+/* Botões de Navegação do Fluxo */
+.controls-container {
+    max-width: var(--max-width);
+    margin: 30px auto 50px auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.control-btn {
+    padding: 16px 32px;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.prev-btn {
+    background-color: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+}
+
+.prev-btn:hover {
+    color: var(--text-white);
+    border-color: var(--text-white);
+}
+
+.next-btn {
+    background-color: var(--primary);
+    color: var(--bg-main);
+    margin-left: auto; /* Empurra o botão Continuar para a direita quando o Voltar está escondido */
+}
+
+.next-btn:disabled {
+    background-color: var(--primary-disabled);
+    color: var(--text-disabled);
+    cursor: not-allowed;
+}
+/*8. COMPONENTE: FORMULÁRIO E RESUMO DE CONFIRMAÇÃO */
+
+.confirmation-container {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr; /* Formulário maior à esquerda, resumo menor à direita */
+    gap: 32px;
+    align-items: start;
+}
+
+/* Formulário de dados */
+.client-form {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-white);
+}
+
+.input-group input, .input-group textarea {
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    color: var(--text-white);
+    padding: 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s ease;
+}
+
+.input-group input:focus, .input-group textarea:focus {
+    outline: none;
+    border-color: var(--primary); /* Foca com a borda dourada */
+}
+
+/* Card de Resumo Lateral */
+.summary-card {
+    background-color: #1A1712; /* Fundo levemente dourado dark */
+    border: 1px solid var(--primary); /* Borda dourada em destaque */
+    border-radius: 8px;
+    padding: 24px;
+}
+
+.summary-card h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 20px;
+    border-bottom: 1px solid #2C261F;
+    padding-bottom: 12px;
+}
+
+.summary-block {
+    margin-bottom: 16px;
+}
+
+.summary-block h4 {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.summary-block p, .summary-services-list li {
+    font-size: 15px;
+    color: var(--text-white);
+    font-weight: 500;
+}
+
+.summary-services-list {
+    list-style: none;
+    padding: 0;
+}
+
+.summary-services-list li {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+/* Caixa de Totalizadores */
+.summary-total-box {
+    margin-top: 24px;
+    border-top: 1px dashed var(--border-color);
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.total-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.total-price {
+    font-size: 22px;
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.text-muted-line {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* Layout responsivo para telas pequenas (Celular) */
+@media (max-width: 768px) {
+    .confirmation-container {
+        grid-template-columns: 1fr; /* Quebra em uma única coluna no celular */
+    }
+}
+/* ==========================================================================
+   X. COMPONENTE: CALENDÁRIO & HORÁRIOS (ESTILO FIGMA)
+   ========================================================================== */
+
+/* Wrapper Geral do Calendário */
+.calendar-wrapper {
+    background-color: #110E0A; /* Fundo escuro do card de agendamento */
+    border: 1px solid #221F1A;
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 600px;
+    margin: 20px auto;
+}
+
+/* Cabeçalho: Mês e Setas */
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.current-month {
+    color: #FFFFFF;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.cal-btn {
+    background: none;
+    border: none;
+    color: #8E8A83;
+    font-size: 24px;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 0 10px;
+}
+
+.cal-btn:hover {
+    color: var(--primary); /* Dourado */
+}
+
+/* Dias da Semana (DOM, SEG, TER...) */
+.weekdays-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.weekdays-grid span {
+    color: #5C564E; /* Texto bem sutil/muted */
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Grade de Dias Numéricos */
+.days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px;
+    text-align: center;
+}
+
+/* Estilo Base de cada Dia */
+.day {
+    background: none;
+    border: none;
+    color: #E2DFD9;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 12px 0;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Dias vazios do início do mês */
+.day.empty {
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Dias passados desativados */
+.day.disabled {
+    color: #332E27;
+    cursor: not-allowed;
+}
+
+/* Hover nos dias disponíveis */
+.day:not(.empty):not(.disabled):hover {
+    background-color: #221F1A;
+    color: #FFFFFF;
+}
+
+/* Dia Selecionado (Dourado igual ao Figma) */
+.day.selected {
+    background-color: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    font-weight: 700;
+}
+
+/* ==========================================================================
+   GRADE DE HORÁRIOS
+   ========================================================================== */
+
+.time-slots-wrapper {
+    max-width: 600px;
+    margin: 32px auto 0 auto;
+}
+
+.time-period h4 {
+    color: #8E8A83;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+}
+
+/* Grid de Horários em 6 Colunas (igual ao Figma desktop) */
+.slots-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+}
+
+/* Botão de Horário */
+.slot-btn {
+    background-color: #110E0A;
+    border: 1px solid #221F1A;
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 14px 0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.slot-btn:hover:not(:disabled) {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* Horário Selecionado */
+.slot-btn.selected {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: #110E0A; /* Texto escuro por cima do dourado */
+    font-weight: 700;
+}
+
+/* Horário Ocupado / Indisponível */
+.slot-btn.taken {
+    background-color: #181511;
+    border-color: #1F1B16;
+    color: #3A342B;
+    text-decoration: line-through;
+    cursor: not-allowed;
+}
+
+/* Responsivo para celular */
+@media (max-width: 600px) {
+    .slots-grid {
+        grid-template-columns: repeat(3, 1fr); /* 3 colunas no celular */
+    }
+}
+/* ==========================================================================
+   X. COMPONENTE: GRADE DE SERVIÇOS (ESTILO FIGMA)
+   ========================================================================== */
+
+/* Define que os cards fiquem em colunas que se adaptam à tela */
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 colunas idênticas no Desktop */
+    gap: 20px; /* Espaço entre os cards */
+    margin-top: 24px;
+}
+
+/* O Card de Serviço Individual */
+.service-card {
+    background-color: #110E0A; /* Fundo escuro idêntico ao calendário */
+    border: 1px solid #221F1A; /* Borda sutil */
+    border-radius: 8px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    text-align: left;
+}
+
+/* Hover simples para dar feedback ao passar o mouse */
+.service-card:hover {
+    border-color: #3E3930;
+}
+
+/* Card Selecionado (Destaque Dourado do Figma) */
+.service-card.selected {
+    border-color: var(--primary);
+    background-color: #16130E; /* Um leve toque quente no fundo */
+}
+
+/* Ícone do serviço (Emoji ou caractere) */
+.service-icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+/* Título do Serviço */
+.service-card h3 {
+    color: #FFFFFF;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Bloco com Preço e Tempo alinhados lado a lado */
+.service-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: auto; /* Empurra as informações para o rodapé do card */
+}
+
+/* Preço em Destaque */
+.service-info .price {
+    color: #FFFFFF;
+    font-weight: 700;
+    font-size: 15px;
+}
+
+/* Duração com a cor mais sutil (muted) */
+.service-info .duration {
+    color: #8E8A83;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Layout responsivo para telas menores (Celular e Tablets) */
+@media (max-width: 900px) {
+    .services-grid {
+        grid-template-columns: repeat(2, 1fr); /* 2 colunas em telas médias */
+    }
+}
+
+@media (max-width: 600px) {
+    .services-grid {
+        grid-template-columns: 1fr; /* 1 única coluna no celular */
+        gap: 16px;
+    }
+}
