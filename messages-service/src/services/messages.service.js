@@ -14,14 +14,14 @@ const mensageList = [
   },
 ];
 
-const messageService = async (number, name, type) => {
-  //const typeMessage = type;
-  const remetent = number;
-  const client = name;
+const messageService = async (mensageData) => {
+  const { number, name, type } = mensageData;
+  
+ 
   //Logica de busca de info do cliente
   const searchBody = {
-    client: client,
-    number: remetent,
+    client: name,
+    number: number,
   };
   const clientExists = numList.some(
     (item) => item.number === searchBody.number,
