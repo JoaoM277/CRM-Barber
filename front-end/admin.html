@@ -2,46 +2,51 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Administrativo|La Palmas</title>
+    <title>Painel Administrativo | La Palmas</title>
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/admin.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+
     <div class="admin-wrapper">
+        <!-- BARRA LATERAL (SIDEBAR) -->
         <aside class="sidebar">
             <div class="sidebar-brand">
                 <div class="brand-logo">LP</div>
                 <div class="brand-text">
                     <h2>La Palmas</h2>
                     <p>Painel Master</p>
-                </div>   
+                </div>
             </div>
+
             <nav class="sidebar-menu">
                 <button class="menu-item active" data-tab="agenda">
                     <span class="menu-icon">📅</span> Agenda de Clientes
                 </button>
-                <button class="menu-item" data-tab="serviços">
+                <button class="menu-item" data-tab="servicos">
                     <span class="menu-icon">✂️</span> Serviços
                 </button>
                 <button class="menu-item" data-tab="barbeiros">
                     <span class="menu-icon">💈</span> Profissionais
                 </button>
-                <button class="menu-icon" data-tab="horarios">
-                    <span>⏱️</span> Configurar Horários
+                <button class="menu-item" data-tab="horarios">
+                    <span class="menu-icon">⏱️</span> Configurar Horários
                 </button>
             </nav>
 
             <div class="sidebar-footer">
-                <button class="btn-logout">🚪</button> Sair do Painel
+                <button class="btn-logout">🚪 Sair do Painel</button>
             </div>
         </aside>
 
+        <!-- ÁREA DE CONTEÚDO DINÂMICO -->
         <main class="main-content">
+            <!-- HEADER DO PAINEL -->
             <header class="admin-header">
-                <div class="header-tittle">
-                    <h1 id="page-title">Agenda de Clientes</h1>
-                    <p id="page subtitle">Gerencie e acompanhe os agendamentos em tempo real</p>
+                <div class="header-title">
+                    <h1 id="page-title">Painel de Gestão</h1>
+                    <p id="page-subtitle">Controle total da sua barbearia</p>
                 </div>
                 <div class="admin-profile">
                     <span>Olá, <strong>Administrador</strong></span>
@@ -49,13 +54,16 @@
                 </div>
             </header>
 
+            <!-- CONTAINER ONDE AS TELAS APARECEM -->
             <section class="content-body" id="admin-content">
+                
+                <!-- TELA 1: AGENDA -->
                 <div class="tab-panel active" id="panel-agenda">
                     <div class="panel-header">
                         <h2>Visão Geral da Agenda</h2>
                         <div class="panel-actions">
                             <input type="date" class="admin-input" id="filter-date">
-                            <button class="btn-priamry">Filtrar</button> 
+                            <button class="btn-primary">Filtrar</button>
                         </div>
                     </div>
                     <div class="table-container">
@@ -71,20 +79,97 @@
                                 </tr>
                             </thead>
                             <tbody id="agenda-table-body">
-                                <tbody id="agenda-table-body">
-                                    
-                                </tbody>
+                                <!-- O JavaScript injeta a agenda aqui -->
                             </tbody>
-
                         </table>
-
                     </div>
                 </div>
+
+                <!-- TELA 2: SERVIÇOS (Aqui entrou o código novo!) -->
+                <div class="tab-panel" id="panel-servicos">
+                    <div class="panel-header">
+                        <h2>Gerenciamento de Serviços</h2>
+                        <!-- Botão que vai chamar o JS para abrir o Modal -->
+                        <button class="btn-primary" onclick="abrirModalServico()">+ Novo Serviço</button>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Ícone</th>
+                                    <th>Nome do Serviço</th>
+                                    <th>Preço (R$)</th>
+                                    <th>Tempo (Min)</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="servicos-table-body">
+                                <!-- O JavaScript injeta os serviços do banco aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TELA 3: BARBEIROS -->
+                <div class="tab-panel" id="panel-barbeiros">
+                    <h2>Gerenciar Profissionais</h2>
+                    <p style="color: var(--text-muted); margin-top: 8px;">Área em construção.</p>
+                </div>
+
+                <!-- TELA 4: HORÁRIOS -->
+                <div class="tab-panel" id="panel-horarios">
+                    <h2>Configuração de Horários</h2>
+                    <p style="color: var(--text-muted); margin-top: 8px;">Área em construção.</p>
+                </div>
+
             </section>
         </main>
     </div>
-    
 
+    <!-- ====================================================================
+         MODAL DE SERVIÇOS (Fica solto no final do arquivo, fora das telas!)
+         ==================================================================== -->
+    <div class="modal-overlay" id="modal-servico">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-titulo">Novo Serviço</h3>
+                <button class="btn-close" onclick="fecharModalServico()">✖</button>
+            </div>
+            
+            <form id="form-servico" class="admin-form">
+                <input type="hidden" id="servico-id">
+                
+                <div class="input-group">
+                    <label>Ícone (Emoji ou Texto)</label>
+                    <input type="text" id="servico-icon" placeholder="Ex: ✂️" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Nome do Serviço</label>
+                    <input type="text" id="servico-nome" placeholder="Ex: Corte Degradê" required>
+                </div>
+                
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Preço (R$)</label>
+                        <input type="number" id="servico-preco" step="0.01" placeholder="40.00" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Duração (Minutos)</label>
+                        <input type="number" id="servico-duracao" placeholder="30" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="fecharModalServico()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Serviço</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Nossos Scripts -->
     <script src="js/admin.js"></script>
 </body>
 </html>
