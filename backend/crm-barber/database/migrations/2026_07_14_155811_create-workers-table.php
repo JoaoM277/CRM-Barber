@@ -14,7 +14,7 @@ return new class extends Migration
          Schema::create('workers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('phone', 20);
+            $table->string('phone', 20)->unique();
             $table->text('photo');
             $table->string('speciality');
             $table->boolean('active');
