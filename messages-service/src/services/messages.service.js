@@ -1,3 +1,5 @@
+const { providerMenssage } = require("../providers/message.provider");
+
 const numList = [{ client: "Paul", number: "(99)9848484" }]; //mais tarde implementar a função de registrar no banco de dados
 const mensageList = [
   {
@@ -12,7 +14,7 @@ const mensageList = [
   },
 ];
 
-const messageService = (number, name, type) => {
+const messageService = async (number, name, type) => {
   //const typeMessage = type;
   const remetent = number;
   const client = name;
@@ -34,12 +36,11 @@ const messageService = (number, name, type) => {
   }
   //Logica de seleção de mensagem
 
-  const messageRespost = mensageList.find(item => item.indice === type)
-  const respost = messageRespost.type+ ": " + messageRespost.content
-  console.log(respost)
+  const messageRespost = mensageList.find((item) => item.indice === type);
+  const respost = messageRespost.type + ": " + messageRespost.content;
+  const response = await providerMenssage(number, respost);
 
-  return respost;
+  return response;
 };
 
 module.exports = { messageService };
-
