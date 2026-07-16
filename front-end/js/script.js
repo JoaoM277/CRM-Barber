@@ -13,19 +13,19 @@ let currentStep = 1;
 let currentDateObj = new Date(); // 14 de Julho de 2026
 
 // ==========================================================================
-// 2. SIMULAÇÃO DE DADOS DO BANCO
+// 2. SIMULAÇÃO DE DADOS DO BANCO (Emojis removidos conforme layout)
 // ==========================================================================
 const dbServicos = [
-    { id: 1, nome: "Corte", preco: 50, duracao: 30, icon: "✂" },
-    { id: 2, nome: "Barba", preco: 35, duracao: 20, icon: "🧔" },
-    { id: 3, nome: "Alisante", preco: 60, duracao: 40, icon: "🧪" },
-    { id: 4, nome: "Hidratação", preco: 30, duracao: 20, icon: "✨" },
-    { id: 5, nome: "Pezinho", preco: 15, duracao: 10, icon: "📐" },
-    { id: 6, nome: "Tinta", preco: 45, duracao: 30, icon: "🎨" },
-    { id: 7, nome: "Botox", preco: 70, duracao: 40, icon: "🔥" },
-    { id: 8, nome: "Cera Nasal", preco: 20, duracao: 15, icon: "👃" },
-    { id: 9, nome: "Selagem", preco: 80, duracao: 50, icon: "🔒" },
-    { id: 10, nome: "Penteado", preco: 25, duracao: 15, icon: "💈" }
+    { id: 1, nome: "Corte", preco: 50, duracao: 30 },
+    { id: 2, nome: "Barba", preco: 35, duracao: 20 },
+    { id: 3, nome: "Alisante", preco: 60, duracao: 40 },
+    { id: 4, nome: "Hidratação", preco: 30, duracao: 20 },
+    { id: 5, nome: "Pezinho", preco: 15, duracao: 10 },
+    { id: 6, nome: "Tinta", preco: 45, duracao: 30 },
+    { id: 7, nome: "Botox", preco: 70, duracao: 40 },
+    { id: 8, nome: "Cera Nasal", preco: 20, duracao: 15 },
+    { id: 9, nome: "Selagem", preco: 80, duracao: 50 },
+    { id: 10, nome: "Penteado", preco: 25, duracao: 15 }
 ];
 
 const dbBarbeiros = [
@@ -55,25 +55,33 @@ const dbHorariosDisponiveis = ["08:00","09:00", "10:00", "11:00", "14:00", "15:0
 function renderServicos() {
     const container = document.getElementById("services-container");
     container.innerHTML = "";
+    
+    // Garante que o container tenha a classe correta de grid/lista compacta
+    container.className = "mobile-service-list";
+
     dbServicos.forEach(servico => {
-        const card = document.createElement("article");
-        card.className = `service-card ${agendamento.servicos.includes(servico.id) ? 'selected' : ''}`;
-        card.innerHTML = `
-            <div class="service-icon">${servico.icon}</div>
-            <h3>${servico.nome}</h3>
-            <div class="service-info">
-                <span class="price">R$ ${servico.preco}</span>
-                <span class="duration">⏱ ${servico.duracao}min</span>
+        // Criando a estrutura atualizada em "linhas/botões" ao invés de cards grandes
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `service-row ${agendamento.servicos.includes(servico.id) ? 'selected' : ''}`;
+        
+        btn.innerHTML = `
+            <div class="service-details">
+                <span class="service-title">${servico.nome}</span>
+                <span class="service-time">${servico.duracao}min</span>
             </div>
+            <span class="service-price">R$ ${servico.preco}</span>
         `;
-        card.addEventListener("click", () => {
+        
+        btn.addEventListener("click", () => {
             const index = agendamento.servicos.indexOf(servico.id);
             if (index > -1) agendamento.servicos.splice(index, 1);
             else agendamento.servicos.push(servico.id);
             renderServicos();
             validateStep();
         });
-        container.appendChild(card);
+        
+        container.appendChild(btn);
     });
 }
 
@@ -87,8 +95,7 @@ function renderBarbeiros() {
     dbBarbeiros.forEach(barbeiro => {
         const card = document.createElement("article");
         
-        // CORREÇÃO AQUI: Verifica se este barbeiro é o selecionado no estado global
-        // Se for, adiciona a classe 'selected' que ativa o CSS dourado do seu arquivo
+        // Verifica se este barbeiro é o selecionado no estado global
         if (agendamento.barbeiroId === barbeiro.id) {
             card.className = "barber-card selected";
         } else {
@@ -111,24 +118,25 @@ function renderBarbeiros() {
            
         `;
 
-        // Evento de clique para selecionar o barbeiro e remontar a lista atualizada
         card.addEventListener("click", () => {
             agendamento.barbeiroId = barbeiro.id;
-            renderBarbeiros(); // Redesenha a lista para aplicar a classe 'selected' no elemento clicado
-            validateStep();    // Libera o botão "Continuar"
+            renderBarbeiros(); 
+            validateStep();    
         });
 
         container.appendChild(card);
     });
 }
+
 function renderCalendario(date) {
     const container = document.getElementById("step-agenda");
     if (!container) return;
 
-    // Injeta a estrutura HTML respeitando as classes do seu CSS externo
     container.innerHTML = `
-        <h2>Selecione o dia e horário</h2>
-        <p class="subtitle">Escolha a melhor data para o seu atendimento</p>
+        <div class="section-intro">
+            <h2>Selecione o dia e horário</h2>
+            <p>Escolha a melhor data para o seu atendimento</p>
+        </div>
         
         <div class="calendar-wrapper">
             <div class="calendar-header">
@@ -163,14 +171,12 @@ function renderCalendario(date) {
     const firstDayIndex = new Date(year, month, 1).getDay();
     const lastDay = new Date(year, month + 1, 0).getDate();
 
-    // Dias vazios do mês anterior
     for (let i = 0; i < firstDayIndex; i++) {
         const emptySpan = document.createElement("span");
         emptySpan.className = "day empty";
         calendarDays.appendChild(emptySpan);
     }
 
-    // Dias numéricos ativos
     for (let day = 1; day <= lastDay; day++) {
         const dayBtn = document.createElement("button");
         dayBtn.type = "button";
@@ -181,20 +187,18 @@ function renderCalendario(date) {
         const today = new Date();
         today.setHours(0,0,0,0);
 
-        // Bloqueia dias que já passaram do dia atual do sistema
         if (loopDate < today) {
             dayBtn.classList.add("disabled");
         }
         
-        // Mantém a bordinha dourada se for o dia selecionado
         if (agendamento.data && agendamento.data.toDateString() === loopDate.toDateString()) {
             dayBtn.classList.add("selected");
         }
 
         dayBtn.addEventListener("click", () => {
-            if (loopDate < today) return; // Impede clique em dias passados
+            if (loopDate < today) return; 
             agendamento.data = loopDate;
-            agendamento.hora = null; // Reseta o horário para obrigar a escolher de novo
+            agendamento.hora = null; 
             renderCalendario(date);
             validateStep();
         });
@@ -202,7 +206,6 @@ function renderCalendario(date) {
         calendarDays.appendChild(dayBtn);
     }
 
-    // Ouvintes das setas atualizando o objeto de data correto
     document.getElementById("cal-prev").addEventListener("click", () => {
         currentDateObj.setMonth(currentDateObj.getMonth() - 1);
         renderCalendario(currentDateObj);
@@ -216,46 +219,6 @@ function renderCalendario(date) {
     renderHorarios();
 }
 
-// ==========================================================================
-// ESCUTADORES E VALIDAÇÕES DO FORMULÁRIO FINAL
-// ==========================================================================
-
-// Bloqueia letras no campo de telefone em tempo real e valida o formulário
-// ==========================================================================
-// MÁSCARA DE TELEFONE: (XX) XXXXX-XXXX
-// ==========================================================================
-document.getElementById("client-form").addEventListener("input", (e) => {
-    if (e.target.id === "client-phone") {
-        // 1. Remove tudo o que não for número
-        let valor = e.target.value.replace(/\D/g, "");
-        
-        // 2. Limita o máximo em 11 dígitos (padrão celular com DDD)
-        if (valor.length > 11) {
-            valor = valor.slice(0, 11);
-        }
-
-        // 3. Aplica a formatação em pedaços conforme a digitação
-        if (valor.length > 0) {
-            // Adiciona os parênteses do DDD: (XX
-            valor = "(" + valor;
-        }
-        if (valor.length > 3) {
-            // Fecha o parêntese e põe o espaço: (XX) X
-            valor = valor.slice(0, 3) + ") " + valor.slice(3);
-        }
-        if (valor.length > 10) {
-            // Encaixa o hífen no meio do número: (XX) XXXXX-XXXX
-            valor = valor.slice(0, 10) + "-" + valor.slice(10);
-        }
-
-        // 4. Devolve o valor formatado para o input
-        e.target.value = valor;
-    }
-    
-    // Roda a validação padrão para liberar o botão de avançar
-    validateStep();
-});
-
 function renderHorarios() {
     const container = document.getElementById("slots-container");
     container.innerHTML = "";
@@ -265,6 +228,7 @@ function renderHorarios() {
     }
     dbHorariosDisponiveis.forEach(hora => {
         const btn = document.createElement("button");
+        btn.type = "button";
         btn.className = `slot-btn ${agendamento.hora === hora ? 'selected' : ''}`;
         btn.textContent = hora;
         btn.addEventListener("click", () => {
@@ -277,28 +241,24 @@ function renderHorarios() {
 }
 
 // ==========================================================================
-// 5. PROCESSAMENTO DO RESUMO FINAL (CÁLCULO DOS DADOS DO BANCO)
+// 5. PROCESSAMENTO DO RESUMO FINAL
 // ==========================================================================
 function renderResumo() {
-    // 1. Filtrar objetos completos dos serviços selecionados
     const servicosEscolhidos = dbServicos.filter(s => agendamento.servicos.includes(s.id));
     
-    // 2. Injetar a lista na tela
     const listContainer = document.getElementById("summary-services-list");
-    listContainer.innerHTML = servicosEscolhidos.map(s => `<li><span>${s.icon} ${s.nome}</span><span>R$ ${s.preco}</span></li>`).join("");
+    // Removida a renderização de s.icon para ficar alinhado ao layout limpo
+    listContainer.innerHTML = servicosEscolhidos.map(s => `<li><span>${s.nome}</span><span>R$ ${s.preco}</span></li>`).join("");
 
-    // 3. Somar preço total e tempo total
     const precoTotal = servicosEscolhidos.reduce((acc, current) => acc + current.preco, 0);
     const tempoTotal = servicosEscolhidos.reduce((acc, current) => acc + current.duracao, 0);
 
     document.getElementById("summary-total-price").textContent = `R$ ${precoTotal}`;
     document.getElementById("summary-total-duration").textContent = `${tempoTotal} min`;
 
-    // 4. Buscar nome do Barbeiro
     const barbeiro = dbBarbeiros.find(b => b.id === agendamento.barbeiroId);
     document.getElementById("summary-barber-name").textContent = barbeiro ? barbeiro.nome : "Não selecionado";
 
-    // 5. Formatar Data e Hora
     if (agendamento.data && agendamento.hora) {
         document.getElementById("summary-date-time").textContent = `${agendamento.data.toLocaleDateString('pt-BR')} às ${agendamento.hora}`;
     } else {
@@ -347,7 +307,6 @@ function validateStep() {
     if (currentStep === 2 && agendamento.barbeiroId !== null) isValid = true;
     if (currentStep === 3 && agendamento.data !== null && agendamento.hora !== null) isValid = true;
     if (currentStep === 4) {
-        // Valida se o formulário HTML está preenchido corretamente
         const form = document.getElementById("client-form");
         isValid = form.checkValidity(); 
     }
@@ -355,50 +314,46 @@ function validateStep() {
     btnNext.disabled = !isValid;
 }
 
-// Escutar preenchimento do form para liberar o botão de Finalizar
-document.getElementById("client-form").addEventListener("input", validateStep);
+// ==========================================================================
+// ESCUTADORES DO FORMULÁRIO FINAL E BOTOES
+// ==========================================================================
+document.getElementById("client-form").addEventListener("input", (e) => {
+    if (e.target.id === "client-phone") {
+        let valor = e.target.value.replace(/\D/g, "");
+        if (valor.length > 11) valor = valor.slice(0, 11);
+
+        if (valor.length > 0) valor = "(" + valor;
+        if (valor.length > 3) valor = valor.slice(0, 3) + ") " + valor.slice(3);
+        if (valor.length > 10) valor = valor.slice(0, 10) + "-" + valor.slice(10);
+        
+        e.target.value = valor;
+    }
+    validateStep();
+});
 
 document.getElementById("btn-next").addEventListener("click", () => {
     if (currentStep < 4) {
         currentStep++;
         updateFlowUI();
     } else {
-        // 1. Captura os dados do formulário final
         agendamento.cliente.nome = document.getElementById("client-name").value;
         agendamento.cliente.telefone = document.getElementById("client-phone").value;
         agendamento.cliente.notas = document.getElementById("client-notes").value;
 
-        // 2. Formata a estrutura exata (Payload) que o Sequelize vai receber no Back-End
+        // O fato do 'servicosIds' ser um array de IDs facilita muito o uso de associações 
+        // belongsToMany no Sequelize (ex: um insert na tabela de junção AgendamentoServicos).
         const payloadParaOExpress = {
             barbeiroId: agendamento.barbeiroId,
-            servicosIds: agendamento.servicos, // Envia o array de IDs ex: [1, 4]
-            dataAgendamento: agendamento.data.toISOString().split('T')[0], // Converte de Objeto Date para "YYYY-MM-DD"
+            servicosIds: agendamento.servicos, 
+            dataAgendamento: agendamento.data.toISOString().split('T')[0], 
             horario: agendamento.hora,
             clienteNome: agendamento.cliente.nome,
             clienteTelefone: agendamento.cliente.telefone,
-            observacoes: agendamento.cliente.notes
+            observacoes: agendamento.cliente.notas 
         };
 
         console.log("🚀 Payload estruturado pronto para a API:", payloadParaOExpress);
 
-        /* ==========================================================================
-        CONEXÃO REAL COM O BACK-END (Descomente quando criarmos as rotas no Express)
-        ==========================================================================
-        fetch("http://localhost:3000/api/agendamentos", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payloadParaOExpress)
-        })
-        .then(response => response.json())
-        .then(dados => {
-            alert("Agendamento gravado com sucesso no banco de dados!");
-        })
-        .catch(erro => console.error("Erro ao salvar no banco:", erro));
-        */
-
-        // Alerta visual temporário para você testar no navegador
         alert(`Perfeito, ${payloadParaOExpress.clienteNome}!\nAgendamento simulado. Abra o Console (F12) para ver o JSON estruturado para o Sequelize.`);
     }
 });
@@ -411,7 +366,6 @@ document.getElementById("btn-prev").addEventListener("click", () => {
 });
 
 window.addEventListener("DOMContentLoaded", () => {
-    // Mantemos a ordem correta de inicialização
     renderBarbeiros();
     renderServicos();
     renderCalendario(currentDateObj);
