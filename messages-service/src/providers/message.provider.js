@@ -13,7 +13,7 @@ const providerMenssage = async (to, respost) => {
     ],
   };
   console.log("Enviando via Provider Fake");
-  console.log("Payload Enviado", JSON.stringify(infobipPayload, null, 2));
+  //console.log("Payload Enviado", JSON.stringify(infobipPayload, null, 2)); 
 
   return {
     status: 200,

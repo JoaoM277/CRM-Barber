@@ -2,7 +2,7 @@ POST http://localhost:3000/message
 Content-Type: application/json
 
 {
-    "number": "(99)98400-7168",
+    "number": "5599984825723",
     "name": "Paulo",
     "type": "1"
 }

@@ -1,6 +1,6 @@
 const { providerMenssage } = require("../providers/message.provider");
 
-const numList = [{ client: "Paul", number: "(99)9848484" }]; //mais tarde implementar a função de registrar no banco de dados
+const numList = [{ client: "Paul", number: "99984825723" }]; //mais tarde implementar a função de registrar no banco de dados
 const mensageList = [
   {
     indice: "1",

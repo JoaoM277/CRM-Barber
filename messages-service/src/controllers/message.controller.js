@@ -3,11 +3,7 @@ const { z, ZodError } = require("zod");
 const { messageService } = require("../services/messages.service");
 
 const messageSchema = z.object({
-  number: z.string().transform((val) =>
-    val.replace(/\D/g, "").refine((val) => val.length === 11, {
-      message: "O numero de telefone deve ter exatamente 11 digitos",
-    }),
-  ),
+  number: z.string().min(11, "O numero deve ter no minimo 11 digitos").max(13,"O numero deve ter no maximo 13 digitos"), 
   name: z.string().min(1, "Nome invalido"),
   type: z.string().min(1, "Tipo de mensagem invalido"),
 });
