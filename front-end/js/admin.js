@@ -262,4 +262,90 @@ if (formServico) {
 window.addEventListener("DOMContentLoaded", () => {
     renderAgenda();   // Inicia a busca automática de agendamentos
     renderServicos(); // Inicia a busca automática de serviços cadastrados
+    renderBarbeiros(); 
 });
+async function renderBarbeiros() {
+    const tableBody = document.getElementById("barbeiros-table-body");
+    if (!tableBody) return;
+
+    // Atenção aqui: mudamos o colspan para 4, pois tiramos uma coluna!
+    tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted);">Buscando profissionais...</td></tr>`;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/barbeiros`);
+        if (!response.ok) throw new Error("Erro de conexão");
+        
+        const barbeiros = await response.json();
+        tableBody.innerHTML = "";
+
+        if (barbeiros.length === 0) {
+            // colspan alterado para 4 aqui também
+            tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted);">Nenhum profissional cadastrado.</td></tr>`;
+            return;
+        }
+
+        barbeiros.forEach(barbeiro => {
+            const tr = document.createElement("tr");
+            const inicial = barbeiro.nome.charAt(0).toUpperCase();
+
+            // Tabela desenhada sem o <td> da especialidade
+            tr.innerHTML = `
+                <td><div class="table-avatar">${inicial}</div></td>
+                <td><strong>${barbeiro.nome}</strong></td>
+                <td>${formatarTelefoneAdmin(barbeiro.telefone)}</td>
+                <td>
+                    <button class="btn-action" onclick="abrirModalBarbeiro(${barbeiro.id})" title="Editar">✏️</button>
+                    <button class="btn-action cancel" title="Excluir">🗑️</button>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error("Falha ao renderizar barbeiros:", error);
+        tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--danger);">Erro de conexão com o banco de dados.</td></tr>`;
+    }
+}
+
+// ... as funções abrirModalBarbeiro e fecharModalBarbeiro continuam iguais ...
+
+// Ouvinte do envio do formulário atualizado
+const formBarbeiro = document.getElementById("form-barbeiro");
+if (formBarbeiro) {
+    formBarbeiro.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const id = document.getElementById("barbeiro-id").value;
+        
+        // Payload (pacote de dados) agora só leva nome e telefone
+        const dadosBarbeiro = {
+            nome: document.getElementById("barbeiro-nome").value,
+            telefone: document.getElementById("barbeiro-telefone").value
+        };
+
+        try {
+            let url = `${API_BASE_URL}/barbeiros`;
+            let metodo = "POST";
+
+            if (id) {
+                url = `${API_BASE_URL}/barbeiros/${id}`;
+                metodo = "PUT";
+            }
+
+            const response = await fetch(url, {
+                method: metodo,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(dadosBarbeiro) // Envia o pacote enxuto para o servidor
+            });
+
+            if (response.ok) {
+                fecharModalBarbeiro();
+                renderBarbeiros(); 
+            } else {
+                alert("Erro ao salvar o profissional.");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Erro de rede.");
+        }
+    });
+}

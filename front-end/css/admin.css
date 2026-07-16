@@ -396,3 +396,16 @@ body {
         padding: 20px; 
     }
 }
+/* Avatar do profissional na tabela */
+.table-avatar {
+    width: 40px;
+    height: 40px;
+    background-color: var(--brand-primary);
+    color: var(--brand-bg-dark);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+}
