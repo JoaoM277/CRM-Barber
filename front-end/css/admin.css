@@ -28,9 +28,76 @@ body {
 }
 
 /* ==========================================================================
+   ESTILOS DO DASHBOARD (VISÃO GERAL)
+   ========================================================================== */
+#panel-dashboard .panel-header {
+    border-bottom: none; /* Remove a linha para integrar melhor com os cards */
+    margin-bottom: 16px;
+}
+
+.dashboard-grid {
+    display: grid;
+    /* Usa auto-fit para criar colunas flexíveis que se adaptam à tela */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.dash-card {
+    background-color: var(--brand-bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px; /* Espaço entre o ícone e os textos */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.dash-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--brand-primary); /* Acende a borda ao passar o mouse */
+}
+
+.dash-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0; /* Impede que o ícone seja esmagado pelo texto */
+}
+
+.dash-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dash-info h3 {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin: 0;
+}
+
+.dash-info p {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+/* ==========================================================================
    2. LAYOUT DESKTOP (PADRÃO)
    ========================================================================== */
-.admin-wrapper {
+.dashboard-grid {
+        grid-template-columns: 1fr; /* Empilha os cartões no mobile */
+        gap: 16px;
+    }
+   .admin-wrapper {
     display: flex;
     width: 100vw;
     height: 100vh;
