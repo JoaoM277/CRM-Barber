@@ -10,7 +10,7 @@ class OperationTime extends Model
     /** @use HasFactory<\Database\Factories\OperationTimeFactory> */
     use HasFactory;
 
-    protected $table = 'operation_time';
+    protected $table = 'operation_times';
 
     protected $fillable = [
         'day_of_week',
