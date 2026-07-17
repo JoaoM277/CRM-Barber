@@ -4,5 +4,5 @@ Content-Type: application/json
 {
     "number": "5599984825723",
     "name": "Paulo",
-    "type": "1"
+    "event": "error.event"
 }
