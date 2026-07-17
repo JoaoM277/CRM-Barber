@@ -14,7 +14,7 @@ class ClientController extends Controller
     {
         $clients = Client::all();
 
-        return response()->json($clients);
+        return response()->json($clients, 200);
     }
 
     /**
@@ -30,13 +30,15 @@ class ClientController extends Controller
      */
     public function store(Request $request)
     {
-        $client = Client::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'birth_date' => $request->birth_date,
-            'observation' => $request->observation
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|unique:clients,email',
+            'phone' => 'required|string|max:20',
+            'birth_date' => 'nullable|date',
+            'observation' => 'nullable|string'
         ]);
+
+        $client = Client::create($data);
 
         return response()->json($client, 201);
     }
@@ -46,13 +48,13 @@ class ClientController extends Controller
      */
     public function show(Client $client)
     {
-        return response()->json($client);
+        return response()->json($client, 200);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Client $client)
+    public function edit(Client $client)    
     {
         //
     }
@@ -62,9 +64,18 @@ class ClientController extends Controller
      */
     public function update(Request $request, Client $client)
     {
-        $client->update($request->all());
 
-        return response()->json(['message:' => 'Updated Successfully'], 201);
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|unique:clients,email',
+            'phone' => 'required|string|max:20',
+            'birth_date' => 'nullable|date',
+            'observation' => 'nullable|string'
+        ]);
+
+        $client->update($data);
+
+        return response()->json(['message:' => 'Updated Successfully', 'data' => $client], 201);
     }
 
     /**
@@ -76,7 +87,7 @@ class ClientController extends Controller
 
         return response()->json([
             'message' => 'Client removed successfully!'
-        ]);
+        ], 200);
         
     }
 }
