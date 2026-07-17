@@ -10,6 +10,7 @@
 <body>
 
     <div class="admin-wrapper">
+        <!-- BARRA LATERAL (SIDEBAR) -->
         <aside class="sidebar">
             <div class="sidebar-brand">
                 <div class="brand-logo">LP</div>
@@ -20,7 +21,10 @@
             </div>
 
             <nav class="sidebar-menu">
-                <button class="menu-item active" data-tab="agenda">
+                <button class="menu-item active" data-tab="dashboard">
+                    <span class="menu-icon">📊</span> Visão Geral
+                </button>
+                <button class="menu-item" data-tab="agenda">
                     <span class="menu-icon">📅</span> Agenda de Clientes
                 </button>
                 <button class="menu-item" data-tab="servicos">
@@ -37,6 +41,7 @@
         </aside>
 
         <main class="main-content">
+            <!-- HEADER DO PAINEL -->
             <header class="admin-header">
                 <div class="header-title">
                     <h1 id="page-title">Painel de Gestão</h1>
@@ -48,9 +53,49 @@
                 </div>
             </header>
 
+            <!-- CONTAINER ONDE AS TELAS APARECEM -->
             <section class="content-body" id="admin-content">
                 
-                <div class="tab-panel active" id="panel-agenda">
+                <!-- ====================================================================
+                     TELA 0: DASHBOARD (FATURAMENTO E VISÃO GERAL)
+                     ==================================================================== -->
+                <div class="tab-panel active" id="panel-dashboard">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Resumo Financeiro</h2>
+                            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Acompanhe o faturamento com base nos agendamentos concluídos.</p>
+                        </div>
+                    </div>
+
+                    <!-- Cartões de Faturamento -->
+                    <div class="dashboard-grid">
+                        <div class="dash-card">
+                            <div class="dash-icon" style="background: rgba(46, 196, 182, 0.15); color: var(--success);">💰</div>
+                            <div class="dash-info">
+                                <h3>Faturamento Hoje</h3>
+                                <p id="faturamento-dia">Carregando...</p>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <div class="dash-icon" style="background: rgba(200, 155, 60, 0.15); color: var(--brand-primary);">📅</div>
+                            <div class="dash-info">
+                                <h3>Faturamento do Mês</h3>
+                                <p id="faturamento-mes">Carregando...</p>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <div class="dash-icon" style="background: rgba(255, 255, 255, 0.05); color: var(--text-main);">📈</div>
+                            <div class="dash-info">
+                                <h3>Faturamento do Ano</h3>
+                                <p id="faturamento-ano">Carregando...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- ====================================================================
+                     TELA 1: AGENDA 
+                     ==================================================================== -->
+                <div class="tab-panel" id="panel-agenda">
                     <div class="panel-header">
                         <h2>Visão Geral da Agenda</h2>
                         <div class="panel-actions">
@@ -71,17 +116,19 @@
                                 </tr>
                             </thead>
                             <tbody id="agenda-table-body">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
 
+                <!-- ====================================================================
+                     TELA 2: SERVIÇOS 
+                     ==================================================================== -->
                 <div class="tab-panel" id="panel-servicos">
                     <div class="panel-header">
                         <h2>Gerenciamento de Serviços</h2>
                         <button class="btn-primary" onclick="abrirModalServico()">+ Novo Serviço</button>
                     </div>
-
                     <div class="table-container">
                         <table class="admin-table">
                             <thead>
@@ -94,17 +141,18 @@
                                 </tr>
                             </thead>
                             <tbody id="servicos-table-body">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
-
+                <!-- ====================================================================
+                     TELA 3: BARBEIROS (Simplificada, sem especialidade)
+                     ==================================================================== -->
                 <div class="tab-panel" id="panel-barbeiros">
                     <div class="panel-header">
                         <h2>Gerenciamento de Profissionais</h2>
                         <button class="btn-primary" onclick="abrirModalBarbeiro()">+ Novo Profissional</button>
                     </div>
-
                     <div class="table-container">
                         <table class="admin-table">
                             <thead>
@@ -116,29 +164,21 @@
                                 </tr>
                             </thead>
                             <tbody id="barbeiros-table-body">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
-                </div>
-
-                <div class="tab-panel" id="panel-horarios">
-                    <div class="panel-header">
-                        <h2>Configuração de Horários</h2>
-                    </div>
-                    <p style="color: var(--text-muted); margin-top: 8px;">Área em construção.</p>
                 </div>
 
             </section>
         </main>
     </div>
-
+    <!-- MODAL DE SERVIÇOS -->
     <div class="modal-overlay" id="modal-servico">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modal-titulo">Novo Serviço</h3>
                 <button class="btn-close" onclick="fecharModalServico()">✖</button>
             </div>
-            
             <form id="form-servico" class="admin-form">
                 <input type="hidden" id="servico-id">
                 
@@ -171,6 +211,7 @@
         </div>
     </div>
 
+    <!-- MODAL DE PROFISSIONAIS -->
     <div class="modal-overlay" id="modal-barbeiro">
         <div class="modal-content">
             <div class="modal-header">
@@ -198,6 +239,8 @@
             </form>
         </div>
     </div>
+
+    <!-- Script de controle do Painel -->
     <script src="js/admin.js"></script>
 </body>
 </html>

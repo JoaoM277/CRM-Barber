@@ -258,4 +258,45 @@ window.addEventListener("DOMContentLoaded", () => {
     renderAgenda();
     renderServicos();
     renderBarbeiros();
+    renderDashboard();
 });
+// --------------------------------------------------------------------------
+// 7. MÓDULO: DASHBOARD FINANCEIRO (INTEGRAÇÃO REAL)
+// --------------------------------------------------------------------------
+async function renderDashboard() {
+    const elDia = document.getElementById("faturamento-dia");
+    const elMes = document.getElementById("faturamento-mes");
+    const elAno = document.getElementById("faturamento-ano");
+
+    if (!elDia || !elMes || !elAno) return;
+
+    // Feedback visual enquanto a requisição viaja pela rede
+    elDia.innerText = "Carregando...";
+    elMes.innerText = "Carregando...";
+    elAno.innerText = "Carregando...";
+
+    try {
+        // Dispara a requisição GET real para o servidor Express
+        const response = await fetch(`${API_BASE_URL}/faturamento`);
+        
+        if (!response.ok) {
+            throw new Error(`Erro na resposta do servidor: ${response.status}`);
+        }
+        
+        // Pega o JSON de resposta do banco de dados
+        const faturamento = await response.json();
+
+        // Converte para número e aplica a máscara oficial de Moeda (R$ 0,00)
+        // O "|| 0" garante que, se vier vazio, ele exiba R$ 0,00 e não dê erro
+        elDia.innerText = Number(faturamento.dia || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        elMes.innerText = Number(faturamento.mes || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        elAno.innerText = Number(faturamento.ano || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    } catch (error) {
+        console.error("Falha ao buscar faturamento:", error);
+        // Fallback visual de erro caso o servidor esteja fora do ar
+        elDia.innerText = "R$ 0,00";
+        elMes.innerText = "R$ 0,00";
+        elAno.innerText = "R$ 0,00";
+    }
+}
