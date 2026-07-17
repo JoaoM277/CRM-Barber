@@ -2,7 +2,7 @@ POST http://localhost:3000/message
 Content-Type: application/json
 
 {
-    "number": "5599984825723",
-    "name": "Paulo",
+    "phone": "5599984825723",
+    "name": "",
     "event": "error.event"
 }

@@ -1,7 +1,7 @@
 const { z } = require("zod");
 
 const messageCreateSchema = z.object({
-  number: z
+  phone: z
     .string()
     .min(11, "O numero deve ter no minimo 11 digitos")
     .max(13, "O numero deve ter no maximo 13 digitos"),

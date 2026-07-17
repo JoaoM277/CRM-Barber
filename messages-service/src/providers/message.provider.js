@@ -1,3 +1,5 @@
+const { MakeMessageResponseDTO } = require("../dtos/response.dtos");
+
 const providerMenssage = async (to, respost) => {
   const infobipPayload = {
     messages: [
@@ -12,10 +14,11 @@ const providerMenssage = async (to, respost) => {
       },
     ],
   };
-  console.log("Enviando via Provider Fake");
-  //console.log("Payload Enviado", JSON.stringify(infobipPayload, null, 2)); 
 
-  return {
+  console.log("Enviando via Provider Fake");
+  console.log("Payload Enviado", JSON.stringify(infobipPayload, null, 2));
+
+  const fakeResponse = {
     status: 200,
     data: {
       messages: [
@@ -33,6 +36,13 @@ const providerMenssage = async (to, respost) => {
       ],
     },
   };
+
+  return MakeMessageResponseDTO({
+    sucess: fakeResponse.status === 200,
+    messageId: fakeResponse.data.messages[0].messageId,
+    provider: "Infobip-Teste",
+    rawResponse: fakeResponse.data,
+  });
 };
 
 module.exports = { providerMenssage };
