@@ -3,6 +3,6 @@ Content-Type: application/json
 
 {
     "phone": "5599984825723",
-    "name": "",
-    "event": "error.event"
+    "name": "Paulo",
+    "trigger": "AGENDAMENTO"
 }

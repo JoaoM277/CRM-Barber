@@ -1,24 +1,12 @@
-const mensageList = [
-  {
-    event: "test.event",
-    type: "Mensagem de Testes",
-    content: "Esta é uma mensagem de testes, status 200",
-  },
-  {
-    event: "error.event",
-    type: "Mensagem de erro",
-    content: "Algo deu errado, tente novamente",
-  },
-  {
-    event: "created.event",
-    type: "Mensagem de erro",
-    content: "Algo deu errado, tente novamente",
-  },
-  {
-    event: "canceled.event",
-    type: "Mensagem de erro",
-    content: "Algo deu errado, tente novamente",
-  },
-];
+const mensageList = {
+  AGENDAMENTO: (name, appointment) =>
+    `Olá, ${name}! Seu agendamento foi confirmado para o dia ${appointment?.date || "marcado"} às ${appointment?.time || "marcado"}. Te esperamos! 💈`,
+
+  CANCELAMENTO: (name, appointment) =>
+    `Olá, ${name}. Seu agendamento para o dia ${appointment?.date} às ${appointment?.time} foi cancelado.`,
+
+  LEMBRETE: (name, appointment) =>
+    `Ei, ${name}, passando para lembrar do seu horário hoje às ${appointment?.time}! ⏰`,
+};
 
 module.exports = mensageList;
