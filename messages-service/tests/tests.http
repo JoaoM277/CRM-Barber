@@ -4,8 +4,8 @@ Content-Type: application/json
 {
     "phone": "5599984825723",
     "name": "Teste",
-    "trigger": "AGENDAMENTO",
-    "date": "20/07",
+    "trigger": "CANCELAMENTO",
+    "date": "22/01",
     "time": "14:00",
     "barber": "Frank"
 }

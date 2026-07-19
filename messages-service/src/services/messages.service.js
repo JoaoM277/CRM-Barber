@@ -17,6 +17,32 @@ const numList = require("../dictionary/clientes.list");
 const messageService = async (mensageData) => {
   const { phone, name, trigger, date, time, barber } = mensageData;
 
+  //Trava de segurança caso venha sem data
+  if (
+    ((trigger === "AGENDAMENTO" || trigger === "LEMBRETE") && !date) ||
+    !time
+  ) {
+    console.warn(
+      `[BLOQUEADO] Tentativa de envio ${trigger} com data ou hora invalidos`,
+    );
+    return {
+      status: "failed",
+      error: "Campos de 'data' e 'hora' são obrigatorios pra este gatilho",
+    };
+  }
+  //Trava de segurança anti-spam e anti-horario
+  const horaAtual = new Date().getHours();
+  if (trigger === "LEMBRETE" && (horaAtual >= 22 || horaAtual < 7)) {
+    console.warn(
+      `[BLOQUEADO] Envio de LEMBRETE retido pra enviar spam do horario comercial`,
+    );
+    return {
+      status: "held",
+      message:
+        "Lembrete retido devido ao horario restrito. Envio permitido apenas em horario comercial",
+    };
+  }
+
   //Logica de busca de info do cliente
   const templateSelect = mensageList[trigger];
   if (!templateSelect) {
