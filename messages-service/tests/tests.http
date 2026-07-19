@@ -3,7 +3,7 @@ Content-Type: application/json
 
 {
     "phone": "5599984825723",
-    "name": "Paulo",
+    "name": "Teste",
     "trigger": "AGENDAMENTO",
     "date": "20/07",
     "time": "14:00",

@@ -1,2 +1,4 @@
 #Ignora enviroments
 .env
+#Ignora arquivos de testes
+tests/
