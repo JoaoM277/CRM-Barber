@@ -9,13 +9,9 @@ const messageCreateSchema = z.object({
   trigger: z.enum(["AGENDAMENTO", "CANCELAMENTO", "LEMBRETE"], {
     errorMap: () => ({ message: "Gatilho de evento Invalido" }),
   }),
-  appointmentData: z
-    .object({
-      date: z.string().optional(),
-      time: z.string().optional(),
-      barber: z.string().optional(),
-    })
-    .optional(),
+  date: z.string().optional(),
+  time: z.string().optional(),
+  barber: z.string().optional(),
 });
 
 const makeMessageDTO = (data) => {

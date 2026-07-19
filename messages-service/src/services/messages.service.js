@@ -15,7 +15,7 @@ const numList = require("../dictionary/clientes.list");
 //};
 
 const messageService = async (mensageData) => {
-  const { phone, name, trigger, appointmentData } = mensageData;
+  const { phone, name, trigger, date, time, barber } = mensageData;
 
   //Logica de busca de info do cliente
   const templateSelect = mensageList[trigger];
@@ -40,7 +40,7 @@ const messageService = async (mensageData) => {
   //Logica de seleção de mensagem
 
   //const messageRespost = mensageList.find((item) => item.event === event);
-  const respost = templateSelect(name, appointmentData);
+  const respost = templateSelect(name, { date, time, barber });
   const response = await providerMenssage(phone, respost);
   if (!response.sucess) {
     return { status: "failed", error: response.errorMensage };
