@@ -15,7 +15,7 @@ class ClientSeeder extends Seeder
         $clients = [
             [
                 'name' => 'João Silva',
-                'phone' => '71991111111',
+                'phone' => '71991111861',
                 'email' => 'joao.silva@example.com',
                 'birth_date' => '1995-03-15',
                 'observation' => 'Cliente desde 2023.'
