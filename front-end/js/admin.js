@@ -300,3 +300,56 @@ async function renderDashboard() {
         elAno.innerText = "R$ 0,00";
     }
 }
+// --------------------------------------------------------------------------
+// 8. MÓDULO: AVISO GERAL (POP-UP DOS CLIENTES)
+// --------------------------------------------------------------------------
+async function renderAviso() {
+    try {
+        // Busca a configuração atual do aviso no banco de dados
+        const response = await fetch(`${API_BASE_URL}/avisos/1`); // Presumindo ID 1 para configuração global
+        
+        if (response.ok) {
+            const aviso = await response.json();
+            
+            // Preenche os campos com os dados do Sequelize
+            document.getElementById("aviso-status").value = aviso.ativo ? "ativo" : "inativo";
+            document.getElementById("aviso-titulo").value = aviso.titulo || "";
+            document.getElementById("aviso-texto").value = aviso.mensagem || "";
+        }
+    } catch (error) {
+        console.error("Nenhum aviso configurado ou erro de conexão:", error);
+    }
+}
+
+// Captura o envio do formulário de avisos
+const formAviso = document.getElementById("form-aviso");
+if (formAviso) {
+    formAviso.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // Monta o payload exato que o seu back-end Node.js estará esperando
+        const payload = {
+            ativo: document.getElementById("aviso-status").value === "ativo",
+            titulo: document.getElementById("aviso-titulo").value,
+            mensagem: document.getElementById("aviso-texto").value
+        };
+
+        try {
+            // Dispara um PUT para atualizar o aviso global (ID 1)
+            const response = await fetch(`${API_BASE_URL}/avisos/1`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                alert("Aviso atualizado com sucesso! Os clientes verão isso no app.");
+            } else {
+                alert("Erro ao salvar o aviso no banco de dados.");
+            }
+        } catch (error) {
+            console.error("Erro no PUT do aviso:", error);
+            alert("Erro de conexão com o servidor.");
+        }
+    });
+}
