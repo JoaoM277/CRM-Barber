@@ -1,2 +1,15 @@
-GET http://localhost:3000/health
+POST http://localhost:3000/message
 Content-Type: application/json
+
+{
+    "phone": "5599984825723",
+    "name": "Teste",
+    "trigger": "CANCELAMENTO",
+    "date": "22/01",
+    "time": "14:00",
+    "barber": "Frank"
+}
+
+###
+
+GET http://localhost:3000/logs
