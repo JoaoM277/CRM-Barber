@@ -25,24 +25,49 @@ let dbHorariosDisponiveis = [];
 // ==========================================================================
 async function carregarDadosIniciais() {
     try {
-        // Dispara todas as requisições em paralelo para carregar mais rápido
+        // 1. Dispara todas as requisições
         const [resServicos, resBarbeiros, resHorarios] = await Promise.all([
-            fetch('http://localhost:8000/api/servicos'), // Substitua pela sua rota real de serviços
-            fetch('http://localhost:8000/api/profissionais'), // Substitua pela sua rota real de barbeiros
-            fetch('http://localhost:8000/api/agendamentos')   // Substitua pela rota base de horários
+            fetch('http://localhost:8000/api/servicos'), 
+            fetch('http://localhost:8000/api/profissionais'), 
+            fetch('http://localhost:8000/api/agendamentos')  
         ]);
 
-        // Converte as respostas para JSON e salva nas variáveis globais
-        dbServicos = await resServicos.json();
-        dbBarbeiros = await resBarbeiros.json();
-        dbHorariosDisponiveis = await resHorarios.json();
+        // 2. Converte para JSON
+        const dataServicos = await resServicos.json();
+        const dataBarbeiros = await resBarbeiros.json();
+        const dataHorarios = await resHorarios.json();
+
+        // 3. Extrai os dados (O Laravel costuma colocar tudo dentro de um array chamado "data")
+        const rawServicos = dataServicos.data ? dataServicos.data : dataServicos;
+        const rawBarbeiros = dataBarbeiros.data ? dataBarbeiros.data : dataBarbeiros;
+        const rawHorarios = dataHorarios.data ? dataHorarios.data : dataHorarios;
+
+        console.log("🔍 Veja no F12 o que está vindo de Serviços:", rawServicos);
+
+        // 4. "Traduz" as colunas do banco para o que o frontend espera
+        // Mude 'item.name' e 'item.price' abaixo para o nome exato das colunas no seu banco!
+        dbServicos = rawServicos.map(item => ({
+            id: item.id,
+            nome: item.name || item.nome || item.titulo || "Sem Nome", 
+            preco: parseFloat(item.price || item.preco || item.valor || 0).toFixed(2), 
+            duracao: item.duration || item.duracao || item.tempo || 30
+        }));
+
+        dbBarbeiros = rawBarbeiros.map(item => ({
+            id: item.id,
+            nome: item.name || item.nome || "Profissional",
+            avatar: item.avatar || item.foto || "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&q=80", 
+            cargo: item.role || item.cargo || "Barber"
+        }));
+
+        // ATENÇÃO: Verifique como a sua rota de agendamentos/horários devolve as horas disponíveis
+        dbHorariosDisponiveis = Array.isArray(rawHorarios) ? rawHorarios : ["08:00", "09:00", "10:00"];
 
     } catch (error) {
         console.error("Erro ao carregar dados do banco:", error);
-        alert("Houve um erro ao carregar os dados. Por favor, atualize a página.");
+        alert("Houve um erro ao conectar com o servidor.");
     }
 }
-
 // ==========================================================================
 // 4. RENDERIZADORES DINÂMICOS
 // ==========================================================================
