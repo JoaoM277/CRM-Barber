@@ -21,7 +21,8 @@ class DatabaseSeeder extends Seeder
             OperationTimeSeeder::class,
             ServiceSeeder::class,
             WorkerSeeder::class,
-            ScheduleSeeder::class
+            ScheduleSeeder::class,
+            BarbershopSeeder::class
         ]);
     }
 }

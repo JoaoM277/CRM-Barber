@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\LogController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\WorkerController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\OperationTimeController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\BarbershopController;
 use Illuminate\Support\Facades\Route;
 
 // Client
@@ -42,4 +44,14 @@ Route::get('/schedules', [ScheduleController::class, 'index'])->name('schedules.
 Route::post('/schedules', [ScheduleController::class, 'store'])->name('schedules.store');
 Route::get('/schedules/{schedule}', [ScheduleController::class, 'show'])->name('schedules.show');
 Route::put('/schedules/{schedule}', [ScheduleController::class, 'update'])->name('schedules.update');
-Route::delete('/schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.delete');  
+Route::delete('/schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.delete');
+
+// Barbershop
+Route::get('/barbershops', [BarbershopController::class, 'index'])->name('barbershops.index');
+Route::post('/barbershops', [BarbershopController::class, 'store'])->name('barbershops.store');
+Route::get('/barbershops/{barbershop}', [BarbershopController::class, 'show'])->name('barbershops.show');
+Route::put('/barbershops/{barbershop}', [BarbershopController::class, 'update'])->name('barbershops.update');
+Route::delete('/barbershops/{barbershop}', [BarbershopController::class, 'destroy'])->name('barbershops.delete');  
+
+// Log
+Route::apiResource('logs', LogController::class);
