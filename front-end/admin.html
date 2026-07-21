@@ -53,7 +53,6 @@
                 </div>
             </header>
 
-            <!-- CONTAINER ONDE AS TELAS APARECEM -->
             <section class="content-body" id="admin-content">
                 
                 <!-- ====================================================================
@@ -90,6 +89,40 @@
                                 <p id="faturamento-ano">Carregando...</p>
                             </div>
                         </div>
+                    </div>
+                    <div class="panel-header" style="margin-top: 40px;">
+                        <div>
+                            <h2>Aviso no Aplicativo (Pop-up)</h2>
+                            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Defina uma mensagem importante para aparecer quando os clientres abrirem o app.</p>
+                        </div>
+                        
+                        <div class="message-panel-container">
+                            <form id="form-aviso" class="admin-form">
+                                <div class="input-row">
+                                    <div class="input-group">
+                                        <label>Status do Pop-up</label>
+                                        <select id="aviso-status" class="admin-input required">
+                                            <option value="inativo">🔴 Desativado (Oculto)</option>
+                                            <option value="ativo">🟢 Ativado (Visível para clientes)</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Título da Mensagem</label>
+                                        <input type="text" id="aviso-titulo" placeholder="Ex: Horário de Fim de Ano" required>
+                                    </div>
+                                </div>
+
+                                <div class="input-group" style="margin-top: 16px;">
+                                    <label>Conteúdo da Mensagem</label>
+                                    <textarea id="aviso-texto" class="admin-input" rows="3" placeholder="Digite o recado que aparecerá para os clientes..." required></textarea>
+                                </div>
+
+                                <div style="text-align: right; margin-top: 20px;">
+                                    <button type="submit" class="btn-primary"> Atualizar Aviso</button>
+                                </div>
+                            </form>
+                        </div>
+
                     </div>
                 </div>
                 <!-- ====================================================================
