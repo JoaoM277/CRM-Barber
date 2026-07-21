@@ -27,9 +27,9 @@ async function carregarDadosIniciais() {
     try {
         // Dispara todas as requisições em paralelo para carregar mais rápido
         const [resServicos, resBarbeiros, resHorarios] = await Promise.all([
-            fetch('/api/servicos'), // Substitua pela sua rota real de serviços
-            fetch('/api/barbeiros'), // Substitua pela sua rota real de barbeiros
-            fetch('/api/horarios')   // Substitua pela rota base de horários
+            fetch('http://localhost:8000/api/servicos'), // Substitua pela sua rota real de serviços
+            fetch('http://localhost:8000/api/profissionais'), // Substitua pela sua rota real de barbeiros
+            fetch('http://localhost:8000/api/agendamentos')   // Substitua pela rota base de horários
         ]);
 
         // Converte as respostas para JSON e salva nas variáveis globais

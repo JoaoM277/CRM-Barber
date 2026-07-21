@@ -18,7 +18,7 @@ menuItems.forEach(item => {
 // --------------------------------------------------------------------------
 // 2. CONFIGURAÇÕES BASE
 // --------------------------------------------------------------------------
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'http://localhost:8000/api';
 
 function formatarTelefoneAdmin(telefone) {
     if (!telefone) return "";
