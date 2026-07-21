@@ -1,5 +1,5 @@
 // ==========================================================================
-// 1. ESTADO GLOBAL DA APLICAÇÃO (Pronto para o Sequelize)
+// 1. ESTADO GLOBAL DA APLICAÇÃO
 // ==========================================================================
 const agendamento = {
     servicos: [],      
@@ -10,57 +10,48 @@ const agendamento = {
 };
 
 let currentStep = 1;
-let currentDateObj = new Date(); // 14 de Julho de 2026
+let currentDateObj = new Date(); 
 
 // ==========================================================================
-// 2. SIMULAÇÃO DE DADOS DO BANCO 
+// 2. VARIÁVEIS QUE RECEBERÃO OS DADOS DO BANCO
 // ==========================================================================
-const dbServicos = [
-    { id: 1, nome: "Corte", preco: 50, duracao: 30 },
-    { id: 2, nome: "Barba", preco: 35, duracao: 20 },
-    { id: 3, nome: "Alisante", preco: 60, duracao: 40 },
-    { id: 4, nome: "Hidratação", preco: 30, duracao: 20 },
-    { id: 5, nome: "Pezinho", preco: 15, duracao: 10 },
-    { id: 6, nome: "Tinta", preco: 45, duracao: 30 },
-    { id: 7, nome: "Botox", preco: 70, duracao: 40 },
-    { id: 8, nome: "Cera Nasal", preco: 20, duracao: 15 },
-    { id: 9, nome: "Selagem", preco: 80, duracao: 50 },
-    { id: 10, nome: "Penteado", preco: 25, duracao: 15 }
-];
+// Trocamos 'const' por 'let' e iniciamos vazios. Eles serão preenchidos pela API.
+let dbServicos = [];
+let dbBarbeiros = [];
+let dbHorariosDisponiveis = [];
 
-const dbBarbeiros = [
-    { 
-        id: 101, 
-        nome: "Rafael Mendes", 
-        avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop&q=80", 
-    },
-    { 
-        id: 102, 
-        nome: "Diego Costa", 
-        avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80" 
-    },
-    { 
-        id: 103, 
-        nome: "Lucas Ferreira",  
-        avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80"
+// ==========================================================================
+// 3. FUNÇÃO DE INTEGRAÇÃO COM A API (Substituindo os Mocks)
+// ==========================================================================
+async function carregarDadosIniciais() {
+    try {
+        // Dispara todas as requisições em paralelo para carregar mais rápido
+        const [resServicos, resBarbeiros, resHorarios] = await Promise.all([
+            fetch('/api/servicos'), // Substitua pela sua rota real de serviços
+            fetch('/api/barbeiros'), // Substitua pela sua rota real de barbeiros
+            fetch('/api/horarios')   // Substitua pela rota base de horários
+        ]);
+
+        // Converte as respostas para JSON e salva nas variáveis globais
+        dbServicos = await resServicos.json();
+        dbBarbeiros = await resBarbeiros.json();
+        dbHorariosDisponiveis = await resHorarios.json();
+
+    } catch (error) {
+        console.error("Erro ao carregar dados do banco:", error);
+        alert("Houve um erro ao carregar os dados. Por favor, atualize a página.");
     }
-];
-
-const dbHorariosDisponiveis = ["08:00","09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
+}
 
 // ==========================================================================
-// 3. RENDERIZADORES DINÂMICOS
+// 4. RENDERIZADORES DINÂMICOS
 // ==========================================================================
-
 function renderServicos() {
     const container = document.getElementById("services-container");
     container.innerHTML = "";
-    
-    // Garante que o container tenha a classe correta de grid/lista compacta
     container.className = "mobile-service-list";
 
     dbServicos.forEach(servico => {
-        // Criando a estrutura atualizada em "linhas/botões" ao invés de cards grandes
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = `service-row ${agendamento.servicos.includes(servico.id) ? 'selected' : ''}`;
@@ -95,7 +86,6 @@ function renderBarbeiros() {
     dbBarbeiros.forEach(barbeiro => {
         const card = document.createElement("article");
         
-        // Verifica se este barbeiro é o selecionado no estado global
         if (agendamento.barbeiroId === barbeiro.id) {
             card.className = "barber-card selected";
         } else {
@@ -115,7 +105,6 @@ function renderBarbeiros() {
                     <div class="barber-tags-box" style="display: flex; gap: 6px; margin-top: 6px;">${tagsHTML}</div>
                 </div>
             </div>
-           
         `;
 
         card.addEventListener("click", () => {
@@ -199,6 +188,10 @@ function renderCalendario(date) {
             if (loopDate < today) return; 
             agendamento.data = loopDate;
             agendamento.hora = null; 
+            
+            // DICA: Em um sistema real, você chamaria um fetch('/api/horarios-disponiveis') 
+            // enviando `loopDate` e `agendamento.barbeiroId` aqui, e então atualizaria `dbHorariosDisponiveis`.
+            
             renderCalendario(date);
             validateStep();
         });
@@ -247,7 +240,6 @@ function renderResumo() {
     const servicosEscolhidos = dbServicos.filter(s => agendamento.servicos.includes(s.id));
     
     const listContainer = document.getElementById("summary-services-list");
-    // Removida a renderização de s.icon para ficar alinhado ao layout limpo
     listContainer.innerHTML = servicosEscolhidos.map(s => `<li><span>${s.nome}</span><span>R$ ${s.preco}</span></li>`).join("");
 
     const precoTotal = servicosEscolhidos.reduce((acc, current) => acc + current.preco, 0);
@@ -315,7 +307,45 @@ function validateStep() {
 }
 
 // ==========================================================================
-// ESCUTADORES DO FORMULÁRIO FINAL E BOTOES
+// 7. AVISO E MODAL DA BARBEARIA
+// ==========================================================================
+async function verificarAvisoBarbearia() {
+    try {
+        const response = await fetch('/api/avisos/ativo'); 
+        const data = await response.json();
+
+        if (data.exibir) {
+            const avisoId = data.dados.id;
+            const avisoJaVisto = localStorage.getItem(`aviso_barbearia_${avisoId}`);
+
+            if (!avisoJaVisto) {
+                mostrarModalNaTela(data.dados.titulo, data.dados.mensagem, avisoId);
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao buscar avisos da barbearia:', error);
+    }
+}
+
+function mostrarModalNaTela(titulo, mensagem, id) {
+    const overlay = document.getElementById('modal-overlay');
+    const tituloElement = document.getElementById('modal-titulo');
+    const mensagemElement = document.getElementById('modal-mensagem');
+    const btnFechar = document.getElementById('btn-fechar-modal');
+
+    tituloElement.textContent = titulo;
+    mensagemElement.textContent = mensagem;
+
+    overlay.classList.remove('modal-escondido');
+
+    btnFechar.addEventListener('click', () => {
+        overlay.classList.add('modal-escondido');
+        localStorage.setItem(`aviso_barbearia_${id}`, 'true');
+    });
+}
+
+// ==========================================================================
+// 8. ESCUTADORES DO FORMULÁRIO FINAL E BOTOES
 // ==========================================================================
 document.getElementById("client-form").addEventListener("input", (e) => {
     if (e.target.id === "client-phone") {
@@ -331,7 +361,7 @@ document.getElementById("client-form").addEventListener("input", (e) => {
     validateStep();
 });
 
-document.getElementById("btn-next").addEventListener("click", () => {
+document.getElementById("btn-next").addEventListener("click", async () => {
     if (currentStep < 4) {
         currentStep++;
         updateFlowUI();
@@ -340,8 +370,6 @@ document.getElementById("btn-next").addEventListener("click", () => {
         agendamento.cliente.telefone = document.getElementById("client-phone").value;
         agendamento.cliente.notas = document.getElementById("client-notes").value;
 
-        // O fato do 'servicosIds' ser um array de IDs facilita muito o uso de associações 
-        // belongsToMany no Sequelize (ex: um insert na tabela de junção AgendamentoServicos).
         const payloadParaOExpress = {
             barbeiroId: agendamento.barbeiroId,
             servicosIds: agendamento.servicos, 
@@ -352,9 +380,9 @@ document.getElementById("btn-next").addEventListener("click", () => {
             observacoes: agendamento.cliente.notas 
         };
 
+        // Aqui você faria um fetch('sua-url/agendamentos', { method: 'POST', body: JSON.stringify(payloadParaOExpress) })
         console.log("🚀 Payload estruturado pronto para a API:", payloadParaOExpress);
-
-        alert(`Perfeito, ${payloadParaOExpress.clienteNome}!\nAgendamento simulado. Abra o Console (F12) para ver o JSON estruturado para o Sequelize.`);
+        alert(`Perfeito, ${payloadParaOExpress.clienteNome}!\nAgendamento salvo. Consulte o console para ver o payload.`);
     }
 });
 
@@ -365,58 +393,20 @@ document.getElementById("btn-prev").addEventListener("click", () => {
     }
 });
 
-window.addEventListener("DOMContentLoaded", () => {
+// ==========================================================================
+// 9. INICIALIZAÇÃO DA PÁGINA (Unificado e Assíncrono)
+// ==========================================================================
+window.addEventListener("DOMContentLoaded", async () => {
+    // 1. Primeiro carregamos todos os dados do banco
+    await carregarDadosIniciais();
+    
+    // 2. Depois renderizamos a tela com os dados preenchidos
     renderBarbeiros();
     renderServicos();
     renderCalendario(currentDateObj);
     renderHorarios();
     updateFlowUI();
+
+    // 3. Verificamos se há algum aviso ativo
+    verificarAvisoBarbearia();
 });
-document.addEventListener('DOMContentLoaded', () => {
-  verificarAvisoBarbearia();
-});
-
-async function verificarAvisoBarbearia() {
-  try {
-    // Substitua pela rota real da sua API onde o aviso está sendo retornado
-    const response = await fetch('/api/avisos/ativo'); 
-    const data = await response.json();
-
-    // Se a API confirmar que tem aviso para exibir
-    if (data.exibir) {
-      const avisoId = data.dados.id;
-      
-      // Verifica no navegador do cliente se ele já viu e fechou esse aviso
-      const avisoJaVisto = localStorage.getItem(`aviso_barbearia_${avisoId}`);
-
-      if (!avisoJaVisto) {
-        mostrarModalNaTela(data.dados.titulo, data.dados.mensagem, avisoId);
-      }
-    }
-  } catch (error) {
-    console.error('Erro ao buscar avisos da barbearia:', error);
-  }
-}
-
-function mostrarModalNaTela(titulo, mensagem, id) {
-  const overlay = document.getElementById('modal-overlay');
-  const tituloElement = document.getElementById('modal-titulo');
-  const mensagemElement = document.getElementById('modal-mensagem');
-  const btnFechar = document.getElementById('btn-fechar-modal');
-
-  // Preenche o HTML com os dados que vieram do banco de dados
-  tituloElement.textContent = titulo;
-  mensagemElement.textContent = mensagem;
-
-  // Remove a classe que esconde o modal
-  overlay.classList.remove('modal-escondido');
-
-  // Adiciona a ação de clicar no botão "Entendi"
-  btnFechar.addEventListener('click', () => {
-    // Esconde o modal de novo
-    overlay.classList.add('modal-escondido');
-    
-    // Salva no navegador que o cliente já leu esse aviso específico
-    localStorage.setItem(`aviso_barbearia_${id}`, 'true');
-  });
-}
