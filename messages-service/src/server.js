@@ -10,7 +10,7 @@ app.use(express.json());
 
 app.use("/health", healthRoutes);
 app.use("/message", messageRoutes);
-(app.use("/logs"), logRoutes);
+app.use("/logs", logRoutes);
 
 app.listen(PORT, () => {
   console.log("Servidor rodando na porta: " + PORT);

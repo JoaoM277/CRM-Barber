@@ -9,3 +9,7 @@ Content-Type: application/json
     "time": "14:00",
     "barber": "Frank"
 }
+
+###
+
+GET http://localhost:3000/logs

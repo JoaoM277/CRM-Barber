@@ -2,7 +2,7 @@ const { getLogsService } = require("../services/messages.log.services");
 
 const getMessageLogController = async (req, res) => {
   try {
-    const queryParams = req.body;
+    const queryParams = req.query;
 
     const logsData = await getLogsService(queryParams);
 
