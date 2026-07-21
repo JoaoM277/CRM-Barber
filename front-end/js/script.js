@@ -13,7 +13,7 @@ let currentStep = 1;
 let currentDateObj = new Date(); // 14 de Julho de 2026
 
 // ==========================================================================
-// 2. SIMULAÇÃO DE DADOS DO BANCO (Emojis removidos conforme layout)
+// 2. SIMULAÇÃO DE DADOS DO BANCO 
 // ==========================================================================
 const dbServicos = [
     { id: 1, nome: "Corte", preco: 50, duracao: 30 },
