@@ -372,3 +372,51 @@ window.addEventListener("DOMContentLoaded", () => {
     renderHorarios();
     updateFlowUI();
 });
+document.addEventListener('DOMContentLoaded', () => {
+  verificarAvisoBarbearia();
+});
+
+async function verificarAvisoBarbearia() {
+  try {
+    // Substitua pela rota real da sua API onde o aviso está sendo retornado
+    const response = await fetch('/api/avisos/ativo'); 
+    const data = await response.json();
+
+    // Se a API confirmar que tem aviso para exibir
+    if (data.exibir) {
+      const avisoId = data.dados.id;
+      
+      // Verifica no navegador do cliente se ele já viu e fechou esse aviso
+      const avisoJaVisto = localStorage.getItem(`aviso_barbearia_${avisoId}`);
+
+      if (!avisoJaVisto) {
+        mostrarModalNaTela(data.dados.titulo, data.dados.mensagem, avisoId);
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao buscar avisos da barbearia:', error);
+  }
+}
+
+function mostrarModalNaTela(titulo, mensagem, id) {
+  const overlay = document.getElementById('modal-overlay');
+  const tituloElement = document.getElementById('modal-titulo');
+  const mensagemElement = document.getElementById('modal-mensagem');
+  const btnFechar = document.getElementById('btn-fechar-modal');
+
+  // Preenche o HTML com os dados que vieram do banco de dados
+  tituloElement.textContent = titulo;
+  mensagemElement.textContent = mensagem;
+
+  // Remove a classe que esconde o modal
+  overlay.classList.remove('modal-escondido');
+
+  // Adiciona a ação de clicar no botão "Entendi"
+  btnFechar.addEventListener('click', () => {
+    // Esconde o modal de novo
+    overlay.classList.add('modal-escondido');
+    
+    // Salva no navegador que o cliente já leu esse aviso específico
+    localStorage.setItem(`aviso_barbearia_${id}`, 'true');
+  });
+}
