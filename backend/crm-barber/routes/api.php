@@ -10,48 +10,48 @@ use App\Http\Controllers\BarbershopController;
 use Illuminate\Support\Facades\Route;
 
 // Client
-Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
-Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
-Route::get('/clients/{client}', [ClientController::class, 'show'])->name('clients.show');
-Route::put('/clients/{client}', [ClientController::class, 'update'])->name('clients.update');
-Route::delete('/clients/{client}', [ClientController::class, 'destroy'])->name('clients.delete');    
+Route::get('/clientes', [ClientController::class, 'index'])->name('clientes.index');
+Route::post('/clientes', [ClientController::class, 'store'])->name('clientes.store');
+Route::get('/clientes/{cliente}', [ClientController::class, 'show'])->name('clientes.show');
+Route::put('/clientes/{cliente}', [ClientController::class, 'update'])->name('clientes.update');
+Route::delete('/clientes/{cliente}', [ClientController::class, 'destroy'])->name('clientes.delete');    
 
 
 // Worker
-Route::get('/workers', [WorkerController::class, 'index'])->name('workers.index');
-Route::post('/workers', [WorkerController::class, 'store'])->name('workers.store');
-Route::get('/workers/{worker}', [WorkerController::class, 'show'])->name('workers.show');
-Route::put('/workers/{worker}', [WorkerController::class, 'update'])->name('workers.update');
-Route::delete('/workers/{worker}', [WorkerController::class, 'destroy'])->name('workers.delete');  
+Route::get('/profissionais', [WorkerController::class, 'index'])->name('profissionais.index');
+Route::post('/profissionais', [WorkerController::class, 'store'])->name('profissionais.store');
+Route::get('/profissionais/{profissional}', [WorkerController::class, 'show'])->name('profissionais.show');
+Route::put('/profissionais/{profissional}', [WorkerController::class, 'update'])->name('profissionais.update');
+Route::delete('/profissionais/{profissional}', [WorkerController::class, 'destroy'])->name('profissionais.delete');  
 
 
 // Service
-Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
-Route::post('/services', [ServiceController::class, 'store'])->name('services.store');
-Route::get('/services/{service}', [ServiceController::class, 'show'])->name('services.show');
-Route::put('/services/{service}', [ServiceController::class, 'update'])->name('services.update');
-Route::delete('/services/{service}', [ServiceController::class, 'destroy'])->name('services.delete');  
+Route::get('/servicos', [ServiceController::class, 'index'])->name('servicos.index');
+Route::post('/servicos', [ServiceController::class, 'store'])->name('servicos.store');
+Route::get('/servicos/{servico}', [ServiceController::class, 'show'])->name('servicos.show');
+Route::put('/servicos/{servico}', [ServiceController::class, 'update'])->name('servicos.update');
+Route::delete('/servicos/{servico}', [ServiceController::class, 'destroy'])->name('servicos.delete');  
 
 // OperationTime
-Route::get('/operation_times', [OperationTimeController::class, 'index'])->name('operation_times.index');
-Route::post('/operation_times', [OperationTimeController::class, 'store'])->name('operation_times.store');
-Route::get('/operation_times/{operation_time}', [OperationTimeController::class, 'show'])->name('operation_times.show');
-Route::put('/operation_times/{operation_time}', [OperationTimeController::class, 'update'])->name('operation_times.update');
-Route::delete('/operation_times/{operation_time}', [OperationTimeController::class, 'destroy'])->name('operation_times.delete');  
+Route::get('/tempo_de_operacao', [OperationTimeController::class, 'index'])->name('tempo_de_operacao.index');
+Route::post('/tempo_de_operacao', [OperationTimeController::class, 'store'])->name('tempo_de_operacao.store');
+Route::get('/tempo_de_operacao/{operacao}', [OperationTimeController::class, 'show'])->name('tempo_de_operacao.show');
+Route::put('/tempo_de_operacao/{operacao}', [OperationTimeController::class, 'update'])->name('tempo_de_operacao.update');
+Route::delete('/tempo_de_operacao/{operacao}', [OperationTimeController::class, 'destroy'])->name('tempo_de_operacao.delete');  
 
 // Schedule
-Route::get('/schedules', [ScheduleController::class, 'index'])->name('schedules.index');
-Route::post('/schedules', [ScheduleController::class, 'store'])->name('schedules.store');
-Route::get('/schedules/{schedule}', [ScheduleController::class, 'show'])->name('schedules.show');
-Route::put('/schedules/{schedule}', [ScheduleController::class, 'update'])->name('schedules.update');
-Route::delete('/schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.delete');
+Route::get('/agendamentos', [ScheduleController::class, 'index'])->name('agendamentos.index');
+Route::post('/agendamentos', [ScheduleController::class, 'store'])->name('agendamentos.store');
+Route::get('/agendamentos/{agendamento}', [ScheduleController::class, 'show'])->name('agendamentos.show');
+Route::put('/agendamentos/{agendamento}', [ScheduleController::class, 'update'])->name('agendamentos.update');
+Route::delete('/agendamentos/{agendamento}', [ScheduleController::class, 'destroy'])->name('agendamentos.delete');
 
 // Barbershop
-Route::get('/barbershops', [BarbershopController::class, 'index'])->name('barbershops.index');
-Route::post('/barbershops', [BarbershopController::class, 'store'])->name('barbershops.store');
-Route::get('/barbershops/{barbershop}', [BarbershopController::class, 'show'])->name('barbershops.show');
-Route::put('/barbershops/{barbershop}', [BarbershopController::class, 'update'])->name('barbershops.update');
-Route::delete('/barbershops/{barbershop}', [BarbershopController::class, 'destroy'])->name('barbershops.delete');  
+Route::get('/barbearias', [BarbershopController::class, 'index'])->name('barbearias.index');
+Route::post('/barbearias', [BarbershopController::class, 'store'])->name('barbearias.store');
+Route::get('/barbearias/{barbearia}', [BarbershopController::class, 'show'])->name('barbearias.show');
+Route::put('/barbearias/{barbearia}', [BarbershopController::class, 'update'])->name('barbearias.update');
+Route::delete('/barbearias/{barbearia}', [BarbershopController::class, 'destroy'])->name('barbearias.delete');  
 
 // Log
 Route::apiResource('logs', LogController::class);
