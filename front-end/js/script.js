@@ -44,13 +44,12 @@ async function carregarDadosIniciais() {
 
         console.log("🔍 Veja no F12 o que está vindo de Serviços:", rawServicos);
 
-        // 4. "Traduz" as colunas do banco para o que o frontend espera
-        // Mude 'item.name' e 'item.price' abaixo para o nome exato das colunas no seu banco!
+       
         dbServicos = rawServicos.map(item => ({
             id: item.id,
             nome: item.name || item.nome || item.titulo || "Sem Nome", 
-            preco: parseFloat(item.price || item.preco || item.valor || 0).toFixed(2), 
-            duracao: item.duration || item.duracao || item.tempo || 30
+            preco: Number(item.price || item.preco || item.valor || 0), // 
+            duracao: Number(item.duration || item.duracao || item.tempo || 30) // 
         }));
 
         dbBarbeiros = rawBarbeiros.map(item => ({
@@ -61,7 +60,17 @@ async function carregarDadosIniciais() {
         }));
 
         // ATENÇÃO: Verifique como a sua rota de agendamentos/horários devolve as horas disponíveis
-        dbHorariosDisponiveis = Array.isArray(rawHorarios) ? rawHorarios : ["08:00", "09:00", "10:00"];
+        // Se o Laravel envia uma lista de objetos, extraímos apenas a string da hora
+if (Array.isArray(rawHorarios)) {
+    dbHorariosDisponiveis = rawHorarios.map(item => {
+        // Se for um objeto com a coluna 'hora', 'horario' ou 'time', ele pega o valor.
+        // Se já for uma string (texto simples), ele apenas repassa.
+        return item.hora || item.horario || item.time || item; 
+    });
+} else {
+    // Fallback caso a API falhe
+    dbHorariosDisponiveis = ["08:00", "09:00", "10:00", "14:00", "15:00"];
+}
 
     } catch (error) {
         console.error("Erro ao carregar dados do banco:", error);
@@ -81,13 +90,17 @@ function renderServicos() {
         btn.type = "button";
         btn.className = `service-row ${agendamento.servicos.includes(servico.id) ? 'selected' : ''}`;
         
+        // Formata o número (ex: 50 vira "50,00")
+        const precoFormatado = servico.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        
         btn.innerHTML = `
             <div class="service-details">
                 <span class="service-title">${servico.nome}</span>
                 <span class="service-time">${servico.duracao}min</span>
             </div>
-            <span class="service-price">R$ ${servico.preco}</span>
+            <span class="service-price">R$ ${precoFormatado}</span> 
         `;
+        // ... (o resto da função continua igual)
         
         btn.addEventListener("click", () => {
             const index = agendamento.servicos.indexOf(servico.id);
@@ -265,12 +278,21 @@ function renderResumo() {
     const servicosEscolhidos = dbServicos.filter(s => agendamento.servicos.includes(s.id));
     
     const listContainer = document.getElementById("summary-services-list");
-    listContainer.innerHTML = servicosEscolhidos.map(s => `<li><span>${s.nome}</span><span>R$ ${s.preco}</span></li>`).join("");
+    
+    // 1. Formata o preço de cada item individual na lista
+    listContainer.innerHTML = servicosEscolhidos.map(s => {
+        const precoItem = s.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        return `<li><span>${s.nome}</span><span>R$ ${precoItem}</span></li>`;
+    }).join("");
 
+    // 2. Agora a matemática funciona porque são números reais!
     const precoTotal = servicosEscolhidos.reduce((acc, current) => acc + current.preco, 0);
     const tempoTotal = servicosEscolhidos.reduce((acc, current) => acc + current.duracao, 0);
 
-    document.getElementById("summary-total-price").textContent = `R$ ${precoTotal}`;
+    // 3. Formata o total final
+    const totalFormatado = precoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+    document.getElementById("summary-total-price").textContent = `R$ ${totalFormatado}`;
     document.getElementById("summary-total-duration").textContent = `${tempoTotal} min`;
 
     const barbeiro = dbBarbeiros.find(b => b.id === agendamento.barbeiroId);
