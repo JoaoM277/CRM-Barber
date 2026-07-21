@@ -551,6 +551,63 @@ body {
     font-size: 13px;
     color: var(--text-muted);
 }
+/* Fundo escuro que cobre a tela toda */
+#modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7); /* Fundo preto com 70% de transparência */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* Garante que fique por cima de tudo */
+}
+
+/* Classe para esconder o modal por padrão */
+.modal-escondido {
+  display: none !important;
+}
+
+/* Caixa branca do aviso */
+.modal-conteudo {
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px; /* Não deixa ficar gigante no PC */
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.modal-conteudo h2 {
+  margin-top: 0;
+  color: #333333;
+}
+
+.modal-conteudo p {
+  color: #666666;
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+/* Botão de fechar */
+#btn-fechar-modal {
+  background-color: #d32f2f; /* Vermelho padrão para fechar/atenção */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+#btn-fechar-modal:hover {
+  background-color: #b71c1c;
+}
 
 @media (max-width: 768px) {
     .confirmation-container {
