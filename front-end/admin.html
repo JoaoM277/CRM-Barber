@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo | La Palmas</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="admin-wrapper">
+        <!-- BARRA LATERAL (SIDEBAR) -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-logo">LP</div>
+                <div class="brand-text">
+                    <h2>La Palmas</h2>
+                    <p>Painel Master</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <button class="menu-item active" data-tab="dashboard">
+                    <span class="menu-icon">📊</span> Visão Geral
+                </button>
+                <button class="menu-item" data-tab="agenda">
+                    <span class="menu-icon">📅</span> Agenda de Clientes
+                </button>
+                <button class="menu-item" data-tab="servicos">
+                    <span class="menu-icon">✂️</span> Serviços
+                </button>
+                <button class="menu-item" data-tab="barbeiros">
+                    <span class="menu-icon">💈</span> Profissionais
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn-logout">🚪 Sair do Painel</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <!-- HEADER DO PAINEL -->
+            <header class="admin-header">
+                <div class="header-title">
+                    <h1 id="page-title">Painel de Gestão</h1>
+                    <p id="page-subtitle">Controle total da sua barbearia</p>
+                </div>
+                <div class="admin-profile">
+                    <span>Olá, <strong>Administrador</strong></span>
+                    <div class="admin-avatar">A</div>
+                </div>
+            </header>
+
+            <section class="content-body" id="admin-content">
+                
+                <!-- ====================================================================
+                     TELA 0: DASHBOARD (FATURAMENTO E VISÃO GERAL)
+                     ==================================================================== -->
+                <div class="tab-panel active" id="panel-dashboard">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Resumo Financeiro</h2>
+                            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Acompanhe o faturamento com base nos agendamentos concluídos.</p>
+                        </div>
+                    </div>
+
+                    <!-- Cartões de Faturamento -->
+                    <div class="dashboard-grid">
+                        <div class="dash-card">
+                            <div class="dash-icon" style="background: rgba(46, 196, 182, 0.15); color: var(--success);">💰</div>
+                            <div class="dash-info">
+                                <h3>Faturamento Hoje</h3>
+                                <p id="faturamento-dia">Carregando...</p>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <div class="dash-icon" style="background: rgba(200, 155, 60, 0.15); color: var(--brand-primary);">📅</div>
+                            <div class="dash-info">
+                                <h3>Faturamento do Mês</h3>
+                                <p id="faturamento-mes">Carregando...</p>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <div class="dash-icon" style="background: rgba(255, 255, 255, 0.05); color: var(--text-main);">📈</div>
+                            <div class="dash-info">
+                                <h3>Faturamento do Ano</h3>
+                                <p id="faturamento-ano">Carregando...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-header" style="margin-top: 40px;">
+                        <div>
+                            <h2>Aviso no Aplicativo (Pop-up)</h2>
+                            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Defina uma mensagem importante para aparecer quando os clientres abrirem o app.</p>
+                        </div>
+                        
+                        <div class="message-panel-container">
+                            <form id="form-aviso" class="admin-form">
+                                <div class="input-row">
+                                    <div class="input-group">
+                                        <label>Status do Pop-up</label>
+                                        <select id="aviso-status" class="admin-input required">
+                                            <option value="inativo">🔴 Desativado (Oculto)</option>
+                                            <option value="ativo">🟢 Ativado (Visível para clientes)</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Título da Mensagem</label>
+                                        <input type="text" id="aviso-titulo" placeholder="Ex: Horário de Fim de Ano" required>
+                                    </div>
+                                </div>
+
+                                <div class="input-group" style="margin-top: 16px;">
+                                    <label>Conteúdo da Mensagem</label>
+                                    <textarea id="aviso-texto" class="admin-input" rows="3" placeholder="Digite o recado que aparecerá para os clientes..." required></textarea>
+                                </div>
+
+                                <div style="text-align: right; margin-top: 20px;">
+                                    <button type="submit" class="btn-primary"> Atualizar Aviso</button>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+                <!-- ====================================================================
+                     TELA 1: AGENDA 
+                     ==================================================================== -->
+                <div class="tab-panel" id="panel-agenda">
+                    <div class="panel-header">
+                        <h2>Visão Geral da Agenda</h2>
+                        <div class="panel-actions">
+                            <input type="date" class="admin-input" id="filter-date">
+                            <button class="btn-primary">Filtrar</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Serviço</th>
+                                    <th>Profissional</th>
+                                    <th>Data e Hora</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agenda-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ====================================================================
+                     TELA 2: SERVIÇOS 
+                     ==================================================================== -->
+                <div class="tab-panel" id="panel-servicos">
+                    <div class="panel-header">
+                        <h2>Gerenciamento de Serviços</h2>
+                        <button class="btn-primary" onclick="abrirModalServico()">+ Novo Serviço</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Ícone</th>
+                                    <th>Nome do Serviço</th>
+                                    <th>Preço (R$)</th>
+                                    <th>Tempo (Min)</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="servicos-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- ====================================================================
+                     TELA 3: BARBEIROS (Simplificada, sem especialidade)
+                     ==================================================================== -->
+                <div class="tab-panel" id="panel-barbeiros">
+                    <div class="panel-header">
+                        <h2>Gerenciamento de Profissionais</h2>
+                        <button class="btn-primary" onclick="abrirModalBarbeiro()">+ Novo Profissional</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Perfil</th>
+                                    <th>Nome do Profissional</th>
+                                    <th>Telefone</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="barbeiros-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+    <!-- MODAL DE SERVIÇOS -->
+    <div class="modal-overlay" id="modal-servico">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-titulo">Novo Serviço</h3>
+                <button class="btn-close" onclick="fecharModalServico()">✖</button>
+            </div>
+            <form id="form-servico" class="admin-form">
+                <input type="hidden" id="servico-id">
+                
+                <div class="input-group">
+                    <label>Ícone (Emoji ou Texto)</label>
+                    <input type="text" id="servico-icon" placeholder="Ex: ✂️" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Nome do Serviço</label>
+                    <input type="text" id="servico-nome" placeholder="Ex: Corte Degradê" required>
+                </div>
+                
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Preço (R$)</label>
+                        <input type="number" id="servico-preco" step="0.01" placeholder="40.00" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Duração (Minutos)</label>
+                        <input type="number" id="servico-duracao" placeholder="30" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="fecharModalServico()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Serviço</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE PROFISSIONAIS -->
+    <div class="modal-overlay" id="modal-barbeiro">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-titulo-barbeiro">Novo Profissional</h3>
+                <button class="btn-close" onclick="fecharModalBarbeiro()">✖</button>
+            </div>
+            
+            <form id="form-barbeiro" class="admin-form">
+                <input type="hidden" id="barbeiro-id">
+                
+                <div class="input-group">
+                    <label>Nome Completo</label>
+                    <input type="text" id="barbeiro-nome" placeholder="Ex: Rafael Mendes" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Telefone (WhatsApp)</label>
+                    <input type="text" id="barbeiro-telefone" placeholder="11988887777" required>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="fecharModalBarbeiro()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Profissional</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script de controle do Painel -->
+    <script src="js/admin.js"></script>
+</body>
+</html>
