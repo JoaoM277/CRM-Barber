@@ -37,21 +37,50 @@ async function carregarDadosIniciais() {
         const dataBarbeiros = await resBarbeiros.json();
         const dataHorarios = await resHorarios.json();
 
-        // 3. Extrai os dados (O Laravel costuma colocar tudo dentro de um array chamado "data")
+        // 3. Extrai os dados
         const rawServicos = dataServicos.data ? dataServicos.data : dataServicos;
         const rawBarbeiros = dataBarbeiros.data ? dataBarbeiros.data : dataBarbeiros;
         const rawHorarios = dataHorarios.data ? dataHorarios.data : dataHorarios;
 
-        console.log("🔍 Veja no F12 o que está vindo de Serviços:", rawServicos);
+        // 🛑 OLHE PARA ESTES LOGS NO F12 PARA VER O NOME EXATO DAS COLUNAS
+        console.log("🔍 DADOS DOS SERVIÇOS:", rawServicos);
+        console.log("🔍 DADOS DOS HORÁRIOS:", rawHorarios);
 
-       
-        dbServicos = rawServicos.map(item => ({
-            id: item.id,
-            nome: item.name || item.nome || item.titulo || "Sem Nome", 
-            preco: Number(item.price || item.preco || item.valor || 0), // 
-            duracao: Number(item.duration || item.duracao || item.tempo || 30) // 
-        }));
+        // ==========================================
+        // 4. ARRUMANDO OS SERVIÇOS (Fim do NaN)
+        // ==========================================
+        dbServicos = rawServicos.map(item => {
+            
+            // Pega o valor do banco
+            let tempoDoBanco = item.duration_time || item.duration || item.duracao || item.tempo || 30;
+            
+            // Tratamento 1: Se for formato de relógio ("00:30:00" ou "00:30")
+            if (typeof tempoDoBanco === 'string' && tempoDoBanco.includes(':')) {
+                const partes = tempoDoBanco.split(':');
+                // Pega as horas (vezes 60) + os minutos
+                tempoDoBanco = (parseInt(partes[0], 10) * 60) + parseInt(partes[1], 10);
+            } 
+            // Tratamento 2: Se vier com texto tipo "30 min", o parseInt pega só o número
+            else {
+                tempoDoBanco = parseInt(tempoDoBanco, 10);
+            }
 
+            // Tratamento 3: Se mesmo assim falhar e virar NaN, força para 30
+            if (isNaN(tempoDoBanco) || tempoDoBanco <= 0) {
+                tempoDoBanco = 30;
+            }
+
+            return {
+                id: item.id,
+                nome: item.name || item.nome || item.titulo || "Sem Nome", 
+                preco: Number(item.price || item.preco || item.valor || 0), 
+                duracao: tempoDoBanco // Agora sim, é um número garantido!
+            };
+        });
+
+        // ==========================================
+        // 5. ARRUMANDO OS BARBEIROS
+        // ==========================================
         dbBarbeiros = rawBarbeiros.map(item => ({
             id: item.id,
             nome: item.name || item.nome || "Profissional",
@@ -59,22 +88,34 @@ async function carregarDadosIniciais() {
             cargo: item.role || item.cargo || "Barber"
         }));
 
-        // ATENÇÃO: Verifique como a sua rota de agendamentos/horários devolve as horas disponíveis
-        // Se o Laravel envia uma lista de objetos, extraímos apenas a string da hora
-if (Array.isArray(rawHorarios)) {
-    dbHorariosDisponiveis = rawHorarios.map(item => {
-        // Se for um objeto com a coluna 'hora', 'horario' ou 'time', ele pega o valor.
-        // Se já for uma string (texto simples), ele apenas repassa.
-        return item.hora || item.horario || item.time || item; 
-    });
-} else {
-    // Fallback caso a API falhe
-    dbHorariosDisponiveis = ["08:00", "09:00", "10:00", "14:00", "15:00"];
-}
+        // ==========================================
+        // 6. ARRUMANDO OS HORÁRIOS (Fim do [object Object])
+        // ==========================================
+        if (Array.isArray(rawHorarios)) {
+            dbHorariosDisponiveis = rawHorarios.map(item => {
+                // Se o horário vier como um objeto (o que estava causando o erro)
+                if (typeof item === 'object' && item !== null) {
+                    // Ele procura a string de texto. Se não achar, não retorna o objeto, retorna "Inválido"
+                    return item.hora || item.horario || item.time || item.inicio || item.data_hora || "Inválido";
+                }
+                // Se já vier como texto ("08:00"), converte garantindo que é string
+                return String(item); 
+            });
+            
+            // Limpa qualquer coisa que não tenha encontrado no banco (Remove os "Inválido")
+            dbHorariosDisponiveis = dbHorariosDisponiveis.filter(hora => hora !== "Inválido");
+            
+            // Se o array ficar vazio porque a coluna estava errada, coloca os horários padrão
+            if (dbHorariosDisponiveis.length === 0) {
+                 dbHorariosDisponiveis = ["08:00", "09:00", "10:00", "14:00", "15:00"];
+            }
+        } else {
+            dbHorariosDisponiveis = ["08:00", "09:00", "10:00", "14:00", "15:00"];
+        }
 
     } catch (error) {
         console.error("Erro ao carregar dados do banco:", error);
-        alert("Houve um erro ao conectar com o servidor.");
+        alert("Houve um erro ao carregar os dados. Por favor, atualize a página.");
     }
 }
 // ==========================================================================
