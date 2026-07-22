@@ -1,23 +1,16 @@
 const { providerMenssage } = require("../providers/message.provider");
 const mensageList = require("../dictionary/templates.messages");
 const numList = require("../dictionary/clientes.list");
-//mais tarde implementar a função de registrar no banco de dados
-
-//const getMessageTemplate = (trigger, name, appointment) => {
-//const date = appointment?.date || "data agendada";
-//const time = appointment?.time || "hora marcada";
-
-//const templates = {
-// AGENDAMENTO: `Ola, ${name} seu agendamento foi marcado pra o dia ${date} as ${time} horas`,
-//CANCELAMENTO: `Ola, ${name} seu agendamento foi cancelado`,
-//LEMBRETE: `Ola ${name}, passando pra lembrar voce do seu horario amanhã as ${time} do dia ${date}`,
-//};
-//};
+// --------------------------------------------------------------------------
+// 1. Service de Mensagens e suas dependencias
+// --------------------------------------------------------------------------
 
 const messageService = async (mensageData) => {
   const { phone, name, trigger, date, time, barber } = mensageData;
 
-  //Trava de segurança caso venha sem data
+  // --------------------------------------------------------------------------
+  // 2. Travas de segurança Anti-Gatilho-Invalido
+  // --------------------------------------------------------------------------
   if (
     ((trigger === "AGENDAMENTO" || trigger === "LEMBRETE") && !date) ||
     !time
@@ -30,7 +23,9 @@ const messageService = async (mensageData) => {
       error: "Campos de 'data' e 'hora' são obrigatorios pra este gatilho",
     };
   }
-  //Trava de segurança anti-spam e anti-horario
+  // --------------------------------------------------------------------------
+  // 3. Travas de segurança Anti-spam e Anti-horario-indevido
+  // --------------------------------------------------------------------------
   const horaAtual = new Date().getHours();
   if (trigger === "LEMBRETE" && (horaAtual >= 22 || horaAtual < 7)) {
     console.warn(
@@ -43,7 +38,9 @@ const messageService = async (mensageData) => {
     };
   }
 
-  //Logica de busca de info do cliente
+  // --------------------------------------------------------------------------
+  // 4. Busca de template e info do cliente
+  // --------------------------------------------------------------------------
   const templateSelect = mensageList[trigger];
   if (!templateSelect) {
     console.error(
@@ -54,25 +51,15 @@ const messageService = async (mensageData) => {
       error: "Template não encontrado pra esse gatilho",
     };
   }
-  //const clientExists = numList.some((item) => item.phone === searchBody.phone);
-  // if (clientExists) {
-  //const clienteSearched = numList.find(
-  //(item) => item.phone === searchBody.phone,
-  //);
-  //console.log(clienteSearched.client, "certo");
-  //} else {
-  //numList.push(searchBody);
-  //}
-  //Logica de seleção de mensagem
-
-  //const messageRespost = mensageList.find((item) => item.event === event);
+  // --------------------------------------------------------------------------
+  // 5. Seleção de template baseado nas informações vindas do controller
+  // --------------------------------------------------------------------------
   const respost = templateSelect(name, { date, time, barber });
   const response = await providerMenssage(phone, respost);
   if (!response.sucess) {
     return { status: "failed", error: response.errorMensage };
   }
 
-  //return response;
   return {
     status: "dispatched",
     trigger: trigger,

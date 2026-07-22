@@ -7,6 +7,7 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\OperationTimeController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\BarbershopController;
+use App\Http\Controllers\MessageController;
 use Illuminate\Support\Facades\Route;
 
 // Client
@@ -55,3 +56,6 @@ Route::delete('/barbearias/{barbearia}', [BarbershopController::class, 'destroy'
 
 // Log
 Route::apiResource('logs', LogController::class);
+
+// Message Service
+Route::post('/mensagens/agendamento', [MessageController::class, 'sendAppointmentConfirmation'])->name('mensagens.agendamento');

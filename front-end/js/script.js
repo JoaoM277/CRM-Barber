@@ -9,6 +9,8 @@ const agendamento = {
     cliente: { nome: "", telefone: "", notas: "" }
 };
 
+const API_BASE_URL = "http://localhost:8000/api";
+
 let currentStep = 1;
 let currentDateObj = new Date(); 
 
@@ -27,9 +29,9 @@ async function carregarDadosIniciais() {
     try {
         // 1. Dispara todas as requisições
         const [resServicos, resBarbeiros, resHorarios] = await Promise.all([
-            fetch('http://localhost:8000/api/servicos'), 
-            fetch('http://localhost:8000/api/profissionais'), 
-            fetch('http://localhost:8000/api/agendamentos')  
+            fetch(`${API_BASE_URL}/servicos`), 
+            fetch(`${API_BASE_URL}/profissionais`), 
+            fetch(`${API_BASE_URL}/agendamentos`)  
         ]);
 
         // 2. Converte para JSON
@@ -458,8 +460,10 @@ document.getElementById("btn-next").addEventListener("click", async () => {
         agendamento.cliente.telefone = document.getElementById("client-phone").value;
         agendamento.cliente.notas = document.getElementById("client-notes").value;
 
-        const payloadParaOExpress = {
+        const barbeiroSelecionado = dbBarbeiros.find(b => b.id === agendamento.barbeiroId);
+        const payloadParaBackend = {
             barbeiroId: agendamento.barbeiroId,
+            barbeiroNome: barbeiroSelecionado ? barbeiroSelecionado.nome : null,
             servicosIds: agendamento.servicos, 
             dataAgendamento: agendamento.data.toISOString().split('T')[0], 
             horario: agendamento.hora,
@@ -468,9 +472,34 @@ document.getElementById("btn-next").addEventListener("click", async () => {
             observacoes: agendamento.cliente.notas 
         };
 
-        // Aqui você faria um fetch('sua-url/agendamentos', { method: 'POST', body: JSON.stringify(payloadParaOExpress) })
-        console.log("🚀 Payload estruturado pronto para a API:", payloadParaOExpress);
-        alert(`Perfeito, ${payloadParaOExpress.clienteNome}!\nAgendamento salvo. Consulte o console para ver o payload.`);
+        try {
+            const btnNext = document.getElementById("btn-next");
+            btnNext.disabled = true;
+            btnNext.textContent = "Finalizando...";
+
+            const response = await fetch(`${API_BASE_URL}/mensagens/agendamento`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify(payloadParaBackend)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Não foi possível enviar a confirmação.");
+            }
+
+            const statusMensagem = data.message_service?.status || "recebida";
+            alert(`Perfeito, ${payloadParaBackend.clienteNome}!\nConfirmação ${statusMensagem} pelo serviço de mensagens.`);
+        } catch (error) {
+            console.error("Erro ao finalizar agendamento:", error);
+            alert(error.message || "Houve um erro ao finalizar o agendamento.");
+        } finally {
+            updateFlowUI();
+        }
     }
 });
 
