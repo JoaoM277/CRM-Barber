@@ -1,5 +1,10 @@
 const { getLogsService } = require("../services/messages.log.services");
 
+
+// --------------------------------------------------------------------------
+// 1. Responsavel pela validação de busca dos logs e por chamar o service.logs
+// --------------------------------------------------------------------------
+
 const getMessageLogController = async (req, res) => {
   try {
     const queryParams = req.query;

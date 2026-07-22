@@ -3,6 +3,10 @@ const { ZodError } = require("zod");
 const { messageService } = require("../services/messages.service");
 const { makeMessageDTO } = require("../dtos/mensage.dtos")
 
+// --------------------------------------------------------------------------
+// 1. Responsavel pela validação de Padrão de dados e por chamar o service.message
+// --------------------------------------------------------------------------
+
 const messageController = async (req, res) => {
   try {
     const messageDTO = makeMessageDTO(req.body)
@@ -14,12 +18,6 @@ const messageController = async (req, res) => {
     }
     return res.status(500).json({ error: "Erro interno do servidor"});
   }
-  //const bodymessage = req.body;
-  //const number = bodymessage.number; //Pra quem vai a mensagem?
-  //const name = bodymessage.name; //Qual o nome do remetente?
-  //const order = bodymessage.type; //Qual tipo de mensagem?
-
-  //return newMessage;
 };
 
 module.exports = { messageController };

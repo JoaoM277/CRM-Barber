@@ -1,3 +1,8 @@
+// --------------------------------------------------------------------------
+// 1. Repositorio de Logs (simulado) (temporario)
+// --------------------------------------------------------------------------
+
+
 const findMessageLogs = async ({ trigger, status, page = 1, limit = 10 }) => {
   /*
     const offset = (page - 1) * limit;
