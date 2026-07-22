@@ -1,5 +1,10 @@
 const { z } = require("zod");
 
+
+// --------------------------------------------------------------------------
+// 1. Corpo de Validação de dados vinjdos do CRM
+// --------------------------------------------------------------------------
+
 const messageCreateSchema = z.object({
   phone: z
     .string()

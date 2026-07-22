@@ -1,3 +1,7 @@
+// --------------------------------------------------------------------------
+// Dicionario de Templates de Mensagens (temporario)
+// --------------------------------------------------------------------------
+
 const mensageList = {
   AGENDAMENTO: (name, appointment) =>
     `Olá, ${name}! Seu agendamento foi confirmado para o dia ${appointment?.date || "marcado"} às ${appointment?.time || "marcado"}. Te esperamos! 💈`,

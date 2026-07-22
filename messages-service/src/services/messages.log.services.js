@@ -1,5 +1,10 @@
 const { findMessageLogs } = require("../repository/messageLog.repository");
 
+
+// --------------------------------------------------------------------------
+// 1. Service de Logs de Mensagens
+// --------------------------------------------------------------------------
+
 const getLogsService = async (queryParams) => {
   const { trigger, status, page = 1, limit = 10 } = queryParams;
 

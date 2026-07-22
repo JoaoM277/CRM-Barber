@@ -1,6 +1,10 @@
 const { MakeMessageResponseDTO } = require("../dtos/response.dtos");
 require("dotenv").config();
 
+// --------------------------------------------------------------------------
+// 1. Cia o Payload da API em questão (InfoBip - Whatsapp)
+// --------------------------------------------------------------------------
+
 const providerMenssage = async (to, respost) => {
   const infobipPayload = {
     from: process.env.INFOBIP_WHATSAPP_NUMBER,
@@ -10,11 +14,19 @@ const providerMenssage = async (to, respost) => {
     },
   };
 
-  console.log("=== DIAGNÓSTICO INFOBIP ===");
-  console.log("Tipo do 'from':", typeof infobipPayload.from);
-  console.log("Valor do 'from':", infobipPayload.from);
-  console.log("JSON final enviado:", JSON.stringify(infobipPayload, null, 2));
-  console.log("===========================");
+  // --------------------------------------------------------------------------
+  // Seção de Logs pra DeBug no Terminal
+  // --------------------------------------------------------------------------
+
+  //console.log("=== DIAGNÓSTICO INFOBIP ===");
+  //console.log("Tipo do 'from':", typeof infobipPayload.from);
+  //console.log("Valor do 'from':", infobipPayload.from);
+  //console.log("JSON final enviado:", JSON.stringify(infobipPayload, null, 2));
+  //console.log("===========================");
+
+  // --------------------------------------------------------------------------
+  // 2. Faz um fetch e envia a requisição da api (abaixo tratamento de erro)
+  // --------------------------------------------------------------------------
 
   try {
     const response = await fetch(
@@ -66,27 +78,7 @@ const providerMenssage = async (to, respost) => {
       rawResponse: { error: error.message },
     });
   }
-  //console.log("Enviando via Provider Fake");
-  //console.log("Payload Enviado", JSON.stringify(infobipPayload, null, 2));
-
-  /*const fakeResponse = {
-    status: 200,
-    data: {
-      messages: [
-        {
-          to: to,
-          status: {
-            groupId: 1,
-            groupName: "PENDING",
-            id: 7,
-            name: "PENDING_ENROUTE",
-            description: "Mensagem enviada para a proxima instancia",
-          },
-          messageId: `fake-id-${Math.random().toString(36).substring(2, 9)}`,
-        },
-      ],
-    },
-  };*/
+  
 };
 
 module.exports = { providerMenssage };
