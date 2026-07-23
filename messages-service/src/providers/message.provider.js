@@ -2,7 +2,7 @@ const { MakeMessageResponseDTO } = require("../dtos/response.dtos");
 require("dotenv").config();
 
 // --------------------------------------------------------------------------
-// 1. Cia o Payload da API em questão (InfoBip - Whatsapp)
+// 1. Cria o Payload da API em questão (InfoBip - Whatsapp)
 // --------------------------------------------------------------------------
 
 const providerMenssage = async (to, respost) => {
