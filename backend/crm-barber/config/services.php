@@ -36,7 +36,7 @@ return [
     ],
 
     'messages' => [
-        'url' => env('MESSAGE_SERVICE_URL', 'http://localhost:3000'),
+        'url' => env('MESSAGE_SERVICE_URL', 'http://localhost:3000/'),
     ],
 
 ];
