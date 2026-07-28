@@ -58,4 +58,4 @@ Route::delete('/barbearias/{barbearia}', [BarbershopController::class, 'destroy'
 Route::apiResource('logs', LogController::class);
 
 // Message Service
-Route::post('/mensagens/agendamento', [MessageController::class, 'sendAppointmentConfirmation'])->name('mensagens.agendamento');
+Route::post('/message', [MessageController::class, 'sendAppointmentConfirmation'])->name('mensagens.agendamento');
