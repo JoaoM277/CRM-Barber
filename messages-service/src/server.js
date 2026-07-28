@@ -37,5 +37,5 @@ app.use("/message", messageRoutes);
 app.use("/logs", logRoutes);
 
 app.listen(PORT, () => {
-  console.log("Servidor rodando na porta: " + PORT);
+  console.log("Servidor rodando na porta: " + PORT + " Aura Farmada com sucesso!!");
 });

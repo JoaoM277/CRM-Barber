@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Schedule;
 use App\Http\Requests\StoreScheduleRequest;
+use App\Http\Controllers\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use App\Http\Requests\UpdateScheduleRequest;
 use Carbon\Carbon;
 
 class ScheduleController extends Controller
 {
+
+     use ApiResponse;
     /**
      * Display a listing of the resource.
      */
@@ -17,7 +20,10 @@ class ScheduleController extends Controller
     {
         $schedule = Schedule::all();
 
-        return response()->json($schedule);
+        return $this->Sucess(
+            data: $schedule,
+            message: 'Agendamentos listados com sucesso.',
+        );//response()->json($schedule);
     }
 
     /**
@@ -61,7 +67,10 @@ class ScheduleController extends Controller
      */
     public function show(Schedule $schedule)
     {
-        return response()->json($schedule);
+        return $this->Sucess(
+            data: $schedule,
+            message: 'Detalhes do agendamento recuperados',
+        ); //response()->json($schedule);
     }
 
     /**
