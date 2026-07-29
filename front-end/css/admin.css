@@ -504,3 +504,48 @@ textarea.admin-input:focus {
     outline: none;
     border-color: var(--brand-primary);
 }
+/* ==========================================================================
+   TELA DE CARREGAMENTO GLOBAL (ADMIN)
+   ========================================================================== */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--bg-main, #0B0A08); 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999; 
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+#loading-overlay p {
+    margin-top: 20px;
+    color: var(--primary, #C89B3C); 
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.loading-escondido {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid var(--border-color, #24201A);
+    border-top: 5px solid var(--primary, #C89B3C); 
+    border-radius: 50%;
+    animation: girar 1s linear infinite;
+}
+
+@keyframes girar {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
