@@ -18,6 +18,12 @@ class MessageController extends Controller
             'barbeiroNome' => 'nullable|string|max:255',
         ]);
 
+        
+
+        if(!str_starts_with($data['clienteTelefone'], '55')){
+            $data['clienteTelefone'] = '55' . $data['clienteTelefone'];
+        }
+
         $messagePayload = [
             'phone' => preg_replace('/\D/', '', $data['clienteTelefone']),
             'name' => $data['clienteNome'],
