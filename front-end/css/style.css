@@ -725,3 +725,50 @@ body {
         font-size: 11px; 
     }
 }
+/* ==========================================================================
+   TELA DE CARREGAMENTO (LOADING)
+   ========================================================================== */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--bg-main); /* Usa a cor de fundo da sua barbearia */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999; /* Fica por cima de absolutamente tudo na tela */
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+#loading-overlay p {
+    margin-top: 20px;
+    color: var(--primary); /* Letra amarela/dourada */
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* Classe que o JavaScript vai adicionar para esconder a tela */
+.loading-escondido {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* O Spinner (A argola giratória) */
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid var(--border-color); /* Cor da borda mais escura */
+    border-top: 5px solid var(--primary); /* Cor da parte que gira */
+    border-radius: 50%;
+    animation: girar 1s linear infinite;
+}
+
+@keyframes girar {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

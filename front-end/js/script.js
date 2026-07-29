@@ -573,17 +573,29 @@ document.getElementById("btn-prev").addEventListener("click", () => {
 // ==========================================================================
 // 9. INICIALIZAÇÃO DA PÁGINA (Unificado e Assíncrono)
 // ==========================================================================
+function esconderLoading() {
+    const loading = document.getElementById("loading-overlay");
+    if (loading) {
+        loading.classList.add("loading-escondido");
+    }
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
-    // 1. Primeiro carregamos todos os dados do banco
+    // 1. O HTML já carrega mostrando a tela de Loading por padrão.
+    
+    // 2. Espera os dados chegarem da API
     await carregarDadosIniciais();
     
-    // 2. Depois renderizamos a tela com os dados preenchidos
+    // 3. Renderiza todas as telas escondidas
     renderBarbeiros();
     renderServicos();
     renderCalendario(currentDateObj);
     renderHorarios();
     updateFlowUI();
 
-    // 3. Verificamos se há algum aviso ativo
+    // 4. Checa os pop-ups de aviso
     verificarAvisoBarbearia();
+
+    // 5. Tudo pronto! Esconde a tela de carregamento para o usuário ver o site.
+    esconderLoading();
 });
