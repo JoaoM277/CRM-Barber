@@ -3,63 +3,64 @@
 namespace App\Http\Controllers;
 
 use App\Models\Schedule;
-use App\Http\Requests\StoreScheduleRequest;
 use App\Http\Controllers\Traits\ApiResponse;
+use App\Http\Requests\StoreScheduleRequest;
 use Illuminate\Http\Request;
-use App\Http\Requests\UpdateScheduleRequest;
 use Carbon\Carbon;
+use Exception;
 
 class ScheduleController extends Controller
 {
 
-     use ApiResponse;
+    use ApiResponse;
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $schedule = Schedule::all();
+        try {
+            $schedule = Schedule::all();
 
-        return $this->Sucess(
-            data: $schedule,
-            message: 'Agendamentos listados com sucesso.',
-        );//response()->json($schedule);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+            return $this->Success(
+                data: $schedule,
+                message: 'Agendamentos listados com sucesso.',
+                statusCode: 200
+            );
+        } catch (Exception $e) {
+            return $this->Error(
+                message: 'Erro ao buscar a lista de agendamentos!',
+                statusCode: 500
+            );
+        }
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreScheduleRequest $request)
     {
-        $data = $request->validate([
-            'client_id'   => 'required|integer|exists:clients,id',
-            'worker_id'   => 'required|integer|exists:workers,id',
-            'service_id'  => 'required|integer|exists:services,id',
-            'date'        => 'required|date_format:d/m/Y',
-            'start_time' => 'required|integer|between:0,23',
-            'end_time' => 'required|integer|between:0,23|gt:start_time',
-            'status'      => 'boolean',
-            'observation' => 'nullable|string|max:1000'
-        ]);
+        try {
+            $data = $request->validated();
 
-        $data['date']   = Carbon::createFromFormat('d/m/Y', $data['date'])->format('Y-m-d');
-        $data['start_time']    = Carbon::createFromTime($data['start_time'], 0, 0)->toTimeString();
-        $data['end_time']      = Carbon::createFromTime($data['end_time'], 0, 0)->toTimeString();
+            $data['date']   = Carbon::createFromFormat('d/m/Y', $data['date'])->format('Y-m-d');
+            $data['start_time']    = Carbon::createFromTime($data['start_time'], 0, 0)->toTimeString();
+            $data['end_time']      = Carbon::createFromTime($data['end_time'], 0, 0)->toTimeString();
+        
+            $schedule = Schedule::create($data);
 
-        $schedule = Schedule::create($data);
+            return $this->Success(
+                data: $schedule,
+                message: 'Agendamentos criados com sucesso.',
+                statusCode: 201
+            );
 
-        return response()->json([
-            'message' => 'Agendamento feito com sucesso!',
-            'schedule' => $schedule
-        ], 201);
+        } catch (Exception $e){
+            return $this->Error(
+                message: 'Erro ao criar agendamento, verifique as credenciais!',
+                statusCode: 400
+            );
+        }
+
     }
 
     /**
@@ -67,46 +68,46 @@ class ScheduleController extends Controller
      */
     public function show(Schedule $schedule)
     {
-        return $this->Sucess(
-            data: $schedule,
-            message: 'Detalhes do agendamento recuperados',
-        ); //response()->json($schedule);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Schedule $schedule)
-    {
-        //
+        try {
+            return $this->Success(
+                data: $schedule,
+                message: 'Detalhes do agendamento recuperados com sucesso.',
+                statusCode: 200
+            );
+        } catch (Exception $e) {
+            return $this->Error(
+                message: 'Erro ao recuperar os dados!',
+                statusCode: 500
+            );
+        }
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Schedule $schedule)
+    public function update(StoreScheduleRequest $request, Schedule $schedule)
     {
-        $data = $request->validate([
-            'client_id'   => 'required|integer|exists:clients,id',
-            'worker_id'   => 'required|integer|exists:workers,id',
-            'service_id'  => 'required|integer|exists:services,id',
-            'date'        => 'required|date_format:d/m/Y',
-            'start_time' => 'required|integer|between:0,23',
-            'end_time' => 'required|integer|between:0,23|gt:start_time',
-            'status'      => 'boolean',
-            'observation' => 'nullable|string|max:1000'
-        ]);
+        try {
+            $data = $request->validated();
 
-        $data['date']   = Carbon::createFromFormat('d/m/Y', $data['date'])->format('Y-m-d');
-        $data['start_time']    = Carbon::createFromTime($data['start_time'], 0, 0)->toTimeString();
-        $data['end_time']      = Carbon::createFromTime($data['end_time'], 0, 0)->toTimeString();
+            $data['date']   = Carbon::createFromFormat('d/m/Y', $data['date'])->format('Y-m-d');
+            $data['start_time']    = Carbon::createFromTime($data['start_time'], 0, 0)->toTimeString();
+            $data['end_time']      = Carbon::createFromTime($data['end_time'], 0, 0)->toTimeString();
 
-        $schedule->update($data);
+            $schedule->update($data);
 
-        return response()->json([
-            'message' => 'Agendamento atualizado com sucesso!',
-            'schedule' => $schedule
-        ], 201);
+            return $this->Success(
+                data: $schedule,
+                message: 'Agendamento atualizado com sucesso!',
+                statusCode: 200
+            );
+
+        } catch (Exception $e) {
+            return $this->Error(
+                message: 'Erro ao atualizar o agendamento!',
+                statusCode: 400
+            );
+        }
     }
 
     /**
@@ -114,8 +115,19 @@ class ScheduleController extends Controller
      */
     public function destroy(Schedule $schedule)
     {
-        $schedule->delete();
+        try {
+            $schedule->delete();
 
-        return response()->json($schedule);
+            return $this->Success(
+                data: $schedule,
+                message: 'Agendamento deletado com sucesso!',
+                statusCode: 200
+            );
+        } catch(Exception $e) {
+            return $this->Error(
+                message: 'Erro ao deletar o agendamento!',
+                statusCode: 500
+            ); 
+        }
     }
 }
