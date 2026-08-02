@@ -10,7 +10,7 @@ class Log extends Model
     protected $fillable = [
         'action',
         'model',
-        'client_id',
+        'user_id',
         'description',
         'ip'
     ];

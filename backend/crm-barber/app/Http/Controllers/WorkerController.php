@@ -2,104 +2,98 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Traits\ApiResponse;
 use App\Http\Requests\StoreWorkerRequest;
 use App\Models\Worker;
-use Exception;
+use Illuminate\Http\Request;
+use App\Http\Requests\UpdateWorkerRequest;
 
 class WorkerController extends Controller
 {
-    use ApiResponse;
-
+    /**
+     * Display a listing of the resource.
+     */
     public function index()
     {
-        try {
-            $workers = Worker::all();
-
-            return $this->Success(
-                data: $workers,
-                message: 'Profissionais listados com sucesso.',
-                statusCode: 200
-            );
-        } catch (Exception $e) {
-            return $this->Error(
-                message: 'Erro ao buscar a lista de profissionais!',
-                statusCode: 500
-            );
-        }
+        $worker = Worker::all();
+        
+        return response()->json($worker, 200);
     }
 
-    public function store(StoreWorkerRequest $request)
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
     {
-        try {
-            $data = $request->validated();
-
-            $worker = Worker::create($data);
-
-            return $this->Success(
-                data: $worker,
-                message: 'Profissional criado com sucesso.',
-                statusCode: 201
-            );
-        } catch (Exception $e) {
-            return $this->Error(
-                message: 'Erro ao criar profissional, verifique as credenciais!',
-                statusCode: 400
-            );
-        }
+        //
     }
 
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {        
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20|unique:workers,phone',
+            'photo' => 'nullable|string',
+            'speciality' => 'nullable|string',
+            'active' => 'boolean'
+        ]);
+
+        $worker = Worker::create($data);
+
+        return response()->json([
+            'message' => 'Profissional criado com sucesso!',
+            'worker' => $worker
+        ], 201);
+    }
+
+    /**
+     * Display the specified resource.
+     */
     public function show(Worker $worker)
     {
-        try {
-            return $this->Success(
-                data: $worker,
-                message: 'Detalhes do profissional recuperados com sucesso.',
-                statusCode: 200
-            );
-        } catch (Exception $e) {
-            return $this->Error(
-                message: 'Erro ao recuperar os dados!',
-                statusCode: 500
-            );
-        }
+        return response()->json($worker, 201);
     }
 
-    public function update(StoreWorkerRequest $request, Worker $worker)
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Worker $worker)
     {
-        try {
-            $data = $request->validated();
-
-            $worker->update($data);
-
-            return $this->Success(
-                data: $worker,
-                message: 'Profissional atualizado com sucesso!',
-                statusCode: 200
-            );
-        } catch (Exception $e) {
-            return $this->Error(
-                message: 'Erro ao atualizar o profissional!',
-                statusCode: 400
-            );
-        }
+        //
     }
 
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Worker $worker)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20|unique:workers,phone',
+            'photo' => 'nullable|string',
+            'speciality' => 'nullable|string',
+            'active' => 'boolean'
+        ]);
+
+        $worker->update($data);
+
+        return response()->json([
+            'message' => 'Profissional atualizado com sucesso!'
+        ], 200);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
     public function destroy(Worker $worker)
     {
-        try {
-            $worker->delete();
+        $worker->delete();
 
-            return $this->Success(
-                data: $worker,
-                message: 'Profissional deletado com sucesso!',
-                statusCode: 200
-            );
-        } catch (Exception $e) {
-            return $this->Error(
-                message: 'Erro ao deletar o profissional!',
-                statusCode: 500
-            );
-        }
+        return response()->json([
+        'message' => 'Profissional deletado com sucesso!',
+        'worker' => $worker
+        ], 200);
     }
 }
