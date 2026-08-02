@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreLogRequest extends FormRequest
+class StoreMessageRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -18,11 +18,11 @@ class StoreLogRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'action' => 'required|string|max:255',
-            'model' => 'nullable|string|max:255',
-            'client_id' => 'nullable|integer|exists:clients,id',
-            'description' => 'nullable|string',
-            'ip' => 'nullable|ip',
+            'clienteNome' => 'required|string|min:1|max:255',
+            'clienteTelefone' => 'required|string|min:8|max:20',
+            'dataAgendamento' => 'required|date',
+            'horario' => 'required|string|max:10',
+            'barbeiroNome' => 'nullable|string|max:255',
         ];
     }
 }
