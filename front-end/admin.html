@@ -96,20 +96,19 @@
                             </div>
                         </div>
                     </div>
-                    <div class="panel-header" style="margin-top: 40px;">
-                        <div>
-                            <h2>Aviso no Aplicativo (Pop-up)</h2>
-                            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Defina uma mensagem importante para aparecer quando os clientres abrirem o app.</p>
-                        </div>
-                        
-                        <div class="message-panel-container">
+                    <!-- ==========================================
+                             TELA DE AVISOS (Simplificada)
+                             ========================================== -->
+                        <div class="message-panel-container" style="margin-top: 40px;">
+                            <h2 style="margin-bottom: 24px; font-size: 18px;">Aviso no Aplicativo (Pop-up)</h2>
+                            
                             <form id="form-aviso" class="admin-form">
                                 <div class="input-row">
                                     <div class="input-group">
                                         <label>Status do Pop-up</label>
                                         <select id="aviso-status" class="admin-input required">
                                             <option value="inativo">🔴 Desativado (Oculto)</option>
-                                            <option value="ativo">🟢 Ativado (Visível para clientes)</option>
+                                            <option value="ativo">🟢 Ativado (Visível)</option>
                                         </select>
                                     </div>
                                     <div class="input-group">
@@ -124,12 +123,10 @@
                                 </div>
 
                                 <div style="text-align: right; margin-top: 20px;">
-                                    <button type="submit" class="btn-primary"> Atualizar Aviso</button>
+                                    <button type="submit" class="btn-primary">Atualizar Aviso</button>
                                 </div>
                             </form>
                         </div>
-
-                    </div>
                 </div>
                 <!-- ====================================================================
                      TELA 1: AGENDA 
@@ -278,7 +275,9 @@
             </form>
         </div>
     </div>
-
+<div>
+    
+</div>
     <!-- Script de controle do Painel -->
     <script src="js/admin.js"></script>
 </body>

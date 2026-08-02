@@ -93,11 +93,7 @@ body {
 /* ==========================================================================
    2. LAYOUT DESKTOP (PADRÃO)
    ========================================================================== */
-.dashboard-grid {
-        grid-template-columns: 1fr; /* Empilha os cartões no mobile */
-        gap: 16px;
-    }
-   .admin-wrapper {
+.admin-wrapper {
     display: flex;
     width: 100vw;
     height: 100vh;
@@ -389,9 +385,103 @@ body {
 }
 
 /* ==========================================================================
+   ESTILOS DO PAINEL DE AVISOS (DESKTOP)
+   ========================================================================== */
+.message-panel-container {
+    background-color: var(--brand-bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+textarea.admin-input {
+    width: 100%;
+    resize: vertical;
+    padding: 12px;
+    background-color: var(--brand-bg-dark);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+textarea.admin-input:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+}
+
+/* ==========================================================================
+   TELA DE CARREGAMENTO GLOBAL (ADMIN)
+   ========================================================================== */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--bg-main, #0B0A08); 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999; 
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+#loading-overlay p {
+    margin-top: 20px;
+    color: var(--primary, #C89B3C); 
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.loading-escondido {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid var(--border-color, #24201A);
+    border-top: 5px solid var(--primary, #C89B3C); 
+    border-radius: 50%;
+    animation: girar 1s linear infinite;
+}
+
+@keyframes girar {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Avatar do profissional na tabela */
+.table-avatar {
+    width: 40px;
+    height: 40px;
+    background-color: var(--brand-primary);
+    color: var(--brand-bg-dark);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* ==========================================================================
    3. LAYOUT MOBILE (ATIVA APENAS ABAIXO DE 768px)
    ========================================================================== */
 @media screen and (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
     .admin-wrapper {
         flex-direction: column;
     }
@@ -462,90 +552,49 @@ body {
     .content-body {
         padding: 20px; 
     }
-}
-/* Avatar do profissional na tabela */
-.table-avatar {
-    width: 40px;
-    height: 40px;
-    background-color: var(--brand-primary);
-    color: var(--brand-bg-dark);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 16px;
-}
-/* ==========================================================================
-   ESTILOS DO PAINEL DE AVISOS
-   ========================================================================== */
-.message-panel-container {
-    background-color: var(--brand-bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 40px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-}
 
-textarea.admin-input {
-    width: 100%;
-    resize: vertical; /* Permite que o admin aumente a caixa só para baixo */
-    padding: 12px;
-    background-color: var(--brand-bg-dark);
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    border-radius: 6px;
-    font-family: inherit;
-    font-size: 14px;
-}
+    /* =========================================================
+       AJUSTES GLOBAIS DE PAINÉIS E AVISOS (Mobile)
+       ========================================================= */
+    
+    /* 1. Quebra TODOS os cabeçalhos para ficarem em coluna no celular */
+    .panel-header {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 16px !important;
+        height: auto !important;
+    }
 
-textarea.admin-input:focus {
-    outline: none;
-    border-color: var(--brand-primary);
-}
-/* ==========================================================================
-   TELA DE CARREGAMENTO GLOBAL (ADMIN)
-   ========================================================================== */
-#loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: var(--bg-main, #0B0A08); 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 999999; 
-    transition: opacity 0.5s ease, visibility 0.5s ease;
-}
+    /* 2. Garante que os blocos DENTRO do header (Texto e Formulário) peguem a largura toda */
+    .panel-header > div {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
 
-#loading-overlay p {
-    margin-top: 20px;
-    color: var(--primary, #C89B3C); 
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
+    /* 3. Ajusta o card escuro para não vazar da tela */
+    .message-panel-container {
+        width: 100% !important;
+        padding: 16px !important; /* Diminui um pouco o padding no celular */
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
 
-.loading-escondido {
-    opacity: 0;
-    visibility: hidden;
-}
+    /* 4. Empilha os campos (Inputs) que antes dividiam a mesma linha */
+    .input-row {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 16px !important;
+        width: 100% !important;
+    }
 
-.spinner {
-    width: 60px;
-    height: 60px;
-    border: 5px solid var(--border-color, #24201A);
-    border-top: 5px solid var(--primary, #C89B3C); 
-    border-radius: 50%;
-    animation: girar 1s linear infinite;
-}
-
-@keyframes girar {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    /* 5. Garante que os campos de texto não empurrem a tela pro lado */
+    .input-group,
+    .admin-form input,
+    .admin-form select,
+    .admin-form textarea {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
 }
