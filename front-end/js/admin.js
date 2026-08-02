@@ -28,21 +28,32 @@ function formatarTelefoneAdmin(telefone) {
 // --------------------------------------------------------------------------
 // 3. MÓDULO: AGENDA
 // --------------------------------------------------------------------------
-async function renderAgenda() {
+async function renderAgenda(dataFiltro = "") {
     const tableBody = document.getElementById("agenda-table-body");
     if (!tableBody) return;
+    
+    // Mostra mensagem de carregando enquanto busca
     tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-muted);">Buscando agendamentos...</td></tr>`;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/agendamentos`);
+        // MÁGICA AQUI: Se tiver uma data, adiciona ela na URL do pedido (?data=2026-08-02)
+        let url = `${API_BASE_URL}/agendamentos`;
+        if (dataFiltro !== "") {
+            url += `?data=${dataFiltro}`;
+        }
+
+        const response = await fetch(url);
+        
         if (!response.ok) throw new Error("Erro de rede");
         const agendamentos = await response.json();
         
         tableBody.innerHTML = "";
+        
+        // Filtra os cancelados para não poluir a tela
         const agendamentosAtivos = agendamentos.filter(ag => ag.status !== "cancelado");
 
         if (agendamentosAtivos.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-muted);">Nenhum agendamento ativo.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-muted);">Nenhum agendamento para esta data.</td></tr>`;
             return;
         }
 
@@ -68,10 +79,28 @@ async function renderAgenda() {
             tableBody.appendChild(tr);
         });
     } catch (error) {
-        tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger);">Servidor offline.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger);">Servidor offline</td></tr>`;
     }
 }
+window.addEventListener("DOMContentLoaded", async () => {
 
+    // --- NOVO: LÓGICA DO BOTÃO DE FILTRO DA AGENDA ---
+    const btnFiltrar = document.getElementById("btn-filtrar-agenda");
+    const inputData = document.getElementById("filter-date");
+
+    if (btnFiltrar && inputData) {
+        btnFiltrar.addEventListener("click", () => {
+            // Pega o valor do calendário (formato YYYY-MM-DD)
+            const dataEscolhida = inputData.value; 
+            
+            // Chama a função passando a data. Se o input estiver vazio, ele busca tudo de novo.
+            renderAgenda(dataEscolhida);
+        });
+    }
+
+    // Oculta a animação de loading e revela o painel
+    esconderLoading();
+});
 window.alterarStatus = async function(id, novoStatus) {
     if (novoStatus === 'cancelado' && !confirm("Cancelar agendamento?")) return;
     try {
