@@ -2,112 +2,117 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Service;
+use App\Http\Controllers\Traits\ApiResponse;
 use App\Http\Requests\StoreServiceRequest;
-use Illuminate\Http\Request;
-use App\Http\Requests\UpdateServiceRequest;
+use App\Models\Service;
 use Carbon\CarbonInterval;
-use Illuminate\Foundation\Console\ServeCommand;
+use Exception;
 
 class ServiceController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    use ApiResponse;
+
     public function index()
     {
-        $service = Service::all();
+        try {
+            $services = Service::all();
 
-        return response()->json($service, 200);
+            return $this->Success(
+                data: $services,
+                message: 'Serviços listados com sucesso.',
+                statusCode: 200
+            );
+        } catch (Exception $e) {
+            return $this->Error(
+                message: 'Erro ao buscar a lista de serviços!',
+                statusCode: 500
+            );
+        }
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function store(StoreServiceRequest $request)
     {
-        //
+        try {
+            $data = $request->validated();
+
+            if (isset($data['duration_time'])) {
+                $data['duration_time'] = CarbonInterval::minutes($data['duration_time'])
+                    ->cascade()
+                    ->format('%H:%I:%S');
+            }
+
+            $service = Service::create($data);
+
+            return $this->Success(
+                data: $service,
+                message: 'Serviço criado com sucesso.',
+                statusCode: 201
+            );
+        } catch (Exception $e) {
+            return $this->Error(
+                message: 'Erro ao criar serviço, verifique as credenciais!',
+                statusCode: 400
+            );
+        }
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'duration_time' => 'integer|min:1',
-            'price' => 'numeric',
-            'active' => 'boolean'
-        ]);
-
-        $validated['duration_time'] = CarbonInterval::minutes($request->duration_time)
-        ->cascade()
-        ->format('%H:%I:%S');
-        
-        $service = Service::create($data);
-        $service->update($validated);
-
-        return response()->json([
-            'message' => 'Serviço criado com sucesso!',
-            'serviço' => $service
-        ], 200);
-    }
-
-    /**
-     * Display the specified resource.
-     */
     public function show(Service $service)
     {
-        return response()->json($service);
+        try {
+            return $this->Success(
+                data: $service,
+                message: 'Detalhes do serviço recuperados com sucesso.',
+                statusCode: 200
+            );
+        } catch (Exception $e) {
+            return $this->Error(
+                message: 'Erro ao recuperar os dados!',
+                statusCode: 500
+            );
+        }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Service $service)
+    public function update(StoreServiceRequest $request, Service $service)
     {
-        //
+        try {
+            $data = $request->validated();
+
+            if (isset($data['duration_time'])) {
+                $data['duration_time'] = CarbonInterval::minutes($data['duration_time'])
+                    ->cascade()
+                    ->format('%H:%I:%S');
+            }
+
+            $service->update($data);
+
+            return $this->Success(
+                data: $service,
+                message: 'Serviço atualizado com sucesso!',
+                statusCode: 200
+            );
+        } catch (Exception $e) {
+            return $this->Error(
+                message: 'Erro ao atualizar o serviço!',
+                statusCode: 400
+            );
+        }
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Service $service)
-    {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'duration_time' => 'integer|min:1',
-            'price' => 'numeric',
-            'active' => 'boolean'
-        ]);
-
-        $validated['duration_time'] = CarbonInterval::minutes($request->duration_time)
-        ->cascade()
-        ->format('%H:%I:%S');
-
-        $service->update($data);
-        $service->update($validated);
-
-        return response()->json([
-            'message' => 'Serviço atualizado com sucesso!',
-            'service' => $service
-        ], 200);
-
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Service $service)
     {
-        $service->delete();
+        try {
+            $service->delete();
 
-        return response()->json([
-            'message' => 'Serviço deletado com sucesso!',
-            'service' => $service
-        ], 200);
+            return $this->Success(
+                data: $service,
+                message: 'Serviço deletado com sucesso!',
+                statusCode: 200
+            );
+        } catch (Exception $e) {
+            return $this->Error(
+                message: 'Erro ao deletar o serviço!',
+                statusCode: 500
+            );
+        }
     }
 }

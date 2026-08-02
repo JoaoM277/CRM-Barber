@@ -10,7 +10,7 @@ trait ApiResponse
      * Resposta Padrão de Sucesso
      */
 
-    public function Sucess(
+    public function Success(
         mixed $data = null,
         string $message = 'Operação realizada com sucesso',
         int $statusCode = 200,
@@ -38,7 +38,7 @@ trait ApiResponse
      * Resposta Padrão de Falha
      */
 
-    public function error(
+    public function Error(
         mixed $errors = null,
         string $message = 'Ocorreu algum erro durante a operação',
         int $statusCode = 400,

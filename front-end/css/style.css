@@ -659,7 +659,56 @@ body {
     color: var(--text-disabled);
     cursor: not-allowed;
 }
+/* ==========================================================================
+   SISTEMA DE MENSAGENS NA TELA (SUBSTITUTO DO ALERT)
+   ========================================================================== */
+#box-mensagem {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 16px 24px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-white);
+    z-index: 10000;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    text-align: center;
+    max-width: 90%;
+    width: max-content;
+    pointer-events: none; /* Garante que não atrapalhe os cliques na tela */
+}
 
+.msg-escondida {
+    opacity: 0;
+    transform: translate(-50%, 20px) !important;
+}
+
+.msg-visivel {
+    opacity: 1;
+    transform: translate(-50%, 0) !important;
+}
+
+/* Temas das mensagens acompanhando o design do site */
+.msg-erro {
+    background-color: var(--bg-card); /* Fundo escuro */
+    border: 1px solid #d32f2f; 
+    border-left: 6px solid #d32f2f; /* Borda grossa vermelha */
+}
+
+.msg-sucesso {
+    background-color: var(--bg-card); 
+    border: 1px solid #2e7d32; 
+    border-left: 6px solid #2e7d32; /* Borda grossa verde */
+}
+
+.msg-aviso {
+    background-color: var(--bg-card);
+    border: 1px solid var(--primary); 
+    border-left: 6px solid var(--primary); /* Borda grossa dourada */
+}
 /* ==========================================================================
    AJUSTES RESPONSIVOS GERAIS
    ========================================================================== */
@@ -675,4 +724,51 @@ body {
         padding: 6px 0; 
         font-size: 11px; 
     }
+}
+/* ==========================================================================
+   TELA DE CARREGAMENTO (LOADING)
+   ========================================================================== */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--bg-main); /* Usa a cor de fundo da sua barbearia */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999; /* Fica por cima de absolutamente tudo na tela */
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+#loading-overlay p {
+    margin-top: 20px;
+    color: var(--primary); /* Letra amarela/dourada */
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* Classe que o JavaScript vai adicionar para esconder a tela */
+.loading-escondido {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* O Spinner (A argola giratória) */
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid var(--border-color); /* Cor da borda mais escura */
+    border-top: 5px solid var(--primary); /* Cor da parte que gira */
+    border-radius: 50%;
+    animation: girar 1s linear infinite;
+}
+
+@keyframes girar {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

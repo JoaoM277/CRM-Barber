@@ -8,6 +8,11 @@
 </head>
 <body>
 
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <p>Carregando...</p>
+</div>    
+
     <header class="main-header">
         <div class="header-container">
             <div class="logo-box">
@@ -238,7 +243,34 @@
     
     <button id="btn-fechar-modal">Entendi</button>
   </div>
-
+<!-- ==========================================
+     MODAL UNIVERSAL DE CONFIRMAÇÃO
+     ========================================== -->
+<div class="modal-overlay" id="modal-confirmacao">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+        
+        <div class="modal-header" style="border-bottom: none; justify-content: center; padding-bottom: 0;">
+            <h3 id="confirm-titulo" style="font-size: 22px; color: var(--text-main);">Confirmação</h3>
+        </div>
+        
+        <div class="content-body" style="padding: 20px 0;">
+            <p id="confirm-mensagem" style="color: var(--text-muted); font-size: 15px; line-height: 1.5;">
+                Tem certeza que deseja continuar?
+            </p>
+        </div>
+        
+        <div class="modal-footer" style="justify-content: center; border-top: none; margin-top: 0; gap: 16px;">
+            <button class="btn-secondary" onclick="fecharModalConfirmacao()">Cancelar</button>
+            <!-- O botão de ação que vai mudar de cor dependendo do perigo -->
+            <button class="btn-primary" id="btn-confirmar-acao">Sim, continuar</button>
+        </div>
+        
+    </div>
+</div>
+</div>
+<!-- SISTEMA DE MENSAGENS CUSTOMIZADO -->
+<div id="box-mensagem" class="msg-escondida">
+    <span id="texto-mensagem">Sua mensagem vai aqui</span>
 </div>
 </body>
 </html>

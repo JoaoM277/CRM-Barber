@@ -28,21 +28,32 @@ function formatarTelefoneAdmin(telefone) {
 // --------------------------------------------------------------------------
 // 3. MÓDULO: AGENDA
 // --------------------------------------------------------------------------
-async function renderAgenda() {
+async function renderAgenda(dataFiltro = "") {
     const tableBody = document.getElementById("agenda-table-body");
     if (!tableBody) return;
+    
+    // Mostra mensagem de carregando enquanto busca
     tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-muted);">Buscando agendamentos...</td></tr>`;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/agendamentos`);
+        // MÁGICA AQUI: Se tiver uma data, adiciona ela na URL do pedido (?data=2026-08-02)
+        let url = `${API_BASE_URL}/agendamentos`;
+        if (dataFiltro !== "") {
+            url += `?data=${dataFiltro}`;
+        }
+
+        const response = await fetch(url);
+        
         if (!response.ok) throw new Error("Erro de rede");
         const agendamentos = await response.json();
         
         tableBody.innerHTML = "";
+        
+        // Filtra os cancelados para não poluir a tela
         const agendamentosAtivos = agendamentos.filter(ag => ag.status !== "cancelado");
 
         if (agendamentosAtivos.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-muted);">Nenhum agendamento ativo.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-muted);">Nenhum agendamento para esta data.</td></tr>`;
             return;
         }
 
@@ -68,10 +79,28 @@ async function renderAgenda() {
             tableBody.appendChild(tr);
         });
     } catch (error) {
-        tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger);">Servidor offline.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger);">Servidor offline</td></tr>`;
     }
 }
+window.addEventListener("DOMContentLoaded", async () => {
 
+    // --- NOVO: LÓGICA DO BOTÃO DE FILTRO DA AGENDA ---
+    const btnFiltrar = document.getElementById("btn-filtrar-agenda");
+    const inputData = document.getElementById("filter-date");
+
+    if (btnFiltrar && inputData) {
+        btnFiltrar.addEventListener("click", () => {
+            // Pega o valor do calendário (formato YYYY-MM-DD)
+            const dataEscolhida = inputData.value; 
+            
+            // Chama a função passando a data. Se o input estiver vazio, ele busca tudo de novo.
+            renderAgenda(dataEscolhida);
+        });
+    }
+
+    // Oculta a animação de loading e revela o painel
+    esconderLoading();
+});
 window.alterarStatus = async function(id, novoStatus) {
     if (novoStatus === 'cancelado' && !confirm("Cancelar agendamento?")) return;
     try {
@@ -252,16 +281,7 @@ if (formBarbeiro) {
 }
 
 // --------------------------------------------------------------------------
-// 6. GATILHO DE INICIALIZAÇÃO
-// --------------------------------------------------------------------------
-window.addEventListener("DOMContentLoaded", () => {
-    renderAgenda();
-    renderServicos();
-    renderBarbeiros();
-    renderDashboard();
-});
-// --------------------------------------------------------------------------
-// 7. MÓDULO: DASHBOARD FINANCEIRO (INTEGRAÇÃO REAL)
+// 6. MÓDULO: DASHBOARD FINANCEIRO
 // --------------------------------------------------------------------------
 async function renderDashboard() {
     const elDia = document.getElementById("faturamento-dia");
@@ -270,48 +290,37 @@ async function renderDashboard() {
 
     if (!elDia || !elMes || !elAno) return;
 
-    // Feedback visual enquanto a requisição viaja pela rede
-    elDia.innerText = "Carregando...";
-    elMes.innerText = "Carregando...";
-    elAno.innerText = "Carregando...";
-
     try {
-        // Dispara a requisição GET real para o servidor Express
         const response = await fetch(`${API_BASE_URL}/faturamento`);
         
         if (!response.ok) {
             throw new Error(`Erro na resposta do servidor: ${response.status}`);
         }
         
-        // Pega o JSON de resposta do banco de dados
         const faturamento = await response.json();
 
-        // Converte para número e aplica a máscara oficial de Moeda (R$ 0,00)
-        // O "|| 0" garante que, se vier vazio, ele exiba R$ 0,00 e não dê erro
         elDia.innerText = Number(faturamento.dia || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         elMes.innerText = Number(faturamento.mes || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         elAno.innerText = Number(faturamento.ano || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     } catch (error) {
         console.error("Falha ao buscar faturamento:", error);
-        // Fallback visual de erro caso o servidor esteja fora do ar
         elDia.innerText = "R$ 0,00";
         elMes.innerText = "R$ 0,00";
         elAno.innerText = "R$ 0,00";
     }
 }
+
 // --------------------------------------------------------------------------
-// 8. MÓDULO: AVISO GERAL (POP-UP DOS CLIENTES)
+// 7. MÓDULO: AVISO GERAL (POP-UP DOS CLIENTES)
 // --------------------------------------------------------------------------
 async function renderAviso() {
     try {
-        // Busca a configuração atual do aviso no banco de dados
-        const response = await fetch(`${API_BASE_URL}/avisos/1`); // Presumindo ID 1 para configuração global
+        const response = await fetch(`${API_BASE_URL}/avisos/1`); 
         
         if (response.ok) {
             const aviso = await response.json();
             
-            // Preenche os campos com os dados do Sequelize
             document.getElementById("aviso-status").value = aviso.ativo ? "ativo" : "inativo";
             document.getElementById("aviso-titulo").value = aviso.titulo || "";
             document.getElementById("aviso-texto").value = aviso.mensagem || "";
@@ -321,13 +330,11 @@ async function renderAviso() {
     }
 }
 
-// Captura o envio do formulário de avisos
 const formAviso = document.getElementById("form-aviso");
 if (formAviso) {
     formAviso.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        // Monta o payload exato que o seu back-end Node.js estará esperando
         const payload = {
             ativo: document.getElementById("aviso-status").value === "ativo",
             titulo: document.getElementById("aviso-titulo").value,
@@ -335,7 +342,6 @@ if (formAviso) {
         };
 
         try {
-            // Dispara um PUT para atualizar o aviso global (ID 1)
             const response = await fetch(`${API_BASE_URL}/avisos/1`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -351,5 +357,73 @@ if (formAviso) {
             console.error("Erro no PUT do aviso:", error);
             alert("Erro de conexão com o servidor.");
         }
+    });
+}
+
+// --------------------------------------------------------------------------
+// 8. TELA DE CARREGAMENTO E INICIALIZAÇÃO ASSÍNCRONA
+// --------------------------------------------------------------------------
+function esconderLoading() {
+    const loading = document.getElementById("loading-overlay");
+    if (loading) {
+        loading.classList.add("loading-escondido");
+    }
+}
+
+// Substituímos o antigo gatilho por este que aguarda o banco de dados
+window.addEventListener("DOMContentLoaded", async () => {
+    
+    // O Promise.all faz com que o painel dispare todas as requisições ao mesmo tempo.
+    // Assim que TODAS finalizarem, a interface é destravada.
+    await Promise.all([
+        renderAgenda(),
+        renderServicos(),
+        renderBarbeiros(),
+        renderDashboard(),
+        renderAviso()
+    ]);
+
+    // Oculta a animação de loading e revela o painel do administrador
+    esconderLoading();
+});
+// ==========================================================================
+// SISTEMA DE MODAL DE CONFIRMAÇÃO UNIVERSAL
+// ==========================================================================
+let acaoPendente = null; // Guarda a função que será executada se o usuário disser "Sim"
+
+window.abrirModalConfirmacao = function(titulo, mensagem, textoBotao, tipoBotao, callback) {
+    // 1. Troca os textos do modal
+    document.getElementById("confirm-titulo").innerText = titulo;
+    document.getElementById("confirm-mensagem").innerText = mensagem;
+    
+    // 2. Configura o botão de confirmação
+    const btnConfirmar = document.getElementById("btn-confirmar-acao");
+    btnConfirmar.innerText = textoBotao;
+    
+    // Se for uma ação perigosa (excluir), fica vermelho. Se for normal, fica dourado.
+    if (tipoBotao === 'danger') {
+        btnConfirmar.style.backgroundColor = 'var(--danger)';
+        btnConfirmar.style.color = '#ffffff';
+    } else {
+        btnConfirmar.style.backgroundColor = 'var(--brand-primary)';
+        btnConfirmar.style.color = 'var(--brand-bg-dark)';
+    }
+    
+    // 3. Salva a ação que deve acontecer e abre o modal
+    acaoPendente = callback;
+    document.getElementById("modal-confirmacao").classList.add("active");
+}
+
+window.fecharModalConfirmacao = function() {
+    document.getElementById("modal-confirmacao").classList.remove("active");
+    acaoPendente = null; // Limpa a ação por segurança
+}
+
+// Quando clicar no botão "Sim", executa a ação salva e fecha o modal
+const btnConfirmarAcao = document.getElementById("btn-confirmar-acao");
+if (btnConfirmarAcao) {
+    btnConfirmarAcao.addEventListener("click", () => {
+        if (acaoPendente) acaoPendente(); 
+        fecharModalConfirmacao();
     });
 }

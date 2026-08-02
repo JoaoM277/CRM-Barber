@@ -451,58 +451,118 @@ document.getElementById("client-form").addEventListener("input", (e) => {
     validateStep();
 });
 
-document.getElementById("btn-next").addEventListener("click", async () => {
-    if (currentStep < 4) {
-        currentStep++;
-        updateFlowUI();
-    } else {
-        agendamento.cliente.nome = document.getElementById("client-name").value;
-        agendamento.cliente.telefone = document.getElementById("client-phone").value;
-        agendamento.cliente.notas = document.getElementById("client-notes").value;
+// ==========================================================================
+// FUNÇÃO PARA MOSTRAR MENSAGENS NA TELA
+// ==========================================================================
+function mostrarAvisoTela(mensagem, tipo = 'aviso') {
+    const box = document.getElementById("box-mensagem");
+    const texto = document.getElementById("texto-mensagem");
 
-        const barbeiroSelecionado = dbBarbeiros.find(b => b.id === agendamento.barbeiroId);
-        const payloadParaBackend = {
-            barbeiroId: agendamento.barbeiroId,
-            barbeiroNome: barbeiroSelecionado ? barbeiroSelecionado.nome : null,
-            servicosIds: agendamento.servicos, 
-            dataAgendamento: agendamento.data.toISOString().split('T')[0], 
-            horario: agendamento.hora,
-            clienteNome: agendamento.cliente.nome,
-            clienteTelefone: agendamento.cliente.telefone,
-            observacoes: agendamento.cliente.notas 
-        };
-
-        try {
-            const btnNext = document.getElementById("btn-next");
-            btnNext.disabled = true;
-            btnNext.textContent = "Finalizando...";
-
-            const response = await fetch(`${API_BASE_URL}/mensagens/agendamento`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                },
-                body: JSON.stringify(payloadParaBackend)
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || "Não foi possível enviar a confirmação.");
-            }
-
-            const statusMensagem = data.message_service?.status || "recebida";
-            alert(`Perfeito, ${payloadParaBackend.clienteNome}!\nConfirmação ${statusMensagem} pelo serviço de mensagens.`);
-        } catch (error) {
-            console.error("Erro ao finalizar agendamento:", error);
-            alert(error.message || "Houve um erro ao finalizar o agendamento.");
-        } finally {
-            updateFlowUI();
-        }
+    if (!box || !texto) {
+        alert(mensagem); // Fallback de segurança se esquecer o HTML
+        return;
     }
-});
 
+    texto.textContent = mensagem;
+
+    // Reseta as classes de cor
+    box.className = '';
+    
+    // Aplica a cor correta baseada no CSS
+    if (tipo === 'erro') box.classList.add('msg-erro');
+    else if (tipo === 'sucesso') box.classList.add('msg-sucesso');
+    else box.classList.add('msg-aviso');
+
+    // Faz aparecer
+    box.classList.add('msg-visivel');
+
+    // Faz sumir após 3.5 segundos
+    setTimeout(() => {
+        box.classList.remove('msg-visivel');
+        box.classList.add('msg-escondida');
+    }, 3500);
+}
+
+
+// ==========================================================================
+// EVENTO DO BOTÃO CONTINUAR / FINALIZAR AGENDAMENTO
+// ==========================================================================
+const btnNext = document.getElementById("btn-next");
+if (btnNext) {
+    btnNext.addEventListener("click", async (e) => {
+        e.preventDefault(); // IMPEDE O REFRESH DA PÁGINA
+
+        // 1. Validações chamando nossa nova função (sem desabilitar o botão)
+        if (currentStep === 1 && agendamento.servicos.length === 0) {
+            return mostrarAvisoTela("Selecione pelo menos um serviço.", "aviso");
+        }
+        if (currentStep === 2 && agendamento.barbeiroId === null) {
+            return mostrarAvisoTela("Escolha um profissional.", "aviso");
+        }
+        if (currentStep === 3 && (agendamento.data === null || agendamento.hora === null)) {
+            return mostrarAvisoTela("Escolha o dia e o horário do atendimento.", "aviso");
+        }
+        if (currentStep === 4) {
+            const formCliente = document.getElementById("client-form");
+            if (formCliente && !formCliente.checkValidity()) {
+                return mostrarAvisoTela("Preencha todos os seus dados corretamente.", "erro");
+            }
+        }
+
+        // 2. Se tudo estiver certo, avança a tela ou envia para a API
+        if (currentStep < 4) {
+            currentStep++;
+            updateFlowUI();
+        } else {
+            // Pega os dados finais do formulário
+            agendamento.cliente.nome = document.getElementById("client-name").value;
+            agendamento.cliente.telefone = document.getElementById("client-phone").value;
+            agendamento.cliente.notas = document.getElementById("client-notes").value;
+
+            const payloadParaBackend = {
+                barbeiroId: agendamento.barbeiroId,
+                servicosIds: agendamento.servicos, 
+                dataAgendamento: agendamento.data.toISOString().split('T')[0], 
+                horario: agendamento.hora,
+                clienteNome: agendamento.cliente.nome,
+                clienteTelefone: agendamento.cliente.telefone,
+                observacoes: agendamento.cliente.notas 
+            };
+
+            try {
+                btnNext.disabled = true;
+                btnNext.textContent = "Aguarde...";
+
+                // Chamada para a sua API
+                const response = await fetch(`${API_BASE_URL}/agendamentos`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payloadParaBackend)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || "Erro de comunicação com o servidor.");
+                }
+
+                // SUCESSO! Mostra a mensagem verde.
+                mostrarAvisoTela(`Agendamento confirmado, ${payloadParaBackend.clienteNome}!`, "sucesso");
+                
+                // Limpa a tela após 3 segundos
+                setTimeout(() => { window.location.reload(); }, 3000);
+
+            } catch (error) {
+                // ERRO! Mostra a mensagem vermelha.
+                console.error("Falha:", error);
+                mostrarAvisoTela(error.message || "Houve um problema ao finalizar.", "erro");
+                
+                btnNext.disabled = false;
+                btnNext.textContent = "Finalizar Agendamento";
+            }
+        }
+    });
+}
 document.getElementById("btn-prev").addEventListener("click", () => {
     if (currentStep > 1) {
         currentStep--;
@@ -513,17 +573,70 @@ document.getElementById("btn-prev").addEventListener("click", () => {
 // ==========================================================================
 // 9. INICIALIZAÇÃO DA PÁGINA (Unificado e Assíncrono)
 // ==========================================================================
+function esconderLoading() {
+    const loading = document.getElementById("loading-overlay");
+    if (loading) {
+        loading.classList.add("loading-escondido");
+    }
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
-    // 1. Primeiro carregamos todos os dados do banco
+    // 1. O HTML já carrega mostrando a tela de Loading por padrão.
+    
+    // 2. Espera os dados chegarem da API
     await carregarDadosIniciais();
     
-    // 2. Depois renderizamos a tela com os dados preenchidos
+    // 3. Renderiza todas as telas escondidas
     renderBarbeiros();
     renderServicos();
     renderCalendario(currentDateObj);
     renderHorarios();
     updateFlowUI();
 
-    // 3. Verificamos se há algum aviso ativo
+    // 4. Checa os pop-ups de aviso
     verificarAvisoBarbearia();
+
+    // 5. Tudo pronto! Esconde a tela de carregamento para o usuário ver o site.
+    esconderLoading();
 });
+// ==========================================================================
+// SISTEMA DE MODAL DE CONFIRMAÇÃO UNIVERSAL
+// ==========================================================================
+let acaoPendente = null; // Guarda a função que será executada se o usuário disser "Sim"
+
+window.abrirModalConfirmacao = function(titulo, mensagem, textoBotao, tipoBotao, callback) {
+    // 1. Troca os textos do modal
+    document.getElementById("confirm-titulo").innerText = titulo;
+    document.getElementById("confirm-mensagem").innerText = mensagem;
+    
+    // 2. Configura o botão de confirmação
+    const btnConfirmar = document.getElementById("btn-confirmar-acao");
+    btnConfirmar.innerText = textoBotao;
+    
+    // Se for uma ação perigosa (excluir), fica vermelho. Se for normal, fica dourado.
+    if (tipoBotao === 'danger') {
+        btnConfirmar.style.backgroundColor = 'var(--danger)';
+        btnConfirmar.style.color = '#ffffff';
+    } else {
+        btnConfirmar.style.backgroundColor = 'var(--brand-primary)';
+        btnConfirmar.style.color = 'var(--brand-bg-dark)';
+    }
+    
+    // 3. Salva a ação que deve acontecer e abre o modal
+    acaoPendente = callback;
+    document.getElementById("modal-confirmacao").classList.add("active");
+}
+
+window.fecharModalConfirmacao = function() {
+    document.getElementById("modal-confirmacao").classList.remove("active");
+    acaoPendente = null; // Limpa a ação por segurança
+}
+
+// Quando clicar no botão "Sim", executa a ação salva e fecha o modal
+const btnConfirmarAcao = document.getElementById("btn-confirmar-acao");
+if (btnConfirmarAcao) {
+    btnConfirmarAcao.addEventListener("click", () => {
+        if (acaoPendente) acaoPendente(); 
+        fecharModalConfirmacao();
+    });
+}
