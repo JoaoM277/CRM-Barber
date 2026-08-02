@@ -386,3 +386,44 @@ window.addEventListener("DOMContentLoaded", async () => {
     // Oculta a animação de loading e revela o painel do administrador
     esconderLoading();
 });
+// ==========================================================================
+// SISTEMA DE MODAL DE CONFIRMAÇÃO UNIVERSAL
+// ==========================================================================
+let acaoPendente = null; // Guarda a função que será executada se o usuário disser "Sim"
+
+window.abrirModalConfirmacao = function(titulo, mensagem, textoBotao, tipoBotao, callback) {
+    // 1. Troca os textos do modal
+    document.getElementById("confirm-titulo").innerText = titulo;
+    document.getElementById("confirm-mensagem").innerText = mensagem;
+    
+    // 2. Configura o botão de confirmação
+    const btnConfirmar = document.getElementById("btn-confirmar-acao");
+    btnConfirmar.innerText = textoBotao;
+    
+    // Se for uma ação perigosa (excluir), fica vermelho. Se for normal, fica dourado.
+    if (tipoBotao === 'danger') {
+        btnConfirmar.style.backgroundColor = 'var(--danger)';
+        btnConfirmar.style.color = '#ffffff';
+    } else {
+        btnConfirmar.style.backgroundColor = 'var(--brand-primary)';
+        btnConfirmar.style.color = 'var(--brand-bg-dark)';
+    }
+    
+    // 3. Salva a ação que deve acontecer e abre o modal
+    acaoPendente = callback;
+    document.getElementById("modal-confirmacao").classList.add("active");
+}
+
+window.fecharModalConfirmacao = function() {
+    document.getElementById("modal-confirmacao").classList.remove("active");
+    acaoPendente = null; // Limpa a ação por segurança
+}
+
+// Quando clicar no botão "Sim", executa a ação salva e fecha o modal
+const btnConfirmarAcao = document.getElementById("btn-confirmar-acao");
+if (btnConfirmarAcao) {
+    btnConfirmarAcao.addEventListener("click", () => {
+        if (acaoPendente) acaoPendente(); 
+        fecharModalConfirmacao();
+    });
+}
