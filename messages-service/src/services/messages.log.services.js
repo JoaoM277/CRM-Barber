@@ -1,9 +1,31 @@
-const { findMessageLogs } = require("../repository/messageLog.repository");
+
 
 
 // --------------------------------------------------------------------------
 // 1. Service de Logs de Mensagens
 // --------------------------------------------------------------------------
+const { findMessageLogs,  } = require("../repository/messageLog.repository");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* const { findMessageLogs } = require("../repository/messageLog.repository");
+//Antiga funcão de logs
 
 const getLogsService = async (queryParams) => {
   const { trigger, status, page = 1, limit = 10 } = queryParams;
@@ -27,3 +49,4 @@ const getLogsService = async (queryParams) => {
 };
 
 module.exports = { getLogsService };
+ */
