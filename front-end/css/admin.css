@@ -307,6 +307,56 @@ body {
     border-bottom: none;
 }
 
+/* =========================================================
+       AJUSTE DEFINITIVO DA TABELA DE AGENDA (APENAS MOBILE)
+       ========================================================= */
+    @media screen and (max-width: 768px) {
+        #panel-agenda .table-container {
+            width: 100% !important;
+            max-width: 100vw !important;
+            overflow: hidden !important; 
+        }
+
+        #panel-agenda .admin-table {
+            width: 100% !important;
+            table-layout: fixed !important; 
+        }
+
+        #panel-agenda .admin-table th, 
+        #panel-agenda .admin-table td {
+            padding: 8px 2px !important; 
+            font-size: 9px !important; /* Fonte bem miúda para caber as 6 colunas */
+            white-space: normal !important; 
+            word-break: break-word !important; /* Força a quebra do texto */
+            text-align: center !important;
+            vertical-align: middle !important;
+        }
+
+        /* Pílulas de status super compactas */
+        #panel-agenda .status-badge {
+            padding: 2px 4px !important;
+            font-size: 8px !important;
+            display: inline-block !important;
+        }
+        
+        /* Botões de ação reduzidos */
+        #panel-agenda .btn-action {
+            font-size: 12px !important;
+            padding: 2px !important;
+        }
+        
+        /* Barra de filtros (Data + Botão) ocupando 100% bem alinhada */
+        #panel-agenda .panel-actions {
+            width: 100% !important;
+            display: flex !important;
+            gap: 8px !important;
+        }
+        
+        #panel-agenda .panel-actions .admin-input {
+            flex-grow: 1 !important;
+        }
+    }
+
 .status-badge {
     padding: 4px 10px;
     border-radius: 20px;
@@ -596,5 +646,11 @@ textarea.admin-input:focus {
     .admin-form textarea {
         width: 100% !important;
         box-sizing: border-box !important;
+    }
+    /* Garante que os títulos dos painéis fiquem em uma linha só no celular */
+    .panel-header h2 {
+        font-size: 17px !important; /* Diminui a fonte levemente */
+        white-space: nowrap !important; /* Proíbe o texto de pular de linha */
+        letter-spacing: -0.5px !important; /* Aproxima um pouquinho as letras */
     }
 }
