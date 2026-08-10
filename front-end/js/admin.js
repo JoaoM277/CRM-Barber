@@ -528,6 +528,13 @@ function esconderLoading() {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
+    // SEGURANÇA: Verifica se o token de login existe antes de carregar o painel
+    const token = localStorage.getItem("admin_token");
+    if (!token) {
+        window.location.href = "login.html";
+        return;
+    }
+
     await Promise.all([
         renderAgenda(),
         renderServicos(),
