@@ -34,6 +34,19 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* ==========================================================================
+   OCULTAR SETAS DE AUMENTAR/DIMINUIR NOS INPUTS DE NÚMERO
+   ========================================================================== */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield; /* Para funcionar no Firefox */
+}
+
+/* ==========================================================================
    ESTILOS DO DASHBOARD (VISÃO GERAL)
    ========================================================================== */
 #panel-dashboard .panel-header {
@@ -477,6 +490,45 @@ textarea.admin-input:focus {
     justify-content: center;
     font-weight: bold;
     font-size: 16px;
+}
+
+/* ==========================================================================
+   SISTEMA DE NOTIFICAÇÕES (TOAST)
+   ========================================================================== */
+#admin-toast {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    padding: 16px 24px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #ffffff;
+    z-index: 999999;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-width: 350px;
+    pointer-events: none;
+}
+
+.toast-escondido {
+    opacity: 0;
+    transform: translateX(100px); 
+}
+
+.toast-visivel {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast-sucesso {
+    background-color: #2e7d32; 
+    border-left: 6px solid #1b5e20;
+}
+
+.toast-erro {
+    background-color: #d32f2f; 
+    border-left: 6px solid #b71c1c;
 }
 
 /* ==========================================================================

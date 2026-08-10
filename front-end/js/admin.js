@@ -138,7 +138,6 @@ async function renderAgenda(dataFiltro = "") {
     }
 }
 
-// Atualizado para usar Toast e Modal
 window.alterarStatus = async function(id, novoStatus) {
     const executarAlteracao = async () => {
         try {
@@ -149,7 +148,6 @@ window.alterarStatus = async function(id, novoStatus) {
             });
             if (res.ok) {
                 mostrarToastAdmin(novoStatus === 'confirmado' ? "Horário confirmado!" : "Agendamento cancelado com sucesso!");
-                // Pega a data que está no filtro no momento para não perder a pesquisa
                 const dataAtualFiltro = document.getElementById("filter-date") ? document.getElementById("filter-date").value : "";
                 renderAgenda(dataAtualFiltro);
             } else {
@@ -163,7 +161,7 @@ window.alterarStatus = async function(id, novoStatus) {
     if (novoStatus === 'cancelado') {
         abrirModalConfirmacao("Cancelar Horário", "Deseja realmente cancelar este agendamento? Esta ação não pode ser desfeita.", "Sim, Cancelar", "danger", executarAlteracao);
     } else {
-        executarAlteracao(); // Confirma direto, sem modal
+        executarAlteracao(); 
     }
 };
 
@@ -173,7 +171,7 @@ window.alterarStatus = async function(id, novoStatus) {
 async function renderServicos() {
     const tableBody = document.getElementById("servicos-table-body");
     if (!tableBody) return;
-    tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px;">Buscando serviços...</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px;">Buscando serviços...</td></tr>`;
 
     try {
         const response = await fetch(`${API_BASE_URL}/servicos`);
@@ -182,16 +180,19 @@ async function renderServicos() {
         
         tableBody.innerHTML = "";
         if (servicos.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px;">Sem serviços.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px;">Sem serviços.</td></tr>`;
             return;
         }
 
         servicos.forEach(servico => {
             const tr = document.createElement("tr");
+            
+            // Formatando o preço para exibir com vírgula na tabela
+            const precoFormatado = Number(servico.preco).toFixed(2).replace('.', ',');
+
             tr.innerHTML = `
-                <td style="font-size: 24px;">${servico.icon}</td>
                 <td><strong>${servico.nome}</strong></td>
-                <td style="color: var(--brand-primary); font-weight: 600;">R$ ${Number(servico.preco).toFixed(2)}</td>
+                <td style="color: var(--brand-primary); font-weight: 600;">R$ ${precoFormatado}</td>
                 <td>${servico.duracao} min</td>
                 <td>
                     <button class="btn-action" onclick="abrirModalServico(${servico.id})" title="Editar">✏️</button>
@@ -201,11 +202,10 @@ async function renderServicos() {
             tableBody.appendChild(tr);
         });
     } catch (error) {
-        tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger);">Servidor offline.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--danger);">Servidor offline.</td></tr>`;
     }
 }
 
-// Atualizado para usar Toast e Modal
 window.deletarServico = function(id) {
     abrirModalConfirmacao("Excluir Serviço", "Tem certeza que deseja apagar este serviço definitivamente?", "Excluir Serviço", "danger", async () => {
         try {
@@ -236,10 +236,15 @@ if (formServico) {
     formServico.addEventListener("submit", async (e) => {
         e.preventDefault();
         const id = document.getElementById("servico-id").value;
+        
+        // Pega o valor "30,00" e converte de volta para o formato de banco de dados "30.00"
+        let precoString = document.getElementById("servico-preco").value;
+        let precoFloat = parseFloat(precoString.replace(/\./g, '').replace(',', '.'));
+
         const payload = {
-            icon: document.getElementById("servico-icon").value,
+            icon: "", // Mantemos vazio para não quebrar a estrutura antiga do banco
             nome: document.getElementById("servico-nome").value,
-            preco: parseFloat(document.getElementById("servico-preco").value),
+            preco: precoFloat,
             duracao: parseInt(document.getElementById("servico-duracao").value)
         };
 
@@ -301,7 +306,6 @@ async function renderBarbeiros() {
     }
 }
 
-// Atualizado para usar Toast e Modal
 window.deletarBarbeiro = function(id) {
     abrirModalConfirmacao("Excluir Profissional", "Tem certeza que deseja apagar este profissional do sistema?", "Excluir Profissional", "danger", async () => {
         try {
@@ -332,9 +336,13 @@ if (formBarbeiro) {
     formBarbeiro.addEventListener("submit", async (e) => {
         e.preventDefault();
         const id = document.getElementById("barbeiro-id").value;
+        
+        // MÁGICA AQUI: O payload agora envia dados falsos para os campos que o banco exige, mas que não estão mais na tela
         const payload = {
             nome: document.getElementById("barbeiro-nome").value,
-            telefone: document.getElementById("barbeiro-telefone").value
+            telefone: document.getElementById("barbeiro-telefone").value.replace(/\D/g, ""), 
+            especialidade: "Geral", // Valor padrão para evitar bloqueio do banco
+            foto: "" // Valor padrão caso o banco exija uma imagem
         };
 
         const url = id ? `${API_BASE_URL}/barbeiros/${id}` : `${API_BASE_URL}/barbeiros`;
@@ -344,6 +352,7 @@ if (formBarbeiro) {
             const res = await fetch(url, {
                 method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
             });
+            
             if (res.ok) { 
                 fecharModalBarbeiro(); 
                 renderBarbeiros(); 
@@ -356,7 +365,6 @@ if (formBarbeiro) {
         }
     });
 }
-
 // --------------------------------------------------------------------------
 // 6. MÓDULO: DASHBOARD FINANCEIRO
 // --------------------------------------------------------------------------
@@ -431,7 +439,7 @@ if (formAviso) {
 }
 
 // --------------------------------------------------------------------------
-// 8. TELA DE CARREGAMENTO E INICIALIZAÇÃO ASSÍNCRONA
+// 8. TELA DE CARREGAMENTO, MÁSCARAS E INICIALIZAÇÃO
 // --------------------------------------------------------------------------
 function esconderLoading() {
     const loading = document.getElementById("loading-overlay");
@@ -461,6 +469,34 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // 3. Oculta a animação de loading e revela o painel do administrador
+    // 3. MÁSCARA DE DINHEIRO PARA O PREÇO DO SERVIÇO
+    const inputPreco = document.getElementById("servico-preco");
+    if (inputPreco) {
+        inputPreco.addEventListener("input", (e) => {
+            let valor = e.target.value.replace(/\D/g, ""); // Mantém apenas números
+            if (valor === "") {
+                e.target.value = "";
+                return;
+            }
+            valor = (parseInt(valor, 10) / 100).toFixed(2); // Divide por 100 para criar os centavos
+            valor = valor.replace(".", ","); // Troca o ponto por vírgula
+            valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); // Adiciona o ponto de milhar
+            e.target.value = valor;
+        });
+    }
+
+    // 4. MÁSCARA DE TELEFONE PARA O BARBEIRO (99)999999999
+    const inputTelefone = document.getElementById("barbeiro-telefone");
+    if (inputTelefone) {
+        inputTelefone.addEventListener("input", (e) => {
+            let valor = e.target.value.replace(/\D/g, ""); // Mantém apenas números
+            if (valor.length > 2) {
+                valor = `(${valor.substring(0, 2)})${valor.substring(2)}`;
+            }
+            e.target.value = valor;
+        });
+    }
+
+    // 5. Oculta a animação de loading e revela o painel do administrador
     esconderLoading();
 });
