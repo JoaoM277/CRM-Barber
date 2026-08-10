@@ -98,10 +98,13 @@ async function renderAgenda(dataFiltro = "") {
             url += `?data=${dataFiltro}`;
         }
 
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            headers: { "Accept": "application/json" } // Garante retorno em JSON do Laravel
+        });
         
         if (!response.ok) throw new Error("Erro de rede");
-        const agendamentos = await response.json();
+        const jsonBody = await response.json();
+        const agendamentos = jsonBody.data ? jsonBody.data : jsonBody;
         
         tableBody.innerHTML = "";
         
@@ -117,14 +120,21 @@ async function renderAgenda(dataFiltro = "") {
             let badgeClass = agendamento.status === "confirmado" ? "confirmed" : "pending";
             let badgeText = agendamento.status === "confirmado" ? "Confirmado" : "Aguardando";
 
+            // Se o Laravel devolver os dados em inglês (client_name, client_phone, etc), 
+            // precisaremos ajustar essas chaves depois.
+            const nomeCli = agendamento.cliente_nome || agendamento.client_name || '';
+            const telCli = agendamento.cliente_telefone || agendamento.client_phone || '';
+            const dataAg = agendamento.data || agendamento.date || '';
+            const horaAg = agendamento.horario || agendamento.time || '';
+
             tr.innerHTML = `
                 <td>
-                    <strong>${agendamento.cliente_nome}</strong><br>
-                    <span class="text-small">${formatarTelefoneAdmin(agendamento.cliente_telefone)}</span>
+                    <strong>${nomeCli}</strong><br>
+                    <span class="text-small">${formatarTelefoneAdmin(telCli)}</span>
                 </td>
                 <td>${agendamento.Servico ? agendamento.Servico.nome : 'N/A'}</td>
                 <td>${agendamento.Barbeiro ? agendamento.Barbeiro.nome : 'N/A'}</td>
-                <td>${agendamento.data.split('-').reverse().join('/')} às ${agendamento.horario}</td>
+                <td>${dataAg.split('-').reverse().join('/')} às ${horaAg}</td>
                 <td><span class="status-badge ${badgeClass}">${badgeText}</span></td>
                 <td>
                     ${agendamento.status === "pendente" ? `<button class="btn-action confirm" onclick="alterarStatus(${agendamento.id}, 'confirmado')" title="Confirmar">✔️</button>` : ''}
@@ -143,7 +153,10 @@ window.alterarStatus = async function(id, novoStatus) {
         try {
             const res = await fetch(`${API_BASE_URL}/agendamentos/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
                 body: JSON.stringify({ status: novoStatus })
             });
             if (res.ok) {
@@ -174,9 +187,14 @@ async function renderServicos() {
     tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px;">Buscando serviços...</td></tr>`;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/servicos`);
+        const response = await fetch(`${API_BASE_URL}/servicos`, {
+            headers: { "Accept": "application/json" }
+        });
         if (!response.ok) throw new Error("Erro");
-        const servicos = await response.json();
+        const jsonBody = await response.json();
+        
+        // Pega a lista dentro de "data" se vier do Laravel
+        const servicos = jsonBody.data ? jsonBody.data : jsonBody;
         
         tableBody.innerHTML = "";
         if (servicos.length === 0) {
@@ -187,13 +205,17 @@ async function renderServicos() {
         servicos.forEach(servico => {
             const tr = document.createElement("tr");
             
-            // Formatando o preço para exibir com vírgula na tabela
-            const precoFormatado = Number(servico.preco).toFixed(2).replace('.', ',');
+            // Aceitando chaves em português ou inglês
+            const nomeSvc = servico.nome || servico.name || '';
+            const precoSvc = servico.preco || servico.price || 0;
+            const duracaoSvc = servico.duracao || servico.duration || 0;
+
+            const precoFormatado = Number(precoSvc).toFixed(2).replace('.', ',');
 
             tr.innerHTML = `
-                <td><strong>${servico.nome}</strong></td>
+                <td><strong>${nomeSvc}</strong></td>
                 <td style="color: var(--brand-primary); font-weight: 600;">R$ ${precoFormatado}</td>
-                <td>${servico.duracao} min</td>
+                <td>${duracaoSvc} min</td>
                 <td>
                     <button class="btn-action" onclick="abrirModalServico(${servico.id})" title="Editar">✏️</button>
                     <button class="btn-action cancel" onclick="deletarServico(${servico.id})" title="Excluir">🗑️</button>
@@ -209,7 +231,10 @@ async function renderServicos() {
 window.deletarServico = function(id) {
     abrirModalConfirmacao("Excluir Serviço", "Tem certeza que deseja apagar este serviço definitivamente?", "Excluir Serviço", "danger", async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/servicos/${id}`, { method: 'DELETE' });
+            const response = await fetch(`${API_BASE_URL}/servicos/${id}`, { 
+                method: 'DELETE',
+                headers: { "Accept": "application/json" } 
+            });
             if (response.ok) {
                 mostrarToastAdmin("Serviço excluído com sucesso!");
                 renderServicos();
@@ -237,15 +262,15 @@ if (formServico) {
         e.preventDefault();
         const id = document.getElementById("servico-id").value;
         
-        // Pega o valor "30,00" e converte de volta para o formato de banco de dados "30.00"
         let precoString = document.getElementById("servico-preco").value;
         let precoFloat = parseFloat(precoString.replace(/\./g, '').replace(',', '.'));
 
+        // ATUALIZADO: Payload usando chaves em INGLÊS para bater com o Laravel
         const payload = {
-            icon: "", // Mantemos vazio para não quebrar a estrutura antiga do banco
-            nome: document.getElementById("servico-nome").value,
-            preco: precoFloat,
-            duracao: parseInt(document.getElementById("servico-duracao").value)
+            icon: null, 
+            name: document.getElementById("servico-nome").value,
+            price: precoFloat,
+            duration: parseInt(document.getElementById("servico-duracao").value)
         };
 
         const url = id ? `${API_BASE_URL}/servicos/${id}` : `${API_BASE_URL}/servicos`;
@@ -253,14 +278,26 @@ if (formServico) {
 
         try {
             const res = await fetch(url, {
-                method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+                method, 
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Accept": "application/json" // <-- EVITA REDIRECIONAMENTO DE ERRO
+                }, 
+                body: JSON.stringify(payload)
             });
+            
             if (res.ok) { 
                 fecharModalServico(); 
                 renderServicos(); 
                 mostrarToastAdmin("Serviço salvo com sucesso!");
             } else {
-                mostrarToastAdmin("Erro ao salvar serviço.", "erro");
+                // Captura do erro exato vindo do Laravel
+                const errData = await res.json();
+                console.error("Erro Servicos:", errData);
+                let erroMsg = "Erro ao salvar serviço.";
+                if (errData.errors) erroMsg = Object.values(errData.errors)[0][0];
+                else if (errData.message) erroMsg = errData.message;
+                mostrarToastAdmin(erroMsg, "erro");
             }
         } catch (err) { 
             mostrarToastAdmin("Erro de conexão com o servidor.", "erro"); 
@@ -269,7 +306,7 @@ if (formServico) {
 }
 
 // --------------------------------------------------------------------------
-// 5. MÓDULO: BARBEIROS
+// 5. MÓDULO: BARBEIROS (PROFISSIONAIS)
 // --------------------------------------------------------------------------
 async function renderBarbeiros() {
     const tableBody = document.getElementById("barbeiros-table-body");
@@ -277,23 +314,32 @@ async function renderBarbeiros() {
     tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px;">Buscando profissionais...</td></tr>`;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/barbeiros`);
+        // CORRIGIDO PARA O ENDEREÇO CERTO DA API DO LARAVEL
+        const response = await fetch(`${API_BASE_URL}/profissionais`, {
+            headers: { "Accept": "application/json" }
+        });
         if (!response.ok) throw new Error("Erro");
-        const barbeiros = await response.json();
         
+        const jsonBody = await response.json();
+        const listaBarbeiros = jsonBody.data ? jsonBody.data : jsonBody;
+
         tableBody.innerHTML = "";
-        if (barbeiros.length === 0) {
+        if (listaBarbeiros.length === 0) {
             tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px;">Nenhum cadastrado.</td></tr>`;
             return;
         }
 
-        barbeiros.forEach(barbeiro => {
+        listaBarbeiros.forEach(barbeiro => {
             const tr = document.createElement("tr");
-            const inicial = barbeiro.nome.charAt(0).toUpperCase();
+            
+            const nomeBarb = barbeiro.nome || barbeiro.name || '';
+            const telBarb = barbeiro.telefone || barbeiro.phone || '';
+            const inicial = nomeBarb ? nomeBarb.charAt(0).toUpperCase() : "?";
+            
             tr.innerHTML = `
                 <td><div class="table-avatar">${inicial}</div></td>
-                <td><strong>${barbeiro.nome}</strong></td>
-                <td>${formatarTelefoneAdmin(barbeiro.telefone)}</td>
+                <td><strong>${nomeBarb}</strong></td>
+                <td>${formatarTelefoneAdmin(telBarb)}</td>
                 <td>
                     <button class="btn-action" onclick="abrirModalBarbeiro(${barbeiro.id})" title="Editar">✏️</button>
                     <button class="btn-action cancel" onclick="deletarBarbeiro(${barbeiro.id})" title="Excluir">🗑️</button>
@@ -309,7 +355,11 @@ async function renderBarbeiros() {
 window.deletarBarbeiro = function(id) {
     abrirModalConfirmacao("Excluir Profissional", "Tem certeza que deseja apagar este profissional do sistema?", "Excluir Profissional", "danger", async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/barbeiros/${id}`, { method: 'DELETE' });
+            // CORRIGIDO PARA /profissionais
+            const response = await fetch(`${API_BASE_URL}/profissionais/${id}`, { 
+                method: 'DELETE',
+                headers: { "Accept": "application/json" } 
+            });
             if (response.ok) {
                 mostrarToastAdmin("Profissional removido com sucesso!");
                 renderBarbeiros();
@@ -337,28 +387,46 @@ if (formBarbeiro) {
         e.preventDefault();
         const id = document.getElementById("barbeiro-id").value;
         
-        // MÁGICA AQUI: O payload agora envia dados falsos para os campos que o banco exige, mas que não estão mais na tela
+        // Captura direta e limpa dos campos do formulário
+        const nomeInput = document.getElementById("barbeiro-nome").value;
+        const telefoneInput = document.getElementById("barbeiro-telefone").value.replace(/\D/g, ""); // Remove parênteses e traços, deixando apenas os números
+
         const payload = {
-            nome: document.getElementById("barbeiro-nome").value,
-            telefone: document.getElementById("barbeiro-telefone").value.replace(/\D/g, ""), 
-            especialidade: "Geral", // Valor padrão para evitar bloqueio do banco
-            foto: "" // Valor padrão caso o banco exija uma imagem
+            name: nomeInput,
+            phone: telefoneInput, 
+            speciality: "Geral", 
+            photo: null,      
+            active: true      
         };
 
-        const url = id ? `${API_BASE_URL}/barbeiros/${id}` : `${API_BASE_URL}/barbeiros`;
+        const url = id ? `${API_BASE_URL}/profissionais/${id}` : `${API_BASE_URL}/profissionais`;
         const method = id ? "PUT" : "POST";
 
         try {
             const res = await fetch(url, {
-                method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+                method, 
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                }, 
+                body: JSON.stringify(payload)
             });
             
-            if (res.ok) { 
+           if (res.ok) { 
                 fecharModalBarbeiro(); 
                 renderBarbeiros(); 
                 mostrarToastAdmin("Profissional salvo com sucesso!");
             } else {
-                mostrarToastAdmin("Erro ao salvar profissional.", "erro");
+                const errData = await res.json();
+                console.error("ERRO COMPLETO DO LARAVEL:", errData); // <-- VAI MOSTRAR TUDO NO F12
+                
+                // Exibe a mensagem real que vier do servidor
+                let erroMsg = errData.message || "Erro ao salvar profissional.";
+                if (errData.errors) {
+                    erroMsg = Object.values(errData.errors)[0][0];
+                }
+                
+                mostrarToastAdmin(erroMsg, "erro");
             }
         } catch (err) { 
             mostrarToastAdmin("Erro de conexão.", "erro"); 
@@ -376,9 +444,13 @@ async function renderDashboard() {
     if (!elDia || !elMes || !elAno) return;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/faturamento`);
+        const response = await fetch(`${API_BASE_URL}/faturamento`, {
+            headers: { "Accept": "application/json" }
+        });
         if (!response.ok) throw new Error(`Erro na resposta do servidor`);
-        const faturamento = await response.json();
+        
+        const jsonBody = await response.json();
+        const faturamento = jsonBody.data ? jsonBody.data : jsonBody;
 
         elDia.innerText = Number(faturamento.dia || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         elMes.innerText = Number(faturamento.mes || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -396,10 +468,14 @@ async function renderDashboard() {
 // --------------------------------------------------------------------------
 async function renderAviso() {
     try {
-        const response = await fetch(`${API_BASE_URL}/avisos/1`); 
+        const response = await fetch(`${API_BASE_URL}/avisos/1`, {
+            headers: { "Accept": "application/json" }
+        }); 
         
         if (response.ok) {
-            const aviso = await response.json();
+            const jsonBody = await response.json();
+            const aviso = jsonBody.data ? jsonBody.data : jsonBody;
+
             document.getElementById("aviso-status").value = aviso.ativo ? "ativo" : "inativo";
             document.getElementById("aviso-titulo").value = aviso.titulo || "";
             document.getElementById("aviso-texto").value = aviso.mensagem || "";
@@ -423,7 +499,10 @@ if (formAviso) {
         try {
             const response = await fetch(`${API_BASE_URL}/avisos/1`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
                 body: JSON.stringify(payload)
             });
 
@@ -449,7 +528,6 @@ function esconderLoading() {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
-    // 1. Inicia todas as buscas de dados ao mesmo tempo
     await Promise.all([
         renderAgenda(),
         renderServicos(),
@@ -458,7 +536,6 @@ window.addEventListener("DOMContentLoaded", async () => {
         renderAviso()
     ]);
 
-    // 2. Configura a Lógica do Botão de Filtro da Agenda
     const btnFiltrar = document.getElementById("btn-filtrar-agenda");
     const inputData = document.getElementById("filter-date");
 
@@ -469,27 +546,25 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // 3. MÁSCARA DE DINHEIRO PARA O PREÇO DO SERVIÇO
     const inputPreco = document.getElementById("servico-preco");
     if (inputPreco) {
         inputPreco.addEventListener("input", (e) => {
-            let valor = e.target.value.replace(/\D/g, ""); // Mantém apenas números
+            let valor = e.target.value.replace(/\D/g, ""); 
             if (valor === "") {
                 e.target.value = "";
                 return;
             }
-            valor = (parseInt(valor, 10) / 100).toFixed(2); // Divide por 100 para criar os centavos
-            valor = valor.replace(".", ","); // Troca o ponto por vírgula
-            valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); // Adiciona o ponto de milhar
+            valor = (parseInt(valor, 10) / 100).toFixed(2); 
+            valor = valor.replace(".", ","); 
+            valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); 
             e.target.value = valor;
         });
     }
 
-    // 4. MÁSCARA DE TELEFONE PARA O BARBEIRO (99)999999999
     const inputTelefone = document.getElementById("barbeiro-telefone");
     if (inputTelefone) {
         inputTelefone.addEventListener("input", (e) => {
-            let valor = e.target.value.replace(/\D/g, ""); // Mantém apenas números
+            let valor = e.target.value.replace(/\D/g, ""); 
             if (valor.length > 2) {
                 valor = `(${valor.substring(0, 2)})${valor.substring(2)}`;
             }
@@ -497,6 +572,5 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // 5. Oculta a animação de loading e revela o painel do administrador
     esconderLoading();
 });
