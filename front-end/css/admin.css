@@ -27,17 +27,22 @@ body {
     overflow: hidden;
 }
 
+/* Força o ícone do calendário a ficar branco no tema escuro */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
 /* ==========================================================================
    ESTILOS DO DASHBOARD (VISÃO GERAL)
    ========================================================================== */
 #panel-dashboard .panel-header {
-    border-bottom: none; /* Remove a linha para integrar melhor com os cards */
+    border-bottom: none; 
     margin-bottom: 16px;
 }
 
 .dashboard-grid {
     display: grid;
-    /* Usa auto-fit para criar colunas flexíveis que se adaptam à tela */
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 24px;
     margin-bottom: 40px;
@@ -50,14 +55,14 @@ body {
     padding: 24px;
     display: flex;
     align-items: center;
-    gap: 20px; /* Espaço entre o ícone e os textos */
+    gap: 20px; 
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .dash-card:hover {
     transform: translateY(-4px);
-    border-color: var(--brand-primary); /* Acende a borda ao passar o mouse */
+    border-color: var(--brand-primary); 
 }
 
 .dash-icon {
@@ -68,7 +73,7 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 28px;
-    flex-shrink: 0; /* Impede que o ícone seja esmagado pelo texto */
+    flex-shrink: 0; 
 }
 
 .dash-info {
@@ -90,6 +95,7 @@ body {
     color: var(--text-main);
     margin: 0;
 }
+
 /* ==========================================================================
    2. LAYOUT DESKTOP (PADRÃO)
    ========================================================================== */
@@ -306,56 +312,6 @@ body {
 .admin-table tr:last-child td {
     border-bottom: none;
 }
-
-/* =========================================================
-       AJUSTE DEFINITIVO DA TABELA DE AGENDA (APENAS MOBILE)
-       ========================================================= */
-    @media screen and (max-width: 768px) {
-        #panel-agenda .table-container {
-            width: 100% !important;
-            max-width: 100vw !important;
-            overflow: hidden !important; 
-        }
-
-        #panel-agenda .admin-table {
-            width: 100% !important;
-            table-layout: fixed !important; 
-        }
-
-        #panel-agenda .admin-table th, 
-        #panel-agenda .admin-table td {
-            padding: 8px 2px !important; 
-            font-size: 9px !important; /* Fonte bem miúda para caber as 6 colunas */
-            white-space: normal !important; 
-            word-break: break-word !important; /* Força a quebra do texto */
-            text-align: center !important;
-            vertical-align: middle !important;
-        }
-
-        /* Pílulas de status super compactas */
-        #panel-agenda .status-badge {
-            padding: 2px 4px !important;
-            font-size: 8px !important;
-            display: inline-block !important;
-        }
-        
-        /* Botões de ação reduzidos */
-        #panel-agenda .btn-action {
-            font-size: 12px !important;
-            padding: 2px !important;
-        }
-        
-        /* Barra de filtros (Data + Botão) ocupando 100% bem alinhada */
-        #panel-agenda .panel-actions {
-            width: 100% !important;
-            display: flex !important;
-            gap: 8px !important;
-        }
-        
-        #panel-agenda .panel-actions .admin-input {
-            flex-grow: 1 !important;
-        }
-    }
 
 .status-badge {
     padding: 4px 10px;
@@ -607,7 +563,7 @@ textarea.admin-input:focus {
        AJUSTES GLOBAIS DE PAINÉIS E AVISOS (Mobile)
        ========================================================= */
     
-    /* 1. Quebra TODOS os cabeçalhos para ficarem em coluna no celular */
+    /* Quebra TODOS os cabeçalhos para ficarem em coluna no celular */
     .panel-header {
         display: flex !important;
         flex-direction: column !important;
@@ -616,22 +572,29 @@ textarea.admin-input:focus {
         height: auto !important;
     }
 
-    /* 2. Garante que os blocos DENTRO do header (Texto e Formulário) peguem a largura toda */
+    /* Garante que os títulos dos painéis fiquem em uma linha só no celular */
+    .panel-header h2 {
+        font-size: 17px !important; 
+        white-space: nowrap !important; 
+        letter-spacing: -0.5px !important; 
+    }
+
+    /* Garante que os blocos DENTRO do header (Texto e Formulário) peguem a largura toda */
     .panel-header > div {
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
     }
 
-    /* 3. Ajusta o card escuro para não vazar da tela */
+    /* Ajusta o card escuro para não vazar da tela */
     .message-panel-container {
         width: 100% !important;
-        padding: 16px !important; /* Diminui um pouco o padding no celular */
+        padding: 16px !important; 
         margin: 0 !important;
         box-sizing: border-box !important;
     }
 
-    /* 4. Empilha os campos (Inputs) que antes dividiam a mesma linha */
+    /* Empilha os campos (Inputs) que antes dividiam a mesma linha */
     .input-row {
         display: flex !important;
         flex-direction: column !important;
@@ -639,7 +602,7 @@ textarea.admin-input:focus {
         width: 100% !important;
     }
 
-    /* 5. Garante que os campos de texto não empurrem a tela pro lado */
+    /* Garante que os campos de texto não empurrem a tela pro lado */
     .input-group,
     .admin-form input,
     .admin-form select,
@@ -647,10 +610,72 @@ textarea.admin-input:focus {
         width: 100% !important;
         box-sizing: border-box !important;
     }
-    /* Garante que os títulos dos painéis fiquem em uma linha só no celular */
-    .panel-header h2 {
-        font-size: 17px !important; /* Diminui a fonte levemente */
-        white-space: nowrap !important; /* Proíbe o texto de pular de linha */
-        letter-spacing: -0.5px !important; /* Aproxima um pouquinho as letras */
+
+    /* =========================================================
+       AJUSTE DEFINITIVO DA TABELA DE AGENDA (MOBILE) E FILTRO
+       ========================================================= */
+    #panel-agenda .table-container {
+        width: 100% !important;
+        max-width: 100vw !important;
+        overflow: hidden !important; 
+    }
+
+    #panel-agenda .admin-table {
+        width: 100% !important;
+        table-layout: fixed !important; 
+    }
+
+    #panel-agenda .admin-table th, 
+    #panel-agenda .admin-table td {
+        padding: 8px 2px !important; 
+        font-size: 9px !important; 
+        white-space: normal !important; 
+        word-break: break-word !important; 
+        text-align: center !important;
+        vertical-align: middle !important;
+    }
+
+    #panel-agenda .status-badge {
+        padding: 2px 4px !important;
+        font-size: 8px !important;
+        display: inline-block !important;
+    }
+    
+    #panel-agenda .btn-action {
+        font-size: 12px !important;
+        padding: 2px !important;
+    }
+    
+    /* Barra de filtros (Data + Botão) - Estilo Integrado e Compacto */
+    #panel-agenda .panel-actions {
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        background-color: var(--brand-bg-dark) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 8px !important;
+        padding: 4px !important;
+        margin-top: -4px !important;
+        margin-bottom: 8px !important;
+    }
+    
+    #panel-agenda .panel-actions .admin-input {
+        flex-grow: 1 !important;
+        border: none !important;
+        background: transparent !important;
+        padding: 6px 10px !important;
+        font-size: 13px !important;
+        color: var(--text-main) !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+    
+    #panel-agenda .panel-actions .btn-primary {
+        padding: 6px 16px !important;
+        border-radius: 6px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        margin: 0 !important;
+        white-space: nowrap !important;
     }
 }
