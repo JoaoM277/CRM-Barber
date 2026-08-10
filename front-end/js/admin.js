@@ -1,5 +1,5 @@
 // --------------------------------------------------------------------------
-// 1. NAVEGAÇÃO DE ABAS
+// 1. NAVEGAÇÃO DE ABAS E TOAST (MENSAGENS)
 // --------------------------------------------------------------------------
 const menuItems = document.querySelectorAll('.menu-item');
 const tabPanels = document.querySelectorAll('.tab-panel');
@@ -15,14 +15,72 @@ menuItems.forEach(item => {
     });
 });
 
+window.mostrarToastAdmin = function(mensagem, tipo = 'sucesso') {
+    const toast = document.getElementById("admin-toast");
+    const texto = document.getElementById("admin-toast-texto");
+
+    if (!toast || !texto) return;
+
+    texto.innerText = mensagem;
+    toast.classList.remove("toast-sucesso", "toast-erro");
+
+    if (tipo === 'erro') {
+        toast.classList.add("toast-erro");
+    } else {
+        toast.classList.add("toast-sucesso");
+    }
+
+    toast.classList.remove("toast-escondido");
+    toast.classList.add("toast-visivel");
+
+    setTimeout(() => {
+        toast.classList.remove("toast-visivel");
+        toast.classList.add("toast-escondido");
+    }, 3500);
+};
+
 // --------------------------------------------------------------------------
-// 2. CONFIGURAÇÕES BASE
+// 2. CONFIGURAÇÕES BASE E MODAL UNIVERSAL
 // --------------------------------------------------------------------------
 const API_BASE_URL = 'http://localhost:8000/api';
 
 function formatarTelefoneAdmin(telefone) {
     if (!telefone) return "";
     return `(${telefone.slice(0,2)}) ${telefone.slice(2,7)}-${telefone.slice(7)}`;
+}
+
+let acaoPendente = null; 
+
+window.abrirModalConfirmacao = function(titulo, mensagem, textoBotao, tipoBotao, callback) {
+    document.getElementById("confirm-titulo").innerText = titulo;
+    document.getElementById("confirm-mensagem").innerText = mensagem;
+    
+    const btnConfirmar = document.getElementById("btn-confirmar-acao");
+    btnConfirmar.innerText = textoBotao;
+    
+    if (tipoBotao === 'danger') {
+        btnConfirmar.style.backgroundColor = 'var(--danger)';
+        btnConfirmar.style.color = '#ffffff';
+    } else {
+        btnConfirmar.style.backgroundColor = 'var(--brand-primary)';
+        btnConfirmar.style.color = 'var(--brand-bg-dark)';
+    }
+    
+    acaoPendente = callback;
+    document.getElementById("modal-confirmacao").classList.add("active");
+}
+
+window.fecharModalConfirmacao = function() {
+    document.getElementById("modal-confirmacao").classList.remove("active");
+    acaoPendente = null; 
+}
+
+const btnConfirmarAcao = document.getElementById("btn-confirmar-acao");
+if (btnConfirmarAcao) {
+    btnConfirmarAcao.addEventListener("click", () => {
+        if (acaoPendente) acaoPendente(); 
+        fecharModalConfirmacao();
+    });
 }
 
 // --------------------------------------------------------------------------
@@ -32,11 +90,9 @@ async function renderAgenda(dataFiltro = "") {
     const tableBody = document.getElementById("agenda-table-body");
     if (!tableBody) return;
     
-    // Mostra mensagem de carregando enquanto busca
     tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-muted);">Buscando agendamentos...</td></tr>`;
 
     try {
-        // MÁGICA AQUI: Se tiver uma data, adiciona ela na URL do pedido (?data=2026-08-02)
         let url = `${API_BASE_URL}/agendamentos`;
         if (dataFiltro !== "") {
             url += `?data=${dataFiltro}`;
@@ -49,7 +105,6 @@ async function renderAgenda(dataFiltro = "") {
         
         tableBody.innerHTML = "";
         
-        // Filtra os cancelados para não poluir a tela
         const agendamentosAtivos = agendamentos.filter(ag => ag.status !== "cancelado");
 
         if (agendamentosAtivos.length === 0) {
@@ -82,36 +137,33 @@ async function renderAgenda(dataFiltro = "") {
         tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger);">Servidor offline</td></tr>`;
     }
 }
-window.addEventListener("DOMContentLoaded", async () => {
 
-    // --- NOVO: LÓGICA DO BOTÃO DE FILTRO DA AGENDA ---
-    const btnFiltrar = document.getElementById("btn-filtrar-agenda");
-    const inputData = document.getElementById("filter-date");
-
-    if (btnFiltrar && inputData) {
-        btnFiltrar.addEventListener("click", () => {
-            // Pega o valor do calendário (formato YYYY-MM-DD)
-            const dataEscolhida = inputData.value; 
-            
-            // Chama a função passando a data. Se o input estiver vazio, ele busca tudo de novo.
-            renderAgenda(dataEscolhida);
-        });
-    }
-
-    // Oculta a animação de loading e revela o painel
-    esconderLoading();
-});
+// Atualizado para usar Toast e Modal
 window.alterarStatus = async function(id, novoStatus) {
-    if (novoStatus === 'cancelado' && !confirm("Cancelar agendamento?")) return;
-    try {
-        const res = await fetch(`${API_BASE_URL}/agendamentos/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: novoStatus })
-        });
-        if (res.ok) renderAgenda();
-    } catch (error) {
-        alert("Falha na conexão.");
+    const executarAlteracao = async () => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/agendamentos/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: novoStatus })
+            });
+            if (res.ok) {
+                mostrarToastAdmin(novoStatus === 'confirmado' ? "Horário confirmado!" : "Agendamento cancelado com sucesso!");
+                // Pega a data que está no filtro no momento para não perder a pesquisa
+                const dataAtualFiltro = document.getElementById("filter-date") ? document.getElementById("filter-date").value : "";
+                renderAgenda(dataAtualFiltro);
+            } else {
+                mostrarToastAdmin("Erro ao alterar o status.", "erro");
+            }
+        } catch (error) {
+            mostrarToastAdmin("Falha na conexão. Tente novamente.", "erro");
+        }
+    };
+
+    if (novoStatus === 'cancelado') {
+        abrirModalConfirmacao("Cancelar Horário", "Deseja realmente cancelar este agendamento? Esta ação não pode ser desfeita.", "Sim, Cancelar", "danger", executarAlteracao);
+    } else {
+        executarAlteracao(); // Confirma direto, sem modal
     }
 };
 
@@ -153,23 +205,27 @@ async function renderServicos() {
     }
 }
 
-// DELETE Serviços
-window.deletarServico = async function(id) {
-    if (!confirm("Tem certeza que deseja apagar este serviço definitivamente?")) return;
-    try {
-        const response = await fetch(`${API_BASE_URL}/servicos/${id}`, { method: 'DELETE' });
-        if (response.ok) renderServicos();
-        else alert("Erro ao apagar.");
-    } catch (error) {
-        alert("Erro de rede.");
-    }
+// Atualizado para usar Toast e Modal
+window.deletarServico = function(id) {
+    abrirModalConfirmacao("Excluir Serviço", "Tem certeza que deseja apagar este serviço definitivamente?", "Excluir Serviço", "danger", async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/servicos/${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                mostrarToastAdmin("Serviço excluído com sucesso!");
+                renderServicos();
+            } else {
+                mostrarToastAdmin("Erro ao apagar o serviço.", "erro");
+            }
+        } catch (error) {
+            mostrarToastAdmin("Erro de rede. Tente novamente.", "erro");
+        }
+    });
 };
 
 window.abrirModalServico = function(id = null) {
     document.getElementById("form-servico").reset();
     document.getElementById("modal-titulo").innerText = id ? "Editar Serviço" : "Novo Serviço";
     document.getElementById("servico-id").value = id || "";
-    // Aqui virá o fetch de edição no futuro
     document.getElementById("modal-servico").classList.add("active");
 }
 
@@ -194,13 +250,21 @@ if (formServico) {
             const res = await fetch(url, {
                 method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
             });
-            if (res.ok) { fecharModalServico(); renderServicos(); }
-        } catch (err) { alert("Erro de conexão."); }
+            if (res.ok) { 
+                fecharModalServico(); 
+                renderServicos(); 
+                mostrarToastAdmin("Serviço salvo com sucesso!");
+            } else {
+                mostrarToastAdmin("Erro ao salvar serviço.", "erro");
+            }
+        } catch (err) { 
+            mostrarToastAdmin("Erro de conexão com o servidor.", "erro"); 
+        }
     });
 }
 
 // --------------------------------------------------------------------------
-// 5. MÓDULO: BARBEIROS (Simplificado)
+// 5. MÓDULO: BARBEIROS
 // --------------------------------------------------------------------------
 async function renderBarbeiros() {
     const tableBody = document.getElementById("barbeiros-table-body");
@@ -237,16 +301,21 @@ async function renderBarbeiros() {
     }
 }
 
-// DELETE Barbeiros
-window.deletarBarbeiro = async function(id) {
-    if (!confirm("Tem certeza que deseja apagar este profissional?")) return;
-    try {
-        const response = await fetch(`${API_BASE_URL}/barbeiros/${id}`, { method: 'DELETE' });
-        if (response.ok) renderBarbeiros();
-        else alert("Erro ao apagar.");
-    } catch (error) {
-        alert("Erro de rede.");
-    }
+// Atualizado para usar Toast e Modal
+window.deletarBarbeiro = function(id) {
+    abrirModalConfirmacao("Excluir Profissional", "Tem certeza que deseja apagar este profissional do sistema?", "Excluir Profissional", "danger", async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/barbeiros/${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                mostrarToastAdmin("Profissional removido com sucesso!");
+                renderBarbeiros();
+            } else {
+                mostrarToastAdmin("Erro ao apagar profissional.", "erro");
+            }
+        } catch (error) {
+            mostrarToastAdmin("Erro de rede. Tente novamente.", "erro");
+        }
+    });
 };
 
 window.abrirModalBarbeiro = function(id = null) {
@@ -275,8 +344,16 @@ if (formBarbeiro) {
             const res = await fetch(url, {
                 method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
             });
-            if (res.ok) { fecharModalBarbeiro(); renderBarbeiros(); }
-        } catch (err) { alert("Erro de conexão."); }
+            if (res.ok) { 
+                fecharModalBarbeiro(); 
+                renderBarbeiros(); 
+                mostrarToastAdmin("Profissional salvo com sucesso!");
+            } else {
+                mostrarToastAdmin("Erro ao salvar profissional.", "erro");
+            }
+        } catch (err) { 
+            mostrarToastAdmin("Erro de conexão.", "erro"); 
+        }
     });
 }
 
@@ -292,11 +369,7 @@ async function renderDashboard() {
 
     try {
         const response = await fetch(`${API_BASE_URL}/faturamento`);
-        
-        if (!response.ok) {
-            throw new Error(`Erro na resposta do servidor: ${response.status}`);
-        }
-        
+        if (!response.ok) throw new Error(`Erro na resposta do servidor`);
         const faturamento = await response.json();
 
         elDia.innerText = Number(faturamento.dia || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -304,7 +377,6 @@ async function renderDashboard() {
         elAno.innerText = Number(faturamento.ano || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     } catch (error) {
-        console.error("Falha ao buscar faturamento:", error);
         elDia.innerText = "R$ 0,00";
         elMes.innerText = "R$ 0,00";
         elAno.innerText = "R$ 0,00";
@@ -320,13 +392,12 @@ async function renderAviso() {
         
         if (response.ok) {
             const aviso = await response.json();
-            
             document.getElementById("aviso-status").value = aviso.ativo ? "ativo" : "inativo";
             document.getElementById("aviso-titulo").value = aviso.titulo || "";
             document.getElementById("aviso-texto").value = aviso.mensagem || "";
         }
     } catch (error) {
-        console.error("Nenhum aviso configurado ou erro de conexão:", error);
+        console.error("Nenhum aviso configurado");
     }
 }
 
@@ -349,13 +420,12 @@ if (formAviso) {
             });
 
             if (response.ok) {
-                alert("Aviso atualizado com sucesso! Os clientes verão isso no app.");
+                mostrarToastAdmin("Aviso do aplicativo atualizado com sucesso!");
             } else {
-                alert("Erro ao salvar o aviso no banco de dados.");
+                mostrarToastAdmin("Erro ao salvar o aviso.", "erro");
             }
         } catch (error) {
-            console.error("Erro no PUT do aviso:", error);
-            alert("Erro de conexão com o servidor.");
+            mostrarToastAdmin("Erro de conexão com o servidor.", "erro");
         }
     });
 }
@@ -370,11 +440,8 @@ function esconderLoading() {
     }
 }
 
-// Substituímos o antigo gatilho por este que aguarda o banco de dados
 window.addEventListener("DOMContentLoaded", async () => {
-    
-    // O Promise.all faz com que o painel dispare todas as requisições ao mesmo tempo.
-    // Assim que TODAS finalizarem, a interface é destravada.
+    // 1. Inicia todas as buscas de dados ao mesmo tempo
     await Promise.all([
         renderAgenda(),
         renderServicos(),
@@ -383,47 +450,17 @@ window.addEventListener("DOMContentLoaded", async () => {
         renderAviso()
     ]);
 
-    // Oculta a animação de loading e revela o painel do administrador
+    // 2. Configura a Lógica do Botão de Filtro da Agenda
+    const btnFiltrar = document.getElementById("btn-filtrar-agenda");
+    const inputData = document.getElementById("filter-date");
+
+    if (btnFiltrar && inputData) {
+        btnFiltrar.addEventListener("click", () => {
+            const dataEscolhida = inputData.value; 
+            renderAgenda(dataEscolhida);
+        });
+    }
+
+    // 3. Oculta a animação de loading e revela o painel do administrador
     esconderLoading();
 });
-// ==========================================================================
-// SISTEMA DE MODAL DE CONFIRMAÇÃO UNIVERSAL
-// ==========================================================================
-let acaoPendente = null; // Guarda a função que será executada se o usuário disser "Sim"
-
-window.abrirModalConfirmacao = function(titulo, mensagem, textoBotao, tipoBotao, callback) {
-    // 1. Troca os textos do modal
-    document.getElementById("confirm-titulo").innerText = titulo;
-    document.getElementById("confirm-mensagem").innerText = mensagem;
-    
-    // 2. Configura o botão de confirmação
-    const btnConfirmar = document.getElementById("btn-confirmar-acao");
-    btnConfirmar.innerText = textoBotao;
-    
-    // Se for uma ação perigosa (excluir), fica vermelho. Se for normal, fica dourado.
-    if (tipoBotao === 'danger') {
-        btnConfirmar.style.backgroundColor = 'var(--danger)';
-        btnConfirmar.style.color = '#ffffff';
-    } else {
-        btnConfirmar.style.backgroundColor = 'var(--brand-primary)';
-        btnConfirmar.style.color = 'var(--brand-bg-dark)';
-    }
-    
-    // 3. Salva a ação que deve acontecer e abre o modal
-    acaoPendente = callback;
-    document.getElementById("modal-confirmacao").classList.add("active");
-}
-
-window.fecharModalConfirmacao = function() {
-    document.getElementById("modal-confirmacao").classList.remove("active");
-    acaoPendente = null; // Limpa a ação por segurança
-}
-
-// Quando clicar no botão "Sim", executa a ação salva e fecha o modal
-const btnConfirmarAcao = document.getElementById("btn-confirmar-acao");
-if (btnConfirmarAcao) {
-    btnConfirmarAcao.addEventListener("click", () => {
-        if (acaoPendente) acaoPendente(); 
-        fecharModalConfirmacao();
-    });
-}
