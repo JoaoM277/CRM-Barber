@@ -7,7 +7,7 @@ const logService = require("../controllers/message.log.controller");
 // --------------------------------------------------------------------------
 
 const messageService = async (mensageData) => {
-  const { phone, name, trigger, date, time, barber } = mensageData;
+  const { phone, name, trigger, date, time, barber, ip } = mensageData;
 
   // --------------------------------------------------------------------------
   // 2. Travas de segurança Anti-Gatilho-Invalido
@@ -22,13 +22,13 @@ const messageService = async (mensageData) => {
 
     const errormessage =
       "Campos de 'data' e 'hora'são obrigatorios pra esse gatilho";
-    await logController.handleCreateLog({
-      phone,
-      trigger,
-      message: null,
-      success: false,
-      errorReason: "INVALID_DATE_OR_TIME",
-      responseCode: 400,
+    await logController.ControllerLogs({
+      action: "WHATSAPP_MENSAGE_SENT",
+      model: trigger,
+      client_id: 1,
+      description:
+        "Mensagem não enviada para: " + phone + " [MOTIVO: INVALID_TRIGGER]",
+      ip: ip,
     });
     return {
       status: "failed",
@@ -45,13 +45,13 @@ const messageService = async (mensageData) => {
       `[BLOQUEADO] Envio de LEMBRETE retido pra enviar spam do horario comercial`,
     );
 
-    await logController.handleCreateLog({
-      phone,
-      trigger,
-      message: null,
-      success: false,
-      errorReason: "HELD_OUT_OF_BUSINESS_HOURS",
-      responseCode: 422,
+    await logController.ControllerLogs({
+      action: "WHATSAPP_MENSAGE_SENT",
+      model: trigger,
+      client_id: 1,
+      description:
+        "Mensagem não enviada para: " + phone + " [MOTIVO: SPAM_BLOQ]",
+      ip: ip,
     });
 
     return {
@@ -70,13 +70,13 @@ const messageService = async (mensageData) => {
       `[ERRO]O gatilho '${trigger}' não possui template configurado`,
     );
 
-    await logController.handleCreateLog({
-      phone,
-      trigger,
-      message: null,
-      success: false,
-      errorReason: "TEMPLATE_NOT_FOUND",
-      responseCode: 404,
+    await logController.ControllerLogs({
+      action: "WHATSAPP_MENSAGE_SENT",
+      model: trigger,
+      client_id: 1,
+      description:
+        "Mensagem não enviada para: " + phone + " [MOTIVO: TEMPLATE_NOT_FOUND]",
+      ip: ip,
     });
 
     return {
@@ -90,25 +90,26 @@ const messageService = async (mensageData) => {
   const respost = templateSelect(name, { date, time, barber });
   const response = await providerMenssage(phone, respost);
   if (!response.sucess) {
-    await logController.handleCreateLog({
-      phone,
-      trigger,
-      message: respost,
-      success: false,
-      errorReason: response.errorMensage || "PROVIDER_REJECTED",
-      responseCode: response.code || 345,
+    await logController.ControllerLogs({
+      action: "WHATSAPP_MENSAGE_SENT",
+      model: trigger,
+      client_id: 1,
+      description:
+        "Mensagem não enviada para: " + phone + " [MOTIVO: PROVIDER_REJECTED]",
+      ip: ip,
     });
 
     return { status: "failed", error: response.errorMensage };
   }
 
-  await logController.handleCreateLog({
-    phone,
-    trigger,
-    message: respost,
-    success: true,
-    responseCode: 200,
-  });
+    await logController.ControllerLogs({
+      action: "WHATSAPP_MENSAGE_SENT",
+      model: trigger,
+      client_id: 1,
+      description:
+        "Mensagem  enviada para: " + phone + " [SUCESS]",
+      ip: ip,
+    });
 
   return {
     status: "dispatched",

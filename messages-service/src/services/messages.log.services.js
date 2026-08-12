@@ -4,37 +4,15 @@
 const logProvider = require("../providers/message.log.provider");
 
 class logService {
-  async logRegisterCreator({
-    phone,
-    trigger,
-    message,
-    sucess = true,
-    errorReason = null,
-    responseCode = null,
-  }) {
-    if (!phone || !trigger) {
+  async logRegisterCreator({ action, model, client_id, description, ip }) {
+    if (!ip || !model) {
       console.warn(
-        "[LogService Warning]: Tentativa de registro de log sem Telefone ou Gatilho",
+        "[LogService Warning]: Tentativa de registro de log sem IP ou Gatilho",
       );
       return null;
     }
 
-    let CleanPhone = String(phone).replace(/\D/g, "");
-
-    let status = "SENT";
-
-    if (!sucess) {
-      status = "REJECTED_PREFIX_MISSING" ? "REJECTED" : "FAILED";
-    }
-
-    const logData = {
-      phone: CleanPhone,
-      trigger: trigger.toUpperCase(),
-      status,
-      message: message || null,
-      errorReason: errorReason || null,
-      responsecode: responseCode || null,
-    };
+    const logData = { action, model, client_id, description, ip };
 
     return await logProvider.logToBackend(logData);
   }

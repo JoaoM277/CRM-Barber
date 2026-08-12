@@ -2,13 +2,13 @@ const express = require("express");
 
 const router = express.Router();
 const {
-  getMessageLogController,
+  logController
 } = require("../controllers/message.log.controller");
 
 // --------------------------------------------------------------------------
 // 2. Rota de Log de Mensagens
 // --------------------------------------------------------------------------
 
-router.get("/", getMessageLogController);
+//router.get("/", logController);
 
 module.exports = router;

@@ -1,18 +1,16 @@
 class logProvider {
   constructor() {
-    ((this.apiUrl = "rota da api de log"), (this.apiToken = "caso precise"));
+    ((this.apiUrl = "http://127.0.0.1:8000"), (this.apiToken = "caso precise"));
   }
 
   async logToBackend(logData) {
     try {
       const payload = {
-        trigger: logData.trigger,
-        status: logData.status,
-        phone: logData.phone,
-        message: logData.message || null,
-        error_reason: logData.error || null,
-        response_code: logData.responseCod || null,
-        service: "whatsapp-",
+        action: logData.action,
+        model: logData.model ?? null,
+        client_id: logData.client_id ?? null,
+        description: logData.description ?? null,
+        ip: logData.ip ?? null,
       };
 
       const headers = {

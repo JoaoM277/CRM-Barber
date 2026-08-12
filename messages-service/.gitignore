@@ -2,3 +2,4 @@
 *.env 
 #Ignora arquivos de testes
 tests/
+/src/generated/prisma

@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model barbershops {
+  id                   BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  name                 String    @db.VarChar(255)
+  slug                 String    @unique(map: "barbershops_slug_unique") @db.VarChar(255)
+  phone                String?   @db.VarChar(20)
+  email                String?   @unique(map: "barbershops_email_unique") @db.VarChar(255)
+  whatsapp             String?   @db.VarChar(20)
+  instagram            String?   @db.VarChar(255)
+  website              String?   @db.VarChar(255)
+  zip_code             String?   @db.VarChar(10)
+  street               String?   @db.VarChar(255)
+  number               String?   @db.VarChar(20)
+  complement           String?   @db.VarChar(255)
+  neighborhood         String?   @db.VarChar(255)
+  city                 String?   @db.VarChar(255)
+  state                String?   @db.VarChar(2)
+  logo_path            String?   @db.VarChar(255)
+  opening_time         DateTime? @db.Time(0)
+  closing_time         DateTime? @db.Time(0)
+  timezone             String    @default("America/Sao_Paulo") @db.VarChar(255)
+  subscription_plan    String    @default("free") @db.VarChar(255)
+  subscription_ends_at DateTime? @db.Date
+  active               Boolean   @default(true)
+  created_at           DateTime? @db.Timestamp(0)
+  updated_at           DateTime? @db.Timestamp(0)
+}
+
+model cache {
+  key        String @id @db.VarChar(255)
+  value      String @db.MediumText
+  expiration BigInt
+
+  @@index([expiration], map: "cache_expiration_index")
+}
+
+model cache_locks {
+  key        String @id @db.VarChar(255)
+  owner      String @db.VarChar(255)
+  expiration BigInt
+
+  @@index([expiration], map: "cache_locks_expiration_index")
+}
+
+model clients {
+  id          BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  name        String      @db.VarChar(255)
+  phone       String      @unique(map: "clients_phone_unique") @db.VarChar(20)
+  email       String?     @unique(map: "clients_email_unique") @db.VarChar(255)
+  birth_date  DateTime?   @db.Date
+  observation String?     @db.Text
+  created_at  DateTime?   @db.Timestamp(0)
+  updated_at  DateTime?   @db.Timestamp(0)
+  logs        logs[]
+  schedules   schedules[]
+}
+
+model logs {
+  id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  action      String    @db.VarChar(255)
+  model       String?   @db.VarChar(255)
+  client_id   BigInt?   @db.UnsignedBigInt
+  description String?   @db.Text
+  ip          String?   @db.VarChar(45)
+  created_at  DateTime? @db.Timestamp(0)
+  updated_at  DateTime? @db.Timestamp(0)
+  clients     clients?  @relation(fields: [client_id], references: [id], onUpdate: Restrict, map: "logs_client_id_foreign")
+
+  @@index([client_id], map: "logs_client_id_foreign")
+}
+
+model migrations {
+  id        Int    @id @default(autoincrement()) @db.UnsignedInt
+  migration String @db.VarChar(255)
+  batch     Int
+}
+
+model operation_times {
+  id            BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  day_of_week   DateTime  @db.Date
+  start_time    DateTime  @db.Time(0)
+  end_time      DateTime  @db.Time(0)
+  waiting_start DateTime  @db.Time(0)
+  waiting_end   DateTime  @db.Time(0)
+  created_at    DateTime? @db.Timestamp(0)
+  updated_at    DateTime? @db.Timestamp(0)
+}
+
+model personal_access_tokens {
+  id             BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  tokenable_type String    @db.VarChar(255)
+  tokenable_id   BigInt    @db.UnsignedBigInt
+  name           String    @db.Text
+  token          String    @unique(map: "personal_access_tokens_token_unique") @db.VarChar(64)
+  abilities      String?   @db.Text
+  last_used_at   DateTime? @db.Timestamp(0)
+  expires_at     DateTime? @db.Timestamp(0)
+  created_at     DateTime? @db.Timestamp(0)
+  updated_at     DateTime? @db.Timestamp(0)
+
+  @@index([expires_at], map: "personal_access_tokens_expires_at_index")
+  @@index([tokenable_type, tokenable_id], map: "personal_access_tokens_tokenable_type_tokenable_id_index")
+}
+
+model schedules {
+  id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  client_id   BigInt    @db.UnsignedBigInt
+  worker_id   BigInt    @db.UnsignedBigInt
+  service_id  BigInt    @db.UnsignedBigInt
+  date        DateTime  @db.Date
+  start_time  DateTime  @db.Time(0)
+  end_time    DateTime  @db.Time(0)
+  status      Boolean   @default(true)
+  observation String?   @db.Text
+  created_at  DateTime? @db.Timestamp(0)
+  updated_at  DateTime? @db.Timestamp(0)
+  clients     clients   @relation(fields: [client_id], references: [id], onUpdate: Restrict, map: "schedules_client_id_foreign")
+  services    services  @relation(fields: [service_id], references: [id], onUpdate: Restrict, map: "schedules_service_id_foreign")
+  workers     workers   @relation(fields: [worker_id], references: [id], onUpdate: Restrict, map: "schedules_worker_id_foreign")
+
+  @@index([client_id], map: "schedules_client_id_foreign")
+  @@index([service_id], map: "schedules_service_id_foreign")
+  @@index([worker_id], map: "schedules_worker_id_foreign")
+}
+
+model services {
+  id            BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  name          String      @db.VarChar(255)
+  description   String?     @db.VarChar(255)
+  duration_time DateTime?   @db.Time(0)
+  price         Float
+  active        Boolean
+  created_at    DateTime?   @db.Timestamp(0)
+  updated_at    DateTime?   @db.Timestamp(0)
+  schedules     schedules[]
+}
+
+model sessions {
+  id            String  @id @db.VarChar(255)
+  user_id       BigInt? @db.UnsignedBigInt
+  ip_address    String? @db.VarChar(45)
+  user_agent    String? @db.Text
+  payload       String  @db.LongText
+  last_activity Int
+
+  @@index([last_activity], map: "sessions_last_activity_index")
+  @@index([user_id], map: "sessions_user_id_index")
+}
+
+model workers {
+  id         BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  name       String      @db.VarChar(255)
+  phone      String      @unique(map: "workers_phone_unique") @db.VarChar(20)
+  photo      String      @db.Text
+  speciality String      @db.VarChar(255)
+  active     Boolean
+  created_at DateTime?   @db.Timestamp(0)
+  updated_at DateTime?   @db.Timestamp(0)
+  schedules  schedules[]
+}

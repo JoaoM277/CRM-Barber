@@ -7,15 +7,7 @@ const logService = require("../services/messages.log.services");
 class logController {
   async ControllerLogs(payload) {
     try {
-      const { phone, trigger, message, errroReason, responseCode } = payload;
-
-      return await logService.logRegisterCreator({
-        phone,
-        trigger,
-        message,
-        errroReason,
-        responseCode,
-      });
+      return await logService.logRegisterCreator(payload);
     } catch (error) {
       console.error(
         "[LogController Falback Error]: Falha ao enviar Log pra o Service ->",

@@ -11,11 +11,12 @@ const messageController = async (req, res) => {
   console.log(req.body);
   try {
     const messageDTO = makeMessageDTO(req.body);
-    const newMessage = await messageService(messageDTO);
-    console.log(newMessage)
+    
+    const newMessage = await messageService({...messageDTO, ip: req.ip});
+    console.log(newMessage);
     return res.status(200).json(newMessage);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     if (error instanceof ZodError) {
       return res.status(400).json({ erros: error.flatten().fieldErrors });
     }
