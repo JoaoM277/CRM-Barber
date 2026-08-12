@@ -96,20 +96,19 @@
                             </div>
                         </div>
                     </div>
-                    <div class="panel-header" style="margin-top: 40px;">
-                        <div>
-                            <h2>Aviso no Aplicativo (Pop-up)</h2>
-                            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Defina uma mensagem importante para aparecer quando os clientres abrirem o app.</p>
-                        </div>
-                        
-                        <div class="message-panel-container">
+                    <!-- ==========================================
+                             TELA DE AVISOS (Simplificada)
+                             ========================================== -->
+                        <div class="message-panel-container" style="margin-top: 40px;">
+                            <h2 style="margin-bottom: 24px; font-size: 18px;">Aviso no Aplicativo (Pop-up)</h2>
+                            
                             <form id="form-aviso" class="admin-form">
                                 <div class="input-row">
                                     <div class="input-group">
                                         <label>Status do Pop-up</label>
                                         <select id="aviso-status" class="admin-input required">
                                             <option value="inativo">🔴 Desativado (Oculto)</option>
-                                            <option value="ativo">🟢 Ativado (Visível para clientes)</option>
+                                            <option value="ativo">🟢 Ativado (Visível)</option>
                                         </select>
                                     </div>
                                     <div class="input-group">
@@ -124,12 +123,10 @@
                                 </div>
 
                                 <div style="text-align: right; margin-top: 20px;">
-                                    <button type="submit" class="btn-primary"> Atualizar Aviso</button>
+                                    <button type="submit" class="btn-primary">Atualizar Aviso</button>
                                 </div>
                             </form>
                         </div>
-
-                    </div>
                 </div>
                 <!-- ====================================================================
                      TELA 1: AGENDA 
@@ -139,7 +136,7 @@
                         <h2>Visão Geral da Agenda</h2>
                         <div class="panel-actions">
                             <input type="date" class="admin-input" id="filter-date">
-                            <button class="btn-primary">Filtrar</button>
+                            <button class="btn-primary" id="btn-filtrar-agenda">Filtrar</button>
                         </div>
                     </div>
                     <div class="table-container">
@@ -148,7 +145,7 @@
                                 <tr>
                                     <th>Cliente</th>
                                     <th>Serviço</th>
-                                    <th>Profissional</th>
+                                    <th>Barbeiro</th>
                                     <th>Data e Hora</th>
                                     <th>Status</th>
                                     <th>Ações</th>
@@ -172,7 +169,6 @@
                         <table class="admin-table">
                             <thead>
                                 <tr>
-                                    <th>Ícone</th>
                                     <th>Nome do Serviço</th>
                                     <th>Preço (R$)</th>
                                     <th>Tempo (Min)</th>
@@ -211,6 +207,7 @@
             </section>
         </main>
     </div>
+    
     <!-- MODAL DE SERVIÇOS -->
     <div class="modal-overlay" id="modal-servico">
         <div class="modal-content">
@@ -221,24 +218,20 @@
             <form id="form-servico" class="admin-form">
                 <input type="hidden" id="servico-id">
                 
+                <!-- O campo de ícone separado foi removido[cite: 3] -->
                 <div class="input-group">
-                    <label>Ícone (Emoji ou Texto)</label>
-                    <input type="text" id="servico-icon" placeholder="Ex: ✂️" required>
-                </div>
-                
-                <div class="input-group">
-                    <label>Nome do Serviço</label>
-                    <input type="text" id="servico-nome" placeholder="Ex: Corte Degradê" required>
+                    <label>Nome do Serviço (Use Emojis! ✂️)</label>
+                    <input type="text" id="servico-nome" placeholder="Ex: ✂️ Corte Degradê" required>
                 </div>
                 
                 <div class="input-row">
                     <div class="input-group">
                         <label>Preço (R$)</label>
-                        <input type="number" id="servico-preco" step="0.01" placeholder="40.00" required>
+                        <input type="text" id="servico-preco" placeholder="R$0,00" required>
                     </div>
                     <div class="input-group">
                         <label>Duração (Minutos)</label>
-                        <input type="number" id="servico-duracao" placeholder="30" required>
+                        <input type="number" id="servico-duracao" placeholder="0" required>
                     </div>
                 </div>
 
@@ -268,7 +261,7 @@
                 
                 <div class="input-group">
                     <label>Telefone (WhatsApp)</label>
-                    <input type="text" id="barbeiro-telefone" placeholder="11988887777" required>
+                    <input type="text" id="barbeiro-telefone" placeholder="(xx)xxxxxxxxx" maxlength="13" required>
                 </div>
 
                 <div class="modal-footer">
@@ -277,6 +270,38 @@
                 </div>
             </form>
         </div>
+    </div>
+
+    <!-- ==========================================
+         MODAL UNIVERSAL DE CONFIRMAÇÃO
+         ========================================== -->
+    <div class="modal-overlay" id="modal-confirmacao">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            
+            <div class="modal-header" style="border-bottom: none; justify-content: center; padding-bottom: 0;">
+                <h3 id="confirm-titulo" style="font-size: 22px; color: var(--text-main);">Confirmação</h3>
+            </div>
+            
+            <div class="content-body" style="padding: 20px 0;">
+                <p id="confirm-mensagem" style="color: var(--text-muted); font-size: 15px; line-height: 1.5;">
+                    Tem certeza que deseja continuar?
+                </p>
+            </div>
+            
+            <div class="modal-footer" style="justify-content: center; border-top: none; margin-top: 0; gap: 16px;">
+                <button class="btn-secondary" onclick="fecharModalConfirmacao()">Cancelar</button>
+                <!-- O botão de ação que vai mudar de cor dependendo do perigo -->
+                <button class="btn-primary" id="btn-confirmar-acao">Sim, continuar</button>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- ==========================================
+         SISTEMA DE MENSAGENS (TOAST DO ADMIN)
+         ========================================== -->
+    <div id="admin-toast" class="toast-escondido">
+        <span id="admin-toast-texto">Mensagem aqui</span>
     </div>
 
     <!-- Script de controle do Painel -->

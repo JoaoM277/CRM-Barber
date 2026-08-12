@@ -1,27 +1,29 @@
-const { getLogsService } = require("../services/messages.log.services");
-
+const logService = require("../services/messages.log.services");
 
 // --------------------------------------------------------------------------
 // 1. Responsavel pela validação de busca dos logs e por chamar o service.logs
 // --------------------------------------------------------------------------
 
-const getMessageLogController = async (req, res) => {
-  try {
-    const queryParams = req.query;
+class logController {
+  async ControllerLogs(payload) {
+    try {
+      const { phone, trigger, message, errroReason, responseCode } = payload;
 
-    const logsData = await getLogsService(queryParams);
-
-    return res.status(200).json({
-      sucess: true,
-      result: logsData,
-    });
-  } catch (error) {
-    console.error("Erro ao buscar logs de mensagens:", error);
-    return res.status(500).json({
-      sucess: false,
-      error: "Erro interno ao buscar historico de mensagens",
-    });
+      return await logService.logRegisterCreator({
+        phone,
+        trigger,
+        message,
+        errroReason,
+        responseCode,
+      });
+    } catch (error) {
+      console.error(
+        "[LogController Falback Error]: Falha ao enviar Log pra o Service ->",
+        error.message,
+      );
+      return null;
+    }
   }
-};
+}
 
-module.exports = { getMessageLogController };
+module.exports = new logController();
