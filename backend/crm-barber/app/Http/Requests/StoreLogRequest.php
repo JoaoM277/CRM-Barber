@@ -12,7 +12,7 @@ class StoreLogRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +23,11 @@ class StoreLogRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'action' => 'required|string|max:255',
+            'model' => 'nullable|string|max:255',
+            'client_id' => 'nullable|integer|exists:clients,id',
+            'description' => 'nullable|string',
+            'ip' => 'nullable|ip',
         ];
     }
 }

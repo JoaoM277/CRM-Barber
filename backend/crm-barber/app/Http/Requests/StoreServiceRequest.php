@@ -12,7 +12,7 @@ class StoreServiceRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +23,11 @@ class StoreServiceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'duration_time' => 'integer|min:1',
+            'price' => 'numeric',
+            'active' => 'boolean',
         ];
     }
 }

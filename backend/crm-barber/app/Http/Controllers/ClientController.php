@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreClientRequest;
 use App\Models\Client;
 use Illuminate\Http\Request;
 
@@ -28,15 +29,9 @@ class ClientController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreClientRequest $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'nullable|email|unique:clients,email',
-            'phone' => 'required|string|max:20',
-            'birth_date' => 'nullable|date',
-            'observation' => 'nullable|string'
-        ]);
+        $data = $request->validated();
 
         $client = Client::create($data);
 

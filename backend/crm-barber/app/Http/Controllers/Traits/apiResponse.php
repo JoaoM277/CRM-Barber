@@ -10,7 +10,7 @@ trait ApiResponse
      * Resposta Padrão de Sucesso
      */
 
-    public function Sucess(
+    public function Success(
         mixed $data = null,
         string $message = 'Operação realizada com sucesso',
         int $statusCode = 200,

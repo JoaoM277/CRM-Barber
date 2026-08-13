@@ -7,7 +7,6 @@ use App\Http\Requests\StoreServiceRequest;
 use Illuminate\Http\Request;
 use App\Http\Requests\UpdateServiceRequest;
 use Carbon\CarbonInterval;
-use Illuminate\Foundation\Console\ServeCommand;
 
 class ServiceController extends Controller
 {
@@ -32,22 +31,17 @@ class ServiceController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreServiceRequest $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'duration_time' => 'integer|min:1',
-            'price' => 'numeric',
-            'active' => 'boolean'
-        ]);
+        $data = $request->validated();
 
-        $validated['duration_time'] = CarbonInterval::minutes($request->duration_time)
-        ->cascade()
-        ->format('%H:%I:%S');
+        if (isset($data['duration_time'])) {
+            $data['duration_time'] = CarbonInterval::minutes($data['duration_time'])
+                ->cascade()
+                ->format('%H:%I:%S');
+        }
         
         $service = Service::create($data);
-        $service->update($validated);
 
         return response()->json([
             'message' => 'Serviço criado com sucesso!',

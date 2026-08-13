@@ -6,7 +6,7 @@ use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
-
+use Symfony\Component\HttpFoundation\Response;
 class UserController extends Controller
 {
     public function index()

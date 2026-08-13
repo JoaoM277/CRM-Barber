@@ -30,15 +30,9 @@ class WorkerController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreWorkerRequest $request)
     {        
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:workers,phone',
-            'photo' => 'nullable|string',
-            'speciality' => 'nullable|string',
-            'active' => 'boolean'
-        ]);
+        $data = $request->validated();
 
         $worker = Worker::create($data);
 

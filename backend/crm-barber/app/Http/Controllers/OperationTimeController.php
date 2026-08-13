@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreOperationTimeRequest;
 use App\Models\OperationTime;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -29,15 +30,9 @@ class OperationTimeController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreOperationTimeRequest $request)
     {
-        $data = $request->validate([
-            'day_of_week' => 'required|date_format:d/m/Y',
-            'start_time' => 'required|integer|between:0,23',
-            'end_time' => 'required|integer|between:0,23|gt:start_time',
-            'waiting_start' => 'required|integer|between:0,23|gte:start_time|lte:end_time', 
-            'waiting_end' => 'required|integer|between:0,23|gt:waiting_start|lte:end_time'
-        ]);
+        $data = $request->validated();
 
         // Converte os inteiros de horas (ex: 8) para o formato H:i:s (ex: 08:00:00)
         $data['day_of_week']   = Carbon::createFromFormat('d/m/Y', $data['day_of_week'])->format('Y-m-d');

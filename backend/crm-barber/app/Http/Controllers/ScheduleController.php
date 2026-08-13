@@ -37,18 +37,9 @@ class ScheduleController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreScheduleRequest $request)
     {
-        $data = $request->validate([
-            'client_id'   => 'required|integer|exists:clients,id',
-            'worker_id'   => 'required|integer|exists:workers,id',
-            'service_id'  => 'required|integer|exists:services,id',
-            'date'        => 'required|date_format:d/m/Y',
-            'start_time' => 'required|integer|between:0,23',
-            'end_time' => 'required|integer|between:0,23|gt:start_time',
-            'status'      => 'boolean',
-            'observation' => 'nullable|string|max:1000'
-        ]);
+        $data = $request->validated();
 
         $data['date']   = Carbon::createFromFormat('d/m/Y', $data['date'])->format('Y-m-d');
         $data['start_time']    = Carbon::createFromTime($data['start_time'], 0, 0)->toTimeString();

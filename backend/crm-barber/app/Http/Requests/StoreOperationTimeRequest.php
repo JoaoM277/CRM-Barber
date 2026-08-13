@@ -12,7 +12,7 @@ class StoreOperationTimeRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +23,11 @@ class StoreOperationTimeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'day_of_week' => 'required|date_format:d/m/Y',
+            'start_time' => 'required|integer|between:0,23',
+            'end_time' => 'required|integer|between:0,23|gt:start_time',
+            'waiting_start' => 'required|integer|between:0,23|gte:start_time|lte:end_time',
+            'waiting_end' => 'required|integer|between:0,23|gt:waiting_start|lte:end_time',
         ];
     }
 }

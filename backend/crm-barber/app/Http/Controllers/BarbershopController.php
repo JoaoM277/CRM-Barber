@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreBarbershopRequest;
 use App\Models\Barbershop;
 use Illuminate\Http\Request;
 
@@ -18,39 +19,9 @@ class BarbershopController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreBarbershopRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:barbershops,slug',
-
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|unique:barbershops,email',
-
-            'zip_code' => 'nullable|string|max:10',
-            'street' => 'nullable|string|max:255',
-            'number' => 'nullable|string|max:20',
-            'complement' => 'nullable|string|max:255',
-            'neighborhood' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'state' => 'nullable|string|size:2',
-
-            'logo' => 'nullable|string|max:255',
-
-            'opening_time' => 'nullable|date_format:H:i',
-            'closing_time' => 'nullable|date_format:H:i',
-
-            'whatsapp' => 'nullable|string|max:20',
-            'instagram' => 'nullable|string|max:255',
-            'website' => 'nullable|url|max:255',
-
-            'timezone' => 'nullable|string|max:100',
-
-            'subscription_plan' => 'nullable|in:free,basic,premium',
-            'subscription_ends_at' => 'nullable|date',
-
-            'active' => 'nullable|boolean',
-        ]);
+        $validated = $request->validated();
 
         $barbershop = Barbershop::create($validated);
 
