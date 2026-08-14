@@ -23,14 +23,14 @@ class StoreScheduleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'client_id'   => 'required|integer|exists:clients,id',
-            'worker_id'   => 'required|integer|exists:workers,id',
-            'service_id'  => 'required|integer|exists:services,id',
-            'date'        => 'required|date_format:d/m/Y',
+            'client_id' => 'required|integer|exists:clients,id',
+            'worker_id' => 'required|integer|exists:workers,id',
+            'service_id' => 'required|integer|exists:services,id',
+            'date' => 'required|date_format:d/m/Y',
             'start_time' => 'required|integer|between:0,23',
             'end_time' => 'required|integer|between:0,23|gt:start_time',
-            'status'      => 'boolean',
-            'observation' => 'nullable|string|max:1000'
+            'status' => 'boolean',
+            'observation' => 'nullable|string|max:1000',
         ];
     }
 }

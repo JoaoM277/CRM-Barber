@@ -270,8 +270,6 @@ function renderCalendario(date) {
             agendamento.data = loopDate;
             agendamento.hora = null; 
             
-            // DICA: Em um sistema real, você chamaria um fetch('/api/horarios-disponiveis') 
-            // enviando `loopDate` e `agendamento.barbeiroId` aqui, e então atualizaria `dbHorariosDisponiveis`.
             
             renderCalendario(date);
             validateStep();

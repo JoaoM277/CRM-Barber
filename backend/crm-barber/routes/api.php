@@ -8,6 +8,8 @@ use App\Http\Controllers\OperationTimeController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\BarbershopController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Client
@@ -59,3 +61,21 @@ Route::apiResource('logs', LogController::class);
 
 // Message Service
 Route::post('/message', [MessageController::class, 'sendAppointmentConfirmation'])->name('mensagens.agendamento');
+
+// Auth (público)
+Route::post('/cadastrar', [AuthController::class, 'register'])->name('users.register');
+Route::post('/login', [AuthController::class, 'login'])->name('users.login');
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/me', [AuthController::class, 'me'])->name('users.me');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('users.logout');
+    Route::get('/pagina-inicial', [UserController::class, 'paginaInicial'])->name('users.pagina-inicial');
+
+    Route::middleware('admin')->group(function () {
+        Route::get('/usuarios', [UserController::class, 'index'])->name('usuarios.index');
+        Route::post('/usuarios', [UserController::class, 'store'])->name('usuarios.store');
+        Route::get('/usuarios/{usuario}', [UserController::class, 'show'])->name('usuarios.show');
+        Route::put('/usuarios/{usuario}', [UserController::class, 'update'])->name('usuarios.update');
+        Route::delete('/usuarios/{usuario}', [UserController::class, 'destroy'])->name('usuarios.delete');
+    });
+});

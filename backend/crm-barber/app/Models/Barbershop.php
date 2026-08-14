@@ -40,4 +40,9 @@ class Barbershop extends Model
         'subscription_ends_at' => 'date',
         'active' => 'boolean',
     ];
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 }

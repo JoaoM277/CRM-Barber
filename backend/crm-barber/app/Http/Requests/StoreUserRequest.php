@@ -2,32 +2,29 @@
 
 namespace App\Http\Requests;
 
+use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
-class StoreWorkerRequest extends FormRequest
+class StoreUserRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
+            'barbershop_id' => 'nullable|integer|exists:barbershops,id',
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:workers,phone',
-            'photo' => 'nullable|string',
-            'speciality' => 'nullable|string',
-            'active' => 'boolean',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:6',
+            'role' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_USER])],
         ];
     }
 }

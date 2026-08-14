@@ -27,7 +27,7 @@ class StoreClientRequest extends FormRequest
             'email' => 'nullable|email|unique:clients,email',
             'phone' => 'required|string|max:20',
             'birth_date' => 'nullable|date',
-            'observation' => 'nullable|string'
+            'observation' => 'nullable|string',
         ];
     }
 }

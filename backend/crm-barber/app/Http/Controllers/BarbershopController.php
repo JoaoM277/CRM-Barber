@@ -2,104 +2,90 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Traits\ApiResponse;
 use App\Http\Requests\StoreBarbershopRequest;
 use App\Models\Barbershop;
-use Exception;
+use Illuminate\Http\Request;
 
 class BarbershopController extends Controller
 {
-    use ApiResponse;
-
+    /**
+     * Display a listing of the resource.
+     */
     public function index()
     {
-        try {
-            $barbershops = Barbershop::all();
-
-            return $this->Success(
-                data: $barbershops,
-                message: 'Barbearias listadas com sucesso.',
-                statusCode: 200
-            );
-        } catch (Exception $e) {
-            return $this->Error(
-                message: 'Erro ao buscar a lista de barbearias!',
-                statusCode: 500
-            );
-        }
+        return response()->json(Barbershop::all(), 200);
     }
 
+    /**
+     * Store a newly created resource in storage.
+     */
     public function store(StoreBarbershopRequest $request)
     {
-        try {
-            $data = $request->validated();
+        $validated = $request->validated();
 
-            $barbershop = Barbershop::create($data);
+        $barbershop = Barbershop::create($validated);
 
-            return $this->Success(
-                data: $barbershop,
-                message: 'Barbearia criada com sucesso.',
-                statusCode: 201
-            );
-        } catch (Exception $e) {
-            return $this->Error(
-                message: 'Erro ao criar barbearia, verifique as credenciais!',
-                statusCode: 400
-            );
-        }
+        return response()->json($barbershop, 201);
+
     }
 
-    public function show(Barbershop $barbershop)
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
     {
-        try {
-            return $this->Success(
-                data: $barbershop,
-                message: 'Detalhes da barbearia recuperados com sucesso.',
-                statusCode: 200
-            );
-        } catch (Exception $e) {
-            return $this->Error(
-                message: 'Erro ao recuperar os dados!',
-                statusCode: 500
-            );
-        }
+        return response()->json(Barbershop::findOrFail($id));
     }
 
-    public function update(StoreBarbershopRequest $request, Barbershop $barbershop)
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Barbershop $barbershop)
     {
-        try {
-            $data = $request->validated();
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'required|string|max:255|unique:barbershops,slug',
 
-            $barbershop->update($data);
+            'phone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|unique:barbershops,email',
 
-            return $this->Success(
-                data: $barbershop,
-                message: 'Barbearia atualizada com sucesso!',
-                statusCode: 200
-            );
-        } catch (Exception $e) {
-            return $this->Error(
-                message: 'Erro ao atualizar a barbearia!',
-                statusCode: 400
-            );
-        }
+            'zip_code' => 'nullable|string|max:10',
+            'street' => 'nullable|string|max:255',
+            'number' => 'nullable|string|max:20',
+            'complement' => 'nullable|string|max:255',
+            'neighborhood' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'state' => 'nullable|string|size:2',
+
+            'logo' => 'nullable|string|max:255',
+
+            'opening_time' => 'nullable|date_format:H:i',
+            'closing_time' => 'nullable|date_format:H:i',
+
+            'whatsapp' => 'nullable|string|max:20',
+            'instagram' => 'nullable|string|max:255',
+            'website' => 'nullable|url|max:255',
+
+            'timezone' => 'nullable|string|max:100',
+
+            'subscription_plan' => 'nullable|in:free,basic,premium',
+            'subscription_ends_at' => 'nullable|date',
+
+            'active' => 'nullable|boolean',
+        ]);
+
+        $barbershop->update($validated);
+
+        return response()->json($barbershop, 201);
     }
 
+    /**
+     * Remove the specified resource from storage.
+     */
     public function destroy(Barbershop $barbershop)
     {
-        try {
-            $barbershop->delete();
+        $barbershop->delete();
 
-            return $this->Success(
-                data: $barbershop,
-                message: 'Barbearia deletada com sucesso!',
-                statusCode: 200
-            );
-        } catch (Exception $e) {
-            return $this->Error(
-                message: 'Erro ao deletar a barbearia!',
-                statusCode: 500
-            );
-        }
+        return response()->json(['Barbearia deletada com sucesso'], 200);
     }
 }

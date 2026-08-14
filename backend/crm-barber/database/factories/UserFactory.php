@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Barbershop;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -12,34 +13,35 @@ use Illuminate\Support\Str;
  */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
     protected static ?string $password;
 
     /**
-     * Define the model's default state.
-     *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
         return [
+            'barbershop_id' => Barbershop::query()->inRandomOrder()->value('id'),
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'role' => User::ROLE_USER,
             'remember_token' => Str::random(10),
         ];
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
-    public function unverified(): static
+    public function admin(): static
     {
         return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
+            'role' => User::ROLE_ADMIN,
+        ]);
+    }
+
+    public function client(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'barbershop_id' => null,
+            'role' => User::ROLE_USER,
         ]);
     }
 }

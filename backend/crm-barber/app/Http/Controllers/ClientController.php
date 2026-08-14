@@ -2,104 +2,87 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Traits\ApiResponse;
 use App\Http\Requests\StoreClientRequest;
 use App\Models\Client;
-use Exception;
+use Illuminate\Http\Request;
 
 class ClientController extends Controller
 {
-    use ApiResponse;
-
+    /**
+     * Display a listing of the resource.
+     */
     public function index()
     {
-        try {
-            $clients = Client::all();
+        $clients = Client::all();
 
-            return $this->Success(
-                data: $clients,
-                message: 'Clientes listados com sucesso.',
-                statusCode: 200
-            );
-        } catch (Exception $e) {
-            return $this->Error(
-                message: 'Erro ao buscar a lista de clientes!',
-                statusCode: 500
-            );
-        }
+        return response()->json($clients, 200);
     }
 
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
     public function store(StoreClientRequest $request)
     {
-        try {
-            $data = $request->validated();
+        $data = $request->validated();
 
-            $client = Client::create($data);
+        $client = Client::create($data);
 
-            return $this->Success(
-                data: $client,
-                message: 'Cliente criado com sucesso.',
-                statusCode: 201
-            );
-        } catch (Exception $e) {
-            return $this->Error(
-                message: 'Erro ao criar cliente, verifique as credenciais!',
-                statusCode: 400
-            );
-        }
+        return response()->json($client, 201);
     }
 
+    /**
+     * Display the specified resource.
+     */
     public function show(Client $client)
     {
-        try {
-            return $this->Success(
-                data: $client,
-                message: 'Detalhes do cliente recuperados com sucesso.',
-                statusCode: 200
-            );
-        } catch (Exception $e) {
-            return $this->Error(
-                message: 'Erro ao recuperar os dados!',
-                statusCode: 500
-            );
-        }
+        return response()->json($client, 200);
     }
 
-    public function update(StoreClientRequest $request, Client $client)
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Client $client)    
     {
-        try {
-            $data = $request->validated();
-
-            $client->update($data);
-
-            return $this->Success(
-                data: $client,
-                message: 'Cliente atualizado com sucesso!',
-                statusCode: 200
-            );
-        } catch (Exception $e) {
-            return $this->Error(
-                message: 'Erro ao atualizar o cliente!',
-                statusCode: 400
-            );
-        }
+        //
     }
 
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Client $client)
+    {
+
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|unique:clients,email',
+            'phone' => 'required|string|max:20',
+            'birth_date' => 'nullable|date',
+            'observation' => 'nullable|string'
+        ]);
+
+        $client->update($data);
+
+        return response()->json(['message:' => 'Updated Successfully', 'data' => $client], 201);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
     public function destroy(Client $client)
     {
-        try {
-            $client->delete();
+        $client->delete();
 
-            return $this->Success(
-                data: $client,
-                message: 'Cliente deletado com sucesso!',
-                statusCode: 200
-            );
-        } catch (Exception $e) {
-            return $this->Error(
-                message: 'Erro ao deletar o cliente!',
-                statusCode: 500
-            );
-        }
+        return response()->json([
+            'message' => 'Client removed successfully!'
+        ], 200);
+        
     }
 }

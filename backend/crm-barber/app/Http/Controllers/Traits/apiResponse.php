@@ -38,7 +38,7 @@ trait ApiResponse
      * Resposta Padrão de Falha
      */
 
-    public function Error(
+    public function error(
         mixed $errors = null,
         string $message = 'Ocorreu algum erro durante a operação',
         int $statusCode = 400,

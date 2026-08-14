@@ -1,8 +1,7 @@
 <?php
 
-use App\Http\Controllers\ClientController;
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
-// Route::get('/clients', [ClientController::class, 'index']);
-
-
+Route::get('/cadastrar', [AuthController::class, 'showRegister'])->name('show.register');
+Route::get('/login', [AuthController::class, 'showLogin'])->name('show.login');
