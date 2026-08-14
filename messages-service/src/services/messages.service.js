@@ -1,7 +1,6 @@
-const { providerMenssage } = require("../providers/message.provider");
-const mensageList = require("../dictionary/templates.messages");
-const numList = require("../dictionary/clientes.list");
-const logService = require("../controllers/message.log.controller");
+const { providerMessage } = require("../providers/message.provider");
+const messageList = require("../dictionary/templates.messages");
+const logController = require("../controllers/message.log.controller");
 // --------------------------------------------------------------------------
 // 1. Service de Mensagens e suas dependencias
 // --------------------------------------------------------------------------
@@ -20,7 +19,7 @@ const messageService = async (mensageData) => {
       `[BLOQUEADO] Tentativa de envio ${trigger} com data ou hora invalidos`,
     );
 
-    const errormessage =
+    const messageError =
       "Campos de 'data' e 'hora'são obrigatorios pra esse gatilho";
     await logController.ControllerLogs({
       action: "WHATSAPP_MENSAGE_SENT",
@@ -32,7 +31,7 @@ const messageService = async (mensageData) => {
     });
     return {
       status: "failed",
-      error: errormessage,
+      error: messageError,
     };
   }
 
@@ -64,7 +63,7 @@ const messageService = async (mensageData) => {
   // --------------------------------------------------------------------------
   // 4. Busca de template e info do cliente
   // --------------------------------------------------------------------------
-  const templateSelect = mensageList[trigger];
+  const templateSelect = messageList[trigger];
   if (!templateSelect) {
     console.error(
       `[ERRO]O gatilho '${trigger}' não possui template configurado`,
@@ -88,7 +87,7 @@ const messageService = async (mensageData) => {
   // 5. Seleção de template baseado nas informações vindas do controller
   // --------------------------------------------------------------------------
   const respost = templateSelect(name, { date, time, barber });
-  const response = await providerMenssage(phone, respost);
+  const response = await providerMessage(phone, respost);
   if (!response.sucess) {
     await logController.ControllerLogs({
       action: "WHATSAPP_MENSAGE_SENT",

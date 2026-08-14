@@ -1,6 +1,6 @@
 class logProvider {
   constructor() {
-    ((this.apiUrl = "http://127.0.0.1:8000"), (this.apiToken = "caso precise"));
+    ((this.apiUrl = process.env.API_URL_BACKEND), (this.apiToken = process.env.API_TOKEN_BACKEND));
   }
 
   async logToBackend(logData) {

@@ -1,7 +1,7 @@
 const { ZodError } = require("zod");
 
 const { messageService } = require("../services/messages.service");
-const { makeMessageDTO } = require("../dtos/mensage.dtos");
+const { makeMessageDTO } = require("../dtos/message.dtos");
 
 // --------------------------------------------------------------------------
 // 1. Responsavel pela validação de Padrão de dados e por chamar o service.message

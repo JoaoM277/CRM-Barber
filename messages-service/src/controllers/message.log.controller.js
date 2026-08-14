@@ -11,7 +11,7 @@ class logController {
     } catch (error) {
       console.error(
         "[LogController Falback Error]: Falha ao enviar Log pra o Service ->",
-        error.message,
+        error.mensage,
       );
       return null;
     }

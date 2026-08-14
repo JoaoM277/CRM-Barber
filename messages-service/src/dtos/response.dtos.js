@@ -8,13 +8,13 @@ const MakeMessageResponseDTO = ({
   messageId,
   provider,
   rawResponse,
-  errorMensage = null,
+  errorMessage = null,
 }) => {
   return {
     sucess: sucess,
     messageId: messageId,
     provider: provider,
-    errorMensage: errorMensage,
+    errorMessage: errorMessage,
     timestamp: new Date(),
     rawResponse: rawResponse,
   };

@@ -2,7 +2,7 @@
 // Dicionario de Templates de Mensagens (temporario)
 // --------------------------------------------------------------------------
 
-const mensageList = {
+const messageList = {
   AGENDAMENTO: (name, appointment) =>
     `Olá, ${name}! Seu agendamento foi confirmado para o dia ${appointment?.date || "marcado"} às ${appointment?.time || "marcado"}. Te esperamos! 💈`,
 
@@ -13,4 +13,4 @@ const mensageList = {
     `Ei, ${name}, passando para lembrar do seu horário hoje às ${appointment?.time}! ⏰`,
 };
 
-module.exports = mensageList;
+module.exports = messageList;

@@ -5,7 +5,7 @@ require("dotenv").config();
 // 1. Cria o Payload da API em questão (InfoBip - Whatsapp)
 // --------------------------------------------------------------------------
 
-const providerMenssage = async (to, respost) => {
+const providerMessage = async (to, respost) => {
   const infobipPayload = {
     from: process.env.INFOBIP_WHATSAPP_NUMBER,
     to: to.replace(/\D/g, ""),
@@ -81,4 +81,4 @@ const providerMenssage = async (to, respost) => {
   
 };
 
-module.exports = { providerMenssage };
+module.exports = { providerMessage };
