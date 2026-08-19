@@ -53,56 +53,144 @@ const createInstance = async (nome) => {
       status: "erro",
       error: {
         code: erro.response?.status ?? "ERRO_NA_CRIAÇÃO_DA_INSTANCIA",
-        message:erro.response?.data?.response?.message?.[0] ??
+        message:
+          erro.response?.data?.response?.message?.[0] ??
           "Não foi possível conectar a instância.",
-      }
+      },
     });
   }
 };
 
 const conectInstance = async (nome) => {
   try {
-    const resposta = await evolution.get(`/instance/connect/${nome}`);
-    console.dir(resposta.data, { depth: null });
-    const qrText = resposta.data.code;
+    const response = await evolution.get(`/instance/connect/${nome}`);
+    console.dir(response.data, { depth: null });
 
-    if (!qrText) {
+    if (!response) {
       console.log("Nada retornado da API");
-      return resposta.data;
+      return makeResponse({
+        sucess: false,
+        action: "connect",
+        instanceName: nome,
+        status: response.data.status,
+        data: {
+          qrCode: response.data.base64 ?? null,
+          pairingCode: response.data.pairingCode ?? null,
+        },
+      });
     }
-    qrcode.generate(qrText, { small: true });
-    return resposta.data;
+
+    return makeResponse({
+      sucess: true,
+      action: "connect",
+      instanceName: nome,
+      status: response.data.status,
+      data: {
+        qrCode: response.data.base64 ?? null,
+        pairingCode: response.data.pairingCode ?? null,
+      },
+    });
   } catch (erro) {
-    console.log("Erro na requisição", erro);
+    return makeResponse({
+      sucess: false,
+      action: "connect",
+      instanceName: nome,
+      status: "erro",
+      error: {
+        code: erro.response?.status ?? "ERRO_NA_CONEXÃO_DA_INSTANCIA",
+        message:
+          erro.response?.data?.response?.message?.[0] ??
+          "Não foi possível conectar a instância.",
+      },
+    });
   }
 };
 
 const verifyInstance = async (nome) => {
   try {
-    const resposta = await evolution.get(`/instance/connectionState/${nome}`);
-    const state = resposta.data.instance.state;
-    console.log(state);
-    return resposta.data;
+    const response = await evolution.get(`/instance/connectionState/${nome}`);
+    const state = response.data.instance.state;
+    return makeResponse({
+      sucess: true,
+      action: "verify",
+      instanceName: nome,
+      status: state,
+      data: {
+        qrCode: response.data.base64 ?? null,
+        pairingCode: response.data.pairingCode ?? null,
+      },
+    });
   } catch (erro) {
-    console.log("Erro na requisição", erro);
+    return makeResponse({
+      sucess: false,
+      action: "verify",
+      instanceName: nome,
+      status: "erro",
+      error: {
+        code: erro.response?.status ?? "ERRO_NA_VERIFY_DA_INSTANCIA",
+        message:
+          erro.response?.data?.response?.message?.[0] ??
+          "Não foi possível verificar a instância.",
+      },
+    });
   }
 };
 
 const desconectInstance = async (nome) => {
   try {
     const logout = await evolution.delete(`/instance/logout/${nome}`);
-    console.log(logout);
+    return makeResponse({
+      sucess: true,
+      action: "desconect",
+      instanceName: nome,
+      status: logout,
+      data: {
+        qrCode: logout.data.base64 ?? null,
+        pairingCode: logout.data.pairingCode ?? null,
+      },
+    });
   } catch (erro) {
-    console.error("Erro na requisição", erro);
+    return makeResponse({
+      sucess: false,
+      action: "desconect",
+      instanceName: nome,
+      status: "erro",
+      error: {
+        code: erro.response?.status ?? "ERRO_AO_DESCONECTAR_DA_INSTANCIA",
+        message:
+          erro.response?.data?.response?.message?.[0] ??
+          "Não foi possível desconectar da instância.",
+      },
+    });
   }
 };
 
 const deletetInstance = async (nome) => {
   try {
     const deleter = await evolution.delete(`/instance/delete/${nome}`);
-    console.log(deleter);
+    return makeResponse({
+      sucess: true,
+      action: "delete",
+      instanceName: nome,
+      status: deleter.data.status,
+      data: {
+        qrCode: deleter.data.base64 ?? null,
+        pairingCode: deleter.data.pairingCode ?? null,
+      },
+    });
   } catch (erro) {
-    console.error("Erro na requisição", erro);
+    return makeResponse({
+      sucess: false,
+      action: "delete",
+      instanceName: nome,
+      status: "erro",
+      error: {
+        code: erro.response?.status ?? "ERRO_AO_DELETAR_A_INSTANCIA",
+        message:
+          erro.response?.data?.response?.message?.[0] ??
+          "Não foi possível deletar a instância.",
+      },
+    });
   }
 };
 
@@ -112,5 +200,5 @@ module.exports = {
   conectInstance,
   verifyInstance,
   desconectInstance,
-  deletetInstance
+  deletetInstance,
 };
