@@ -5,6 +5,21 @@ require("dotenv").config({
   path: require("path").resolve(__dirname, "../../.env"),
 });
 
+const makeResponse = ({
+  success,
+  action,
+  instanceName,
+  status,
+  data = null,
+  error = null,
+}) => ({
+  success,
+  action,
+  instanceName,
+  status,
+  data,
+  error,
+});
 const evolution = axios.create({
   baseURL: process.env.EVOLUTION_URL,
   headers: {
@@ -20,10 +35,28 @@ const createInstance = async (nome) => {
       qrcode: true,
       integration: "WHATSAPP-BAILEYS",
     });
-
-    return instancia;
+    return makeResponse({
+      sucess: true,
+      action: "create",
+      instanceName: nome,
+      status: instancia.data.status,
+      data: {
+        qrCode: instancia.data.base64 ?? null,
+        pairingCode: instancia.data.pairingCode ?? null,
+      },
+    });
   } catch (erro) {
-    console.error("Falha na requisição", erro);
+    return makeResponse({
+      sucess: false,
+      action: "create",
+      instanceName: nome,
+      status: "erro",
+      error: {
+        code: erro.response?.status ?? "ERRO_NA_CRIAÇÃO_DA_INSTANCIA",
+        message:erro.response?.data?.response?.message?.[0] ??
+          "Não foi possível conectar a instância.",
+      }
+    });
   }
 };
 
@@ -73,9 +106,11 @@ const deletetInstance = async (nome) => {
   }
 };
 
-((module.exports = evolution),
-  { createInstance },
-  { conectInstance },
-  { verifyInstance },
-  { desconectInstance },
-  { deletetInstance });
+module.exports = {
+  evolution,
+  createInstance,
+  conectInstance,
+  verifyInstance,
+  desconectInstance,
+  deletetInstance
+};
