@@ -1,5 +1,5 @@
 const { z } = require("zod");
-
+const { required } = require("zod/mini");
 
 // --------------------------------------------------------------------------
 // 1. Corpo de Validação de dados vinjdos do CRM
@@ -19,8 +19,19 @@ const messageCreateSchema = z.object({
   barber: z.string().optional(),
 });
 
-const makeMessageDTO = (data) => {
-  return messageCreateSchema.parse(data);
+const schemaEvolution = z.object({
+  name: z
+    .string({ required_error: "O campo name é obrigatorio" })
+    .trim()
+    .min(1, { message: "O campo não pode ser vazio" }),
+});
+
+const makeSchemaEvolution = (data) => {
+  return schemaEvolution.safeParse(data);
 };
 
-module.exports = { messageCreateSchema, makeMessageDTO };
+const makeMessageDTO = (data) => {
+  return messageCreateSchema.safeParse(data);
+};
+
+module.exports = { makeMessageDTO, makeSchemaEvolution };

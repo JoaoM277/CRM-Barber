@@ -1,7 +1,13 @@
 const express = require("express");
 const routes = express.Router();
-const { testControler } = require("../controllers/test.controller");
+const { createnGetInstanceController } = require("../controllers/evolution.controller");
+const { testControler } = require("../controllers/evolution.controller");
+const { connectSecondInstanceController } = require("../controllers/evolution.controller");
+const { verifyInstanceController  } = require("../controllers/evolution.controller");
+const { desconectInstanceController   } = require("../controllers/evolution.controller");
+const { deleteInstanceController  } = require("../controllers/evolution.controller");
 
-routes.post("/", testControler);
+
+routes.post("/", deleteInstanceController );
 
 module.exports = routes;

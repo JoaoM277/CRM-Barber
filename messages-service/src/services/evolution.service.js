@@ -36,7 +36,7 @@ const createInstance = async (nome) => {
       integration: "WHATSAPP-BAILEYS",
     });
     return makeResponse({
-      sucess: true,
+      success: true,
       action: "create",
       instanceName: nome,
       status: instancia.data.status,
@@ -64,12 +64,10 @@ const createInstance = async (nome) => {
 const conectInstance = async (nome) => {
   try {
     const response = await evolution.get(`/instance/connect/${nome}`);
-    console.dir(response.data, { depth: null });
 
     if (!response) {
-      console.log("Nada retornado da API");
       return makeResponse({
-        sucess: false,
+        success: false,
         action: "connect",
         instanceName: nome,
         status: response.data.status,
@@ -81,7 +79,7 @@ const conectInstance = async (nome) => {
     }
 
     return makeResponse({
-      sucess: true,
+      success: true,
       action: "connect",
       instanceName: nome,
       status: response.data.status,
@@ -92,7 +90,7 @@ const conectInstance = async (nome) => {
     });
   } catch (erro) {
     return makeResponse({
-      sucess: false,
+      success: false,
       action: "connect",
       instanceName: nome,
       status: "erro",
@@ -111,7 +109,7 @@ const verifyInstance = async (nome) => {
     const response = await evolution.get(`/instance/connectionState/${nome}`);
     const state = response.data.instance.state;
     return makeResponse({
-      sucess: true,
+      success: true,
       action: "verify",
       instanceName: nome,
       status: state,
@@ -122,7 +120,7 @@ const verifyInstance = async (nome) => {
     });
   } catch (erro) {
     return makeResponse({
-      sucess: false,
+      success: false,
       action: "verify",
       instanceName: nome,
       status: "erro",
@@ -151,7 +149,7 @@ const desconectInstance = async (nome) => {
     });
   } catch (erro) {
     return makeResponse({
-      sucess: false,
+      success: false,
       action: "desconect",
       instanceName: nome,
       status: "erro",
@@ -169,7 +167,7 @@ const deletetInstance = async (nome) => {
   try {
     const deleter = await evolution.delete(`/instance/delete/${nome}`);
     return makeResponse({
-      sucess: true,
+      success: true,
       action: "delete",
       instanceName: nome,
       status: deleter.data.status,
@@ -180,7 +178,7 @@ const deletetInstance = async (nome) => {
     });
   } catch (erro) {
     return makeResponse({
-      sucess: false,
+      success: false,
       action: "delete",
       instanceName: nome,
       status: "erro",
