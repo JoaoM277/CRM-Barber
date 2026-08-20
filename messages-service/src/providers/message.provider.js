@@ -14,19 +14,6 @@ const providerMessage = async (to, respost) => {
     },
   };
 
-  // --------------------------------------------------------------------------
-  // Seção de Logs pra DeBug no Terminal
-  // --------------------------------------------------------------------------
-
-  //console.log("=== DIAGNÓSTICO INFOBIP ===");
-  //console.log("Tipo do 'from':", typeof infobipPayload.from);
-  //console.log("Valor do 'from':", infobipPayload.from);
-  //console.log("JSON final enviado:", JSON.stringify(infobipPayload, null, 2));
-  //console.log("===========================");
-
-  // --------------------------------------------------------------------------
-  // 2. Faz um fetch e envia a requisição da api (abaixo tratamento de erro)
-  // --------------------------------------------------------------------------
 
   try {
     const response = await fetch(

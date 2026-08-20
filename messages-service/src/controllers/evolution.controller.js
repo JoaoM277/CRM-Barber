@@ -175,7 +175,7 @@ const deleteInstanceController = async (req, res) => {
     }
 
     return res.status(200).json({
-      message: "Instancia desconectada com sucesso",
+      message: "Instancia deletada com sucesso",
       data: deleter.data ?? deleter.action ?? null,
     });
   } catch (error) {
