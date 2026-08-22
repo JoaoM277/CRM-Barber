@@ -97,7 +97,7 @@ class WorkerSeeder extends Seeder
         ];
 
         foreach ($workers as $worker) {
-            Worker::create($worker);
+            Worker::updateOrcreate($worker);
         }
     }
 }

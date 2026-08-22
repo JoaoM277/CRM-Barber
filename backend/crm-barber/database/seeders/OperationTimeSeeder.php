@@ -73,7 +73,7 @@ class OperationTimeSeeder extends Seeder
         ];
 
         foreach ($operationTimes as $operationTime) {
-            OperationTime::create($operationTime);
+            OperationTime::updateOrcreate($operationTime);
         }
     }
 }

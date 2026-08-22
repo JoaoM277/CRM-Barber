@@ -248,7 +248,7 @@ class BarbershopSeeder extends Seeder
         ];
 
         foreach ($barbershops as $barbershop) {
-            Barbershop::create($barbershop);
+            Barbershop::updateOrcreate($barbershop);
         }
 
     }

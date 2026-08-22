@@ -127,7 +127,7 @@ class ScheduleSeeder extends Seeder
         ];
 
         foreach ($schedules as $schedule) {
-            Schedule::create($schedule);
+            Schedule::updateOrcreate($schedule);
         }
     }
 }
