@@ -58,7 +58,7 @@ class ScheduleController extends Controller
      */
     public function show(Schedule $schedule)
     {
-        return $this->Sucess(
+        return $this->Success(
             data: $schedule,
             message: 'Detalhes do agendamento recuperados',
         ); //response()->json($schedule);

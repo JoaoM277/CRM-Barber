@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
 const formLogin = document.getElementById("form-login");
 const feedback = document.getElementById("login-feedback");
@@ -28,9 +28,9 @@ if (formLogin) {
 
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok && data.access_token) {
                 // Salva o token de acesso no navegador
-                localStorage.setItem("admin_token", data.token);
+                localStorage.setItem("admin_token", data.access_token);
                 
                 // Redireciona para o painel de administração que já construímos
                 window.location.href = "admin.html"; // Ajuste o nome da sua página admin se for diferente
