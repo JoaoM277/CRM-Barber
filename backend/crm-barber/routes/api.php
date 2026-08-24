@@ -62,6 +62,15 @@ Route::apiResource('logs', LogController::class);
 // Message Service
 Route::post('/message', [MessageController::class, 'sendAppointmentConfirmation'])->name('mensagens.agendamento');
 
+//Instance Manager
+Route::middleware('auth:sanctum')->prefix('instances')->group(function(){
+  Route::post('{instanceName}/create', [InstanceController::class, 'create'])->name('instance.register');
+  Route::post('{instanceName}/connect', [InstanceController::class, 'connect'])->name('instance.register');
+  Route::post('{instanceName}/verify', [InstanceController::class, 'verify'])->name('instance.register');
+  Route::post('{instanceName}/disconnect', [InstanceController::class, 'disconnect'])->name('instance.register');
+  Route::post('{instanceName}/delete', [InstanceController::class, 'delete'])->name('instance.register');
+});
+
 // Auth (público)
 Route::post('/cadastrar', [AuthController::class, 'register'])->name('users.register');
 Route::post('/login', [AuthController::class, 'login'])->name('users.login');

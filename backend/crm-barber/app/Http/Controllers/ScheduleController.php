@@ -20,7 +20,7 @@ class ScheduleController extends Controller
     {
         $schedule = Schedule::all();
 
-        return $this->Sucess(
+        return $this->Success(
             data: $schedule,
             message: 'Agendamentos listados com sucesso.',
         );//response()->json($schedule);
