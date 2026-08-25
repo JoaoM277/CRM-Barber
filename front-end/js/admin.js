@@ -615,13 +615,19 @@ window.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  await Promise.all([
+/*   await Promise.all([
     renderAgenda(),
     renderServicos(),
     renderBarbeiros(),
     renderDashboard(),
     renderAviso(),
-  ]);
+  ]); */
+
+    await renderAgenda()
+    await renderServicos()
+    await renderBarbeiros()
+    await renderDashboard()
+    await renderAviso()
 
   const btnFiltrar = document.getElementById("btn-filtrar-agenda");
   const inputData = document.getElementById("filter-date");
