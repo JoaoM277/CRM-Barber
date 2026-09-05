@@ -12,6 +12,22 @@ class Schedule extends Model
 
     // protected $table = 'schedules';
 
+    public const STATUS_PENDENTE = 'pendente';
+
+    public const STATUS_CONFIRMADO = 'confirmado';
+
+    public const STATUS_CANCELADO = 'cancelado';
+
+    public const STATUSES = [
+        self::STATUS_PENDENTE,
+        self::STATUS_CONFIRMADO,
+        self::STATUS_CANCELADO,
+    ];
+
+    protected $attributes = [
+        'status' => self::STATUS_PENDENTE,
+    ];
+
     protected $fillable = [
         'client_id',
         'worker_id',

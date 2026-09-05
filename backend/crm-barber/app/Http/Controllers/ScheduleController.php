@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\UpdateScheduleRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
 class ScheduleController extends Controller
@@ -66,7 +67,7 @@ class ScheduleController extends Controller
             'date'        => Carbon::parse($data['dataAgendamento'])->format('Y-m-d'),
             'start_time'  => $start->format('H:i:s'),
             'end_time'    => $end->format('H:i:s'),
-            'status'      => true,
+            'status'      => Schedule::STATUS_PENDENTE,
             'observation' => $data['observacoes'] ?? null,
         ]);
 
@@ -145,26 +146,34 @@ class ScheduleController extends Controller
     public function update(Request $request, Schedule $schedule)
     {
         $data = $request->validate([
-            'client_id'   => 'required|integer|exists:clients,id',
-            'worker_id'   => 'required|integer|exists:workers,id',
-            'service_id'  => 'required|integer|exists:services,id',
-            'date'        => 'required|date_format:d/m/Y',
-            'start_time' => 'required|integer|between:0,23',
-            'end_time' => 'required|integer|between:0,23|gt:start_time',
-            'status'      => 'boolean',
-            'observation' => 'nullable|string|max:1000'
+            'status'          => ['sometimes', Rule::in(Schedule::STATUSES)],
+            'observation'     => 'sometimes|nullable|string|max:1000',
+            'observacoes'     => 'sometimes|nullable|string|max:1000',
+            'dataAgendamento' => 'sometimes|date',
+            'horario'         => ['sometimes', 'regex:/^\d{2}:\d{2}$/'],
         ]);
 
-        $data['date']   = Carbon::createFromFormat('d/m/Y', $data['date'])->format('Y-m-d');
-        $data['start_time']    = Carbon::createFromTime($data['start_time'], 0, 0)->toTimeString();
-        $data['end_time']      = Carbon::createFromTime($data['end_time'], 0, 0)->toTimeString();
+        $update = [];
 
-        $schedule->update($data);
+        if ($request->has('status')) {
+            $update['status'] = $data['status'];
+        }
+        if ($request->has('observation') || $request->has('observacoes')) {
+            $update['observation'] = $data['observation'] ?? $data['observacoes'] ?? null;
+        }
+        if ($request->filled('dataAgendamento')) {
+            $update['date'] = Carbon::parse($data['dataAgendamento'])->format('Y-m-d');
+        }
+        if ($request->filled('horario')) {
+            $update['start_time'] = $data['horario'].':00';
+        }
+
+        $schedule->update($update);
 
         return response()->json([
             'message' => 'Agendamento atualizado com sucesso!',
-            'schedule' => $schedule
-        ], 201);
+            'schedule' => $schedule->fresh(),
+        ], 200);
     }
 
     /**

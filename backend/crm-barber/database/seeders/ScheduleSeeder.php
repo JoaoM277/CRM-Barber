@@ -21,7 +21,7 @@ class ScheduleSeeder extends Seeder
                 'date' => '2026-07-20',
                 'start_time' => '08:00:00',
                 'end_time' => '08:30:00',
-                'status' => true,
+                'status' => 'pendente',
                 'observation' => 'Primeiro horário do dia.',
             ],
 
@@ -32,7 +32,7 @@ class ScheduleSeeder extends Seeder
                 'date' => '2026-07-20',
                 'start_time' => '09:00:00',
                 'end_time' => '09:20:00',
-                'status' => true,
+                'status' => 'pendente',
                 'observation' => 'Cliente prefere navalha.',
             ],
 
@@ -43,7 +43,7 @@ class ScheduleSeeder extends Seeder
                 'date' => '2026-07-20',
                 'start_time' => '10:00:00',
                 'end_time' => '10:50:00',
-                'status' => true,
+                'status' => 'pendente',
                 'observation' => 'Pacote completo.',
             ],
 
@@ -54,7 +54,7 @@ class ScheduleSeeder extends Seeder
                 'date' => '2026-07-21',
                 'start_time' => '08:30:00',
                 'end_time' => '09:10:00',
-                'status' => true,
+                'status' => 'pendente',
                 'observation' => 'Pigmentação da barba.',
             ],
 
@@ -65,7 +65,7 @@ class ScheduleSeeder extends Seeder
                 'date' => '2026-07-21',
                 'start_time' => '10:00:00',
                 'end_time' => '10:30:00',
-                'status' => true,
+                'status' => 'pendente',
                 'observation' => 'Hidratação capilar.',
             ],
 
@@ -76,7 +76,7 @@ class ScheduleSeeder extends Seeder
                 'date' => '2026-07-22',
                 'start_time' => '09:00:00',
                 'end_time' => '10:00:00',
-                'status' => true,
+                'status' => 'pendente',
                 'observation' => 'Selagem completa.',
             ],
 
@@ -87,7 +87,7 @@ class ScheduleSeeder extends Seeder
                 'date' => '2026-07-22',
                 'start_time' => '11:00:00',
                 'end_time' => '11:15:00',
-                'status' => true,
+                'status' => 'pendente',
                 'observation' => 'Design de sobrancelha.',
             ],
 
@@ -98,7 +98,7 @@ class ScheduleSeeder extends Seeder
                 'date' => '2026-07-23',
                 'start_time' => '08:00:00',
                 'end_time' => '08:25:00',
-                'status' => true,
+                'status' => 'pendente',
                 'observation' => 'Corte infantil.',
             ],
 
@@ -109,7 +109,7 @@ class ScheduleSeeder extends Seeder
                 'date' => '2026-07-23',
                 'start_time' => '15:00:00',
                 'end_time' => '15:15:00',
-                'status' => false,
+                'status' => 'cancelado',
                 'observation' => 'Cliente cancelou.',
             ],
 
@@ -120,7 +120,7 @@ class ScheduleSeeder extends Seeder
                 'date' => '2026-07-24',
                 'start_time' => '16:00:00',
                 'end_time' => '16:30:00',
-                'status' => true,
+                'status' => 'pendente',
                 'observation' => 'Cliente recorrente.',
             ],
 
