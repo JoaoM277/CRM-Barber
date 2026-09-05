@@ -31,6 +31,8 @@ As dependências diretas necessárias para executar o serviço são:
 - `cors@^2.8.6`
 - `dotenv@^17.4.2`
 - `zod@^4.4.3`
+- `axios@^1.19.0`
+- `qrcode-terminal@^0.12.0`
 
 Dependência de desenvolvimento usada para facilitar o desenvolvimento local:
 
@@ -45,7 +47,19 @@ Dependência de desenvolvimento usada para facilitar o desenvolvimento local:
 
 O serviço usa `dotenv` para carregar variáveis de ambiente a partir de `.env`.
 
-As variáveis esperadas são:
+As variáveis esperadas são (ver `.env.example`):
+
+Ponte com o backend Laravel:
+
+- `API_URL_BACKEND`
+- `API_TOKEN_BACKEND`
+
+Provider WhatsApp (Evolution API):
+
+- `EVOLUTION_URL`
+- `EVOLUTION_API_KEY`
+
+Provider SMS/WhatsApp (Infobip — legado/fallback):
 
 - `INFOBIP_BASE_URL`
 - `INFOBIP_API_KEY`

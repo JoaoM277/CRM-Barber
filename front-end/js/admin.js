@@ -312,10 +312,10 @@ if (formServico) {
 
     // ATUALIZADO: Payload usando chaves em INGLÊS para bater com o Laravel
     const payload = {
-      icon: null,
       name: document.getElementById("servico-nome").value,
       price: precoFloat,
-      duration: parseInt(document.getElementById("servico-duracao").value),
+      duration_time: parseInt(document.getElementById("servico-duracao").value),
+      active: true,
     };
 
     const url = id
@@ -454,7 +454,7 @@ if (formBarbeiro) {
       name: nomeInput,
       phone: telefoneInput,
       speciality: "Geral",
-      photo: null,
+      photo: "",
       active: true,
     };
 

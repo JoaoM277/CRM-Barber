@@ -16,21 +16,21 @@ class StoreScheduleRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Contrato usado pela tela pública de agendamento (front-end/js/script.js).
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'client_id' => 'required|integer|exists:clients,id',
-            'worker_id' => 'required|integer|exists:workers,id',
-            'service_id' => 'required|integer|exists:services,id',
-            'date' => 'required|date_format:d/m/Y',
-            'start_time' => 'required|integer|between:0,23',
-            'end_time' => 'required|integer|between:0,23|gt:start_time',
-            'status' => 'boolean',
-            'observation' => 'nullable|string|max:1000',
+            'clienteNome' => 'required|string|max:255',
+            'clienteTelefone' => 'required|string|max:20',
+            'barbeiroId' => 'required|integer|exists:workers,id',
+            'servicosIds' => 'required|array|min:1',
+            'servicosIds.*' => 'integer|exists:services,id',
+            'dataAgendamento' => 'required|date',
+            'horario' => ['required', 'regex:/^\d{2}:\d{2}$/'],
+            'observacoes' => 'nullable|string|max:1000',
         ];
     }
 }

@@ -10,9 +10,13 @@ const { makeMessageDTO } = require("../dtos/message.dtos");
 const messageController = async (req, res) => {
   console.log(req.body);
   try {
-    const messageDTO = makeMessageDTO(req.body);
-    
-    const newMessage = await messageService({...messageDTO, ip: req.ip});
+    const parsed = makeMessageDTO(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({ erros: parsed.error.flatten().fieldErrors });
+    }
+
+    const newMessage = await messageService({ ...parsed.data, ip: req.ip });
     console.log(newMessage);
     return res.status(200).json(newMessage);
   } catch (error) {

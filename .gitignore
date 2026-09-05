@@ -1,0 +1,13 @@
+# Dependências
+node_modules/
+vendor/
+
+# Ambiente
+*.env
+.env
+.env.*
+!.env.example
+
+# Logs / temporários
+*.log
+.DS_Store

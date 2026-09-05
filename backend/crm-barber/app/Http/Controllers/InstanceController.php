@@ -24,14 +24,14 @@ class InstanceController extends Controller
 
   public function connect(Request $request): JsonResponse
   {
-    $response = Http::get("{$this->baseUrl}instance/connect", $request->all());
+    $response = Http::post("{$this->baseUrl}instance/connect", $request->all());
 
     return response()->json($response->json(), $response->status());
   }
 
   public function verify(Request $request): JsonResponse
   {
-    $response = Http::get("{$this->baseUrl}instance/verify", $request->all());
+    $response = Http::post("{$this->baseUrl}instance/verify", $request->all());
 
     return response()->json($response->json(), $response->status());
   }

@@ -2,13 +2,77 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Barbershop;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    /**
+     * Cadastro de dono de barbearia.
+     * Cria a barbearia + o usuário admin vinculado e devolve o token.
+     */
+    public function register(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => 'required|string|min:6',
+            'barbershop_name' => 'required|string|max:255',
+            'barbershop_phone' => 'nullable|string|max:20',
+            'barbershop_whatsapp' => 'nullable|string|max:20',
+        ]);
+
+        $result = DB::transaction(function () use ($validated) {
+            $barbershop = Barbershop::create([
+                'name' => $validated['barbershop_name'],
+                'slug' => $this->generateUniqueSlug($validated['barbershop_name']),
+                'phone' => $validated['barbershop_phone'] ?? null,
+                'whatsapp' => $validated['barbershop_whatsapp'] ?? null,
+            ]);
+
+            $user = User::create([
+                'barbershop_id' => $barbershop->id,
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => $validated['password'],
+                'role' => User::ROLE_ADMIN,
+            ]);
+
+            return [$user, $barbershop];
+        });
+
+        [$user, $barbershop] = $result;
+
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => $user->load('barbershop'),
+        ], 201);
+    }
+
+    /**
+     * Gera um slug único para a barbearia a partir do nome.
+     */
+    private function generateUniqueSlug(string $name): string
+    {
+        $base = Str::slug($name) ?: 'barbearia';
+        $slug = $base;
+        $i = 1;
+
+        while (Barbershop::where('slug', $slug)->exists()) {
+            $slug = $base.'-'.$i++;
+        }
+
+        return $slug;
+    }
+
     /**
      * Autenticação e emissão de token
      */

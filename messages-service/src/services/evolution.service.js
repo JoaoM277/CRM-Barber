@@ -47,7 +47,7 @@ const createInstance = async (nome) => {
     });
   } catch (erro) {
     return makeResponse({
-      sucess: false,
+      success: false,
       action: "create",
       instanceName: nome,
       status: "erro",
@@ -138,7 +138,7 @@ const desconectInstance = async (nome) => {
   try {
     const logout = await evolution.delete(`/instance/logout/${nome}`);
     return makeResponse({
-      sucess: true,
+      success: true,
       action: "desconect",
       instanceName: nome,
       status: logout,

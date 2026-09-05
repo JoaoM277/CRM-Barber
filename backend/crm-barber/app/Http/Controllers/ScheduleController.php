@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\Schedule;
+use App\Models\Service;
+use App\Models\Worker;
 use App\Http\Requests\StoreScheduleRequest;
 use App\Http\Controllers\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use App\Http\Requests\UpdateScheduleRequest;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class ScheduleController extends Controller
@@ -41,16 +46,78 @@ class ScheduleController extends Controller
     {
         $data = $request->validated();
 
-        $data['date']   = Carbon::createFromFormat('d/m/Y', $data['date'])->format('Y-m-d');
-        $data['start_time']    = Carbon::createFromTime($data['start_time'], 0, 0)->toTimeString();
-        $data['end_time']      = Carbon::createFromTime($data['end_time'], 0, 0)->toTimeString();
+        $phone = preg_replace('/\D/', '', $data['clienteTelefone']);
 
-        $schedule = Schedule::create($data);
+        $client = Client::firstOrCreate(
+            ['phone' => $phone],
+            ['name' => $data['clienteNome']],
+        );
+
+        $serviceId = $data['servicosIds'][0];
+        $service   = Service::find($serviceId);
+
+        $start = Carbon::parse($data['horario']);
+        $end   = (clone $start)->addMinutes($this->serviceDurationMinutes($service));
+
+        $schedule = Schedule::create([
+            'client_id'   => $client->id,
+            'worker_id'   => $data['barbeiroId'],
+            'service_id'  => $serviceId,
+            'date'        => Carbon::parse($data['dataAgendamento'])->format('Y-m-d'),
+            'start_time'  => $start->format('H:i:s'),
+            'end_time'    => $end->format('H:i:s'),
+            'status'      => true,
+            'observation' => $data['observacoes'] ?? null,
+        ]);
+
+        $this->dispatchWhatsappConfirmation($client, $schedule);
 
         return response()->json([
             'message' => 'Agendamento feito com sucesso!',
-            'schedule' => $schedule
+            'schedule' => $schedule->load(['client', 'worker', 'service']),
         ], 201);
+    }
+
+    /**
+     * Duração do serviço em minutos (coluna TIME); usa 30 min como padrão.
+     */
+    private function serviceDurationMinutes(?Service $service): int
+    {
+        if (! $service || ! $service->duration_time) {
+            return 30;
+        }
+
+        $d = Carbon::parse($service->duration_time);
+
+        return ($d->hour * 60 + $d->minute) ?: 30;
+    }
+
+    /**
+     * Aciona o serviço de mensagens (Node) para a confirmação via WhatsApp.
+     * Nunca derruba o agendamento se o serviço estiver fora do ar.
+     */
+    private function dispatchWhatsappConfirmation(Client $client, Schedule $schedule): void
+    {
+        $phone = preg_replace('/\D/', '', (string) $client->phone);
+        if (! str_starts_with($phone, '55')) {
+            $phone = '55'.$phone;
+        }
+
+        $worker = Worker::find($schedule->worker_id);
+
+        try {
+            $url = rtrim(config('services.messages.url'), '/');
+            Http::timeout(5)->post("{$url}/message", [
+                'phone'   => $phone,
+                'name'    => $client->name,
+                'trigger' => 'AGENDAMENTO',
+                'date'    => Carbon::parse($schedule->date)->format('Y-m-d'),
+                'time'    => substr((string) $schedule->start_time, 0, 5),
+                'barber'  => $worker?->name,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Falha ao acionar o serviço de mensagens: '.$e->getMessage());
+        }
     }
 
     /**
