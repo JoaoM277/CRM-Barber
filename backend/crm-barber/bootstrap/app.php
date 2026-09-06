@@ -15,7 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'service.token' => \App\Http\Middleware\ServiceTokenMiddleware::class,
         ]);
+
+        // API-only: sem página de login web, então convidado não autenticado
+        // recebe 401 JSON em vez de redirect para a rota "login" (inexistente).
+        $middleware->redirectGuestsTo(fn () => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -9,7 +9,7 @@ const agendamento = {
     cliente: { nome: "", telefone: "", notas: "" }
 };
 
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL = window.API_BASE_URL || "http://localhost:8000/api";
 
 let currentStep = 1;
 let currentDateObj = new Date(); 
@@ -21,6 +21,12 @@ let currentDateObj = new Date();
 let dbServicos = [];
 let dbBarbeiros = [];
 let dbHorariosDisponiveis = [];
+let dbOcupados = [];
+let dbExpediente = [];
+
+const hmToMin = (hm) => { const [h, m] = String(hm).split(':').map(Number); return h * 60 + (m || 0); };
+const minToHm = (min) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+const ymdLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 // ==========================================================================
 // 3. FUNÇÃO DE INTEGRAÇÃO COM A API (Substituindo os Mocks)
@@ -31,7 +37,7 @@ async function carregarDadosIniciais() {
         const [resServicos, resBarbeiros, resHorarios] = await Promise.all([
             fetch(`${API_BASE_URL}/servicos`), 
             fetch(`${API_BASE_URL}/profissionais`), 
-            fetch(`${API_BASE_URL}/agendamentos`)  
+            fetch(`${API_BASE_URL}/disponibilidade`)
         ]);
 
         // 2. Converte para JSON
@@ -43,6 +49,8 @@ async function carregarDadosIniciais() {
         const rawServicos = dataServicos.data ? dataServicos.data : dataServicos;
         const rawBarbeiros = dataBarbeiros.data ? dataBarbeiros.data : dataBarbeiros;
         const rawHorarios = dataHorarios.data ? dataHorarios.data : dataHorarios;
+        dbOcupados = Array.isArray(rawHorarios) ? rawHorarios : [];
+        dbExpediente = Array.isArray(dataHorarios.expediente) ? dataHorarios.expediente : [];
 
         // 🛑 OLHE PARA ESTES LOGS NO F12 PARA VER O NOME EXATO DAS COLUNAS
         console.log("🔍 DADOS DOS SERVIÇOS:", rawServicos);
@@ -291,14 +299,59 @@ function renderCalendario(date) {
     renderHorarios();
 }
 
+const SLOT_INTERVALO = 30; // minutos entre horários oferecidos
+
 function renderHorarios() {
     const container = document.getElementById("slots-container");
     container.innerHTML = "";
-    if (!agendamento.data) {
-        container.innerHTML = `<p style="color: var(--text-muted); font-size:14px; grid-column:1/-1; text-align:center;">Selecione um dia primeiro</p>`;
-        return;
+
+    const aviso = (txt) => {
+        container.innerHTML = `<p style="color: var(--text-muted); font-size:14px; grid-column:1/-1; text-align:center;">${txt}</p>`;
+    };
+
+    if (!agendamento.data) return aviso("Selecione um dia primeiro");
+    if (!agendamento.barbeiroId) return aviso("Volte e escolha um profissional");
+
+    const diaSemana = agendamento.data.getDay(); // 0=domingo .. 6=sábado
+    const exp = dbExpediente.find(e => Number(e.day_of_week) === diaSemana);
+
+    if (!exp || !exp.active) return aviso("A barbearia não abre neste dia.");
+
+    // duração total dos serviços escolhidos
+    const dur = Math.max(
+        15,
+        dbServicos.filter(s => agendamento.servicos.includes(s.id)).reduce((a, s) => a + (s.duracao || 0), 0)
+    );
+
+    const abre = hmToMin(exp.start_time);
+    const fecha = hmToMin(exp.end_time);
+    const almocoIni = exp.waiting_start ? hmToMin(exp.waiting_start) : null;
+    const almocoFim = exp.waiting_end ? hmToMin(exp.waiting_end) : null;
+
+    const dataStr = ymdLocal(agendamento.data);
+    const hoje = new Date();
+    const ehHoje = dataStr === ymdLocal(hoje);
+    const agoraMin = hoje.getHours() * 60 + hoje.getMinutes();
+
+    const ocupadosDoDia = dbOcupados.filter(
+        o => o.date === dataStr && Number(o.worker_id) === Number(agendamento.barbeiroId)
+    );
+
+    const slots = [];
+    for (let t = abre; t + dur <= fecha; t += SLOT_INTERVALO) {
+        const fim = t + dur;
+        if (almocoIni !== null && t < almocoFim && fim > almocoIni) continue;            // colide com almoço
+        if (ehHoje && t <= agoraMin) continue;                                           // já passou
+        const conflita = ocupadosDoDia.some(o => t < hmToMin(o.end_time) && fim > hmToMin(o.start_time));
+        if (conflita) continue;
+        slots.push(minToHm(t));
     }
-    dbHorariosDisponiveis.forEach(hora => {
+
+    if (agendamento.hora && !slots.includes(agendamento.hora)) agendamento.hora = null;
+
+    if (slots.length === 0) return aviso("Sem horários livres nesse dia.");
+
+    slots.forEach(hora => {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = `slot-btn ${agendamento.hora === hora ? 'selected' : ''}`;
@@ -399,7 +452,7 @@ function validateStep() {
 // ==========================================================================
 async function verificarAvisoBarbearia() {
     try {
-        const response = await fetch('/api/avisos/ativo'); 
+        const response = await fetch(`${API_BASE_URL}/avisos/ativo`); 
         const data = await response.json();
 
         if (data.exibir) {
@@ -520,7 +573,7 @@ if (btnNext) {
             const payloadParaBackend = {
                 barbeiroId: agendamento.barbeiroId,
                 servicosIds: agendamento.servicos, 
-                dataAgendamento: agendamento.data.toISOString().split('T')[0], 
+                dataAgendamento: ymdLocal(agendamento.data), 
                 horario: agendamento.hora,
                 clienteNome: agendamento.cliente.nome,
                 clienteTelefone: agendamento.cliente.telefone,
@@ -578,9 +631,50 @@ function esconderLoading() {
     }
 }
 
+// ==========================================================================
+//  IDENTIDADE VISUAL DA BARBEARIA (cabeçalho + cor de destaque)
+// ==========================================================================
+async function carregarIdentidade() {
+    try {
+        const res = await fetch(`${API_BASE_URL}/barbearia`);
+        if (!res.ok) return;
+        const bs = await res.json();
+
+        const nome = document.getElementById("bs-name");
+        const sub = document.getElementById("bs-subtitle");
+        const loc = document.getElementById("bs-location");
+        const logo = document.getElementById("bs-logo");
+
+        if (nome && bs.name) { nome.textContent = bs.name; document.title = bs.name; }
+        if (sub) sub.textContent = bs.subtitle || "BARBEARIA";
+
+        if (loc) {
+            const cidadeEstado = [bs.city, bs.state].filter(Boolean).join(", ");
+            if (cidadeEstado) {
+                loc.textContent = cidadeEstado;
+            } else {
+                loc.closest(".location-box")?.style.setProperty("display", "none");
+            }
+        }
+
+        if (logo && bs.logo_url) {
+            logo.innerHTML = `<img src="${bs.logo_url}" alt="${bs.name || "logo"}">`;
+        }
+
+        if (bs.accent_color) {
+            document.documentElement.style.setProperty("--primary", bs.accent_color);
+        }
+    } catch (e) {
+        /* mantém os placeholders do HTML */
+    }
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
     // 1. O HTML já carrega mostrando a tela de Loading por padrão.
-    
+
+    // 1b. Identidade visual (nome, logo, cidade, cor)
+    await carregarIdentidade();
+
     // 2. Espera os dados chegarem da API
     await carregarDadosIniciais();
     

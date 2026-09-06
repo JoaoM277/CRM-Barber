@@ -17,6 +17,7 @@ const messageCreateSchema = z.object({
   date: z.string().optional(),
   time: z.string().optional(),
   barber: z.string().optional(),
+  instance: z.string().optional(),
 });
 
 const schemaEvolution = z.object({

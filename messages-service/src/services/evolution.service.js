@@ -41,8 +41,8 @@ const createInstance = async (nome) => {
       instanceName: nome,
       status: instancia.data.status,
       data: {
-        qrCode: instancia.data.base64 ?? null,
-        pairingCode: instancia.data.pairingCode ?? null,
+        qrCode: instancia.data.qrcode?.base64 ?? instancia.data.base64 ?? null,
+        pairingCode: instancia.data.qrcode?.pairingCode ?? instancia.data.pairingCode ?? null,
       },
     });
   } catch (erro) {
@@ -72,7 +72,7 @@ const conectInstance = async (nome) => {
         instanceName: nome,
         status: response.data.status,
         data: {
-          qrCode: response.data.base64 ?? null,
+          qrCode: response.data.base64 ?? response.data.qrcode?.base64 ?? null,
           pairingCode: response.data.pairingCode ?? null,
         },
       });
@@ -84,7 +84,7 @@ const conectInstance = async (nome) => {
       instanceName: nome,
       status: response.data.status,
       data: {
-        qrCode: response.data.base64 ?? null,
+        qrCode: response.data.base64 ?? response.data.qrcode?.base64 ?? null,
         pairingCode: response.data.pairingCode ?? null,
       },
     });
@@ -114,7 +114,7 @@ const verifyInstance = async (nome) => {
       instanceName: nome,
       status: state,
       data: {
-        qrCode: response.data.base64 ?? null,
+        qrCode: response.data.base64 ?? response.data.qrcode?.base64 ?? null,
         pairingCode: response.data.pairingCode ?? null,
       },
     });
@@ -192,6 +192,41 @@ const deletetInstance = async (nome) => {
   }
 };
 
+// Envia uma mensagem de texto por uma instância conectada
+const sendText = async (instanceName, number, text) => {
+  try {
+    const response = await evolution.post(`/message/sendText/${instanceName}`, {
+      number: String(number).replace(/\D/g, ""),
+      text: text,
+    });
+    return makeResponse({
+      success: true,
+      action: "sendText",
+      instanceName: instanceName,
+      status: response.data?.status ?? "sent",
+      data: {
+        messageId:
+          response.data?.key?.id ?? response.data?.messageId ?? null,
+      },
+    });
+  } catch (erro) {
+    return makeResponse({
+      success: false,
+      action: "sendText",
+      instanceName: instanceName,
+      status: "erro",
+      error: {
+        code: erro.response?.status ?? "ERRO_ENVIO_MENSAGEM",
+        message:
+          erro.response?.data?.response?.message?.[0] ??
+          erro.response?.data?.message ??
+          erro.message ??
+          "Não foi possível enviar a mensagem pela instância.",
+      },
+    });
+  }
+};
+
 module.exports = {
   evolution,
   createInstance,
@@ -199,4 +234,5 @@ module.exports = {
   verifyInstance,
   desconectInstance,
   deletetInstance,
+  sendText,
 };

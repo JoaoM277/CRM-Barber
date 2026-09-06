@@ -1,5 +1,10 @@
 # PRE_DEPLOY_CHECKLIST — CRM-Barber (MVP / ambiente de testes)
 
+> **Status:** smoke test local (seção 4) rodado end-to-end contra MySQL — os 10 passos passaram
+> (auth, RBAC/401, throttle, cadastro base, agendamento público, fila → WhatsApp → log,
+> confirmar/cancelar, faturamento, avisos).
+
+
 Três serviços + um MySQL compartilhado:
 
 | Serviço | Pasta | Stack | Porta padrão |
@@ -8,7 +13,7 @@ Três serviços + um MySQL compartilhado:
 | Serviço de mensagens | `messages-service` | Node 18+ / Express | 3000 |
 | Frontend | `front-end` | HTML/CSS/JS estático (sem build) | 5500 (ou qualquer) |
 
-Fluxo: **Frontend → Laravel (`:8000/api`) → Node (`:3000`) → Evolution API / Infobip**.
+Fluxo: **Frontend → Laravel (`:8000/api`) → Node (`:3000`) → Evolution API**.
 O Node fala com o Laravel **só por HTTP** (nunca direto no banco).
 
 ---
@@ -47,11 +52,14 @@ Copiar de `.env.example` e ajustar. Chaves que **precisam** ser revisadas:
 | `DB_USERNAME` | *(seu user)* | |
 | `DB_PASSWORD` | *(sua senha)* | |
 | `MESSAGE_SERVICE_URL` | `http://127.0.0.1:3000/` | **tem que terminar com `/`** (o `InstanceController` concatena sem barra) |
+| `MESSAGES_SERVICE_TOKEN` | *(segredo aleatório longo)* | **igual ao do Node.** Autentica `POST /api/logs` (header `X-Service-Token`) |
+| `FRONTEND_URL` | `http://SEU_HOST:5500` | origem do front; usada nos redirects de `web.php` e como fallback do CORS |
+| `CORS_ALLOWED_ORIGINS` | `http://SEU_HOST:5500` | lista separada por vírgula das origens liberadas; se vazio, usa `FRONTEND_URL` |
 | `SESSION_DRIVER` | `database` | precisa da tabela `sessions` (já vem nas migrations) |
 | `CACHE_STORE` | `database` | idem tabela `cache` |
-| `QUEUE_CONNECTION` | `database` | não há jobs no MVP; worker é opcional |
+| `QUEUE_CONNECTION` | `database` | **o disparo de WhatsApp virou job** — precisa de worker rodando (ver 3.1) |
 
-> CORS: o projeto não publicou `config/cors.php`, então vale o default do Laravel (`api/*` liberado para qualquer origem). Suficiente para o teste; travar depois.
+> CORS agora é controlado por `config/cors.php` + `CORS_ALLOWED_ORIGINS`. Só as origens listadas conseguem consumir a API pelo navegador.
 
 ### 2.2 Node — `messages-service/.env`
 
@@ -61,23 +69,19 @@ Copiar de `messages-service/.env.example`:
 |---|---|
 | `PORT` | porta do serviço (default 3000) |
 | `API_URL_BACKEND` | URL base do Laravel **sem `/api`** (ex.: `http://127.0.0.1:8000`) — usada para gravar logs em `POST {API_URL_BACKEND}/api/logs` |
-| `API_TOKEN_BACKEND` | token para autenticar no Laravel (hoje a rota `/api/logs` está pública, mas o provider já manda o header) |
+| `MESSAGES_SERVICE_TOKEN` | **mesmo valor** do `MESSAGES_SERVICE_TOKEN` do Laravel; enviado no header `X-Service-Token` |
 | `EVOLUTION_URL` | URL da instância da Evolution API |
 | `EVOLUTION_API_KEY` | apikey global da Evolution API |
-| `INFOBIP_BASE_URL` | base da Infobip (canal legado/fallback de WhatsApp) |
-| `INFOBIP_API_KEY` | chave da Infobip |
-| `INFOBIP_SENDER_ID` | ex.: `InfoSMS` |
-| `INFOBIP_WHATSAPP_NUMBER` | número remetente no formato internacional |
 
-> O envio de WhatsApp do fluxo de agendamento passa hoje pelo **provider Infobip** (`src/providers/message.provider.js`). A Evolution API é usada só para o ciclo de vida de instâncias (`/instance/*`).
+> O envio de WhatsApp passa **exclusivamente pela Evolution API** usando a instância conectada da barbearia: o Laravel escolhe a instância com status `conectado` e manda o nome no payload; o Node envia via `POST {EVOLUTION_URL}/message/sendText/{instance}`. **Sem uma instância criada e conectada na aba Instâncias, nenhuma mensagem é enviada** (fica registrada no log como `SEM_INSTANCIA`).
 
 ### 2.3 Frontend — `front-end/`
 
-Sem `.env` e sem build. A URL da API está **hardcoded** em 3 arquivos e precisa ser trocada para a URL pública do Laravel antes de subir:
+Sem `.env` e sem build. A URL da API fica num **único arquivo**:
 
-- `front-end/js/admin.js`  → `const API_BASE_URL = "http://localhost:8000/api";`
-- `front-end/js/script.js` → `const API_BASE_URL = "http://localhost:8000/api";`
-- `front-end/js/login.js`  → `const API_BASE_URL = "http://localhost:8000/api";`
+- `front-end/js/config.js` → `window.API_BASE_URL = "http://SEU_HOST:8000/api";`
+
+Trocar só essa linha para a URL pública do Laravel. Os 3 scripts (`admin.js`, `script.js`, `login.js`) já leem de `window.API_BASE_URL`.
 
 ---
 
@@ -95,9 +99,19 @@ php artisan migrate --seed --force     # cria as tabelas e popula dados de teste
 php artisan config:cache
 php artisan route:cache
 
-# subir (dev server; em produção real usar nginx + php-fpm):
+# subir a API (dev server; em produção real usar nginx + php-fpm):
 php artisan serve --host=0.0.0.0 --port=8000
+
+# em OUTRO processo — worker da fila (disparo de WhatsApp):
+php artisan queue:work --tries=3
 ```
+
+> O `migrate` já inclui as migrations novas: `status` do agendamento
+> (`pendente`/`confirmado`/`concluido`/`cancelado`), `services.duration_time` em
+> minutos, `workers.photo`/`speciality` nullable, `operation_times` reformulado (dia da semana 0-6 + intervalo), `barbershops` ganhou `subtitle`/`accent_color` (identidade da página pública), campos de pagamento em `workers`
+> (`payment_type`, `commission_percent`, `fixed_salary`, `pix_key`), `price` +
+> `commission_value` em `schedules`, tabelas `avisos`, `instances`, `payouts` e as
+> tabelas de fila (`jobs`, `failed_jobs`, `job_batches`).
 
 Dados semeados úteis para o teste (senha de todos: **`123456`**):
 - `admin@alphabarber.test` / `admin@kingbarber.test` — role admin
@@ -118,11 +132,13 @@ Verificação rápida: `curl http://127.0.0.1:3000/health` → `{"service":"mess
 ### 3.3 Frontend
 
 ```bash
-# 1. editar API_BASE_URL nos 3 arquivos js (seção 2.3)
+# 1. editar front-end/js/config.js (window.API_BASE_URL)
 # 2. servir a pasta estática, ex.:
 npx serve front-end -l 5500
 #   ou: python -m http.server 5500 --directory front-end
 ```
+
+> A origem em que o front é servido tem que estar em `CORS_ALLOWED_ORIGINS` do Laravel.
 
 Páginas: `index.html` (agendamento público), `login.html` (login admin), `admin.html` (painel).
 
@@ -137,27 +153,41 @@ Páginas: `index.html` (agendamento público), `login.html` (login admin), `admi
    - Conferir no banco: nova linha em `clients` (se telefone novo) e em `schedules` com `status = 'pendente'`.
 5. **Disparo WhatsApp**: ao finalizar o agendamento o Laravel chama `POST {MESSAGE_SERVICE_URL}message` → conferir log do Node (`req.body` + `status: "dispatched"` ou o erro do provider).
    - Se o Node estiver fora do ar, o agendamento **ainda assim** é criado (o disparo é best-effort com timeout de 5s).
-6. **Log de mensagem**: conferir nova linha em `logs` (`action = WHATSAPP_MENSAGE_SENT`).
+6. **Log de mensagem**: `queue:work` processa o job `SendAppointmentWhatsapp`; conferir nova linha em `logs` (`action = WHATSAPP_MENSAGE_SENT`). O `POST /api/logs` do Node só passa se o `X-Service-Token` bater.
 7. **Confirmar / Cancelar no painel**: na agenda do `admin.html`, clicar ✔️ → linha vira "Confirmado"; clicar ❌ → agendamento some da lista (`status = 'cancelado'`). `PUT /agendamentos/{id}` deve responder `200`.
+8. **Dashboard financeiro**: aba de faturamento → `GET /faturamento` (auth+admin) devolve `{dia,mes,ano}`; valores > 0 depois de confirmar agendamentos.
+9. **Avisos**: no painel, salvar um aviso com "ativo"; no site público (`index.html`), o modal do aviso aparece (`GET /avisos/ativo`).
+10. **Segurança**: `curl` sem token em `GET /api/agendamentos` ou `GET /api/clientes` → `401`. `GET /api/servicos` sem token → `200` (público, o site precisa). Rotas admin (`/faturamento`, `/instances`, `/payouts`) com token de usuário comum → `403`.
+11. **Folha de comissões**: no modal de Profissional, definir `payment_type` + `%`/`fixo` → salvar. Concluir um agendamento (botão ✅ na Agenda). Aba **Faturamento** mostra o atendimento em "Por profissional" com `Total a pagar = comissão + fixo`. Botão 💸 → registrar repasse → aparece em "Histórico de repasses".
+12. **Instâncias**: aba **Instâncias** → "Nova instância" → nome sem espaços → o QR Code aparece; escanear no WhatsApp; o status passa a "Conectado" (polling). Botão 🗑️ remove (faz logout+delete na Evolution). Requer o serviço Node no ar e `EVOLUTION_URL`/`EVOLUTION_API_KEY` válidos.
 
 ---
 
-## 5. Pendências conhecidas (não bloqueiam o teste, mas registrar)
+## 5. Mapa de acesso das rotas
+
+**Públicas (sem token):** `POST /login`, `POST /cadastrar` (throttle 6/min) · `GET /servicos` · `GET /profissionais` · `POST /agendamentos` (throttle 15/min) · `GET /disponibilidade` · `GET /avisos/ativo`
+
+**Interna (header `X-Service-Token`):** `POST /logs`
+
+**Autenticadas (`auth:sanctum`):** todo o resto de clientes / serviços / profissionais / tempo_de_operação / barbearias / agendamentos (GET lista, show, update, delete) / logs (leitura) / avisos (leitura) / `POST /message` / `instances/*`
+
+**Somente admin (`auth:sanctum` + `admin`):** `usuarios/*` · `GET/PUT /avisos/{id}` · `GET /faturamento` · `GET|POST /payouts` · `GET|POST /instances`, `GET /instances/{id}/qrcode`, `GET /instances/{id}/status`, `DELETE /instances/{id}`
+
+---
+
+## 6. Pendências conhecidas (não bloqueiam)
 
 | Item | Impacto |
 |---|---|
-| Endpoints chamados pelo front que não existem: `GET /faturamento`, `GET|PUT /avisos/1`, `GET /api/avisos/ativo` | Telas de faturamento/avisos ficam vazias ou com erro no console. |
-| `services.duration_time` é coluna `TIME` mas recebe minutos como inteiro | Duração grava errada; o cálculo de `end_time` no agendamento usa fallback de 30 min. |
-| `ScheduleController@index` sem `->with()` e sem filtro `?data=` | Colunas "Serviço"/"Barbeiro" aparecem como "N/A" na agenda; filtro de data não funciona. |
-| `web.php` (`/login`, `/cadastrar`) aponta para métodos/views inexistentes | Rotas web dão 500. O frontend não depende delas (é servido à parte). |
-| API base URL hardcoded nos 3 JS | Externalizar em config antes de um deploy "de verdade". |
-| `.env` com segredos versionado em `messages-service` no passado / `backend/.env` local | Garantir que os `.env` reais do servidor **não** vão para o git (o `.gitignore` da raiz já cobre). |
-| Rota `/api/logs` pública | Sem auth; ok para teste interno, fechar depois. |
+| Calendário do site permite clicar em dia fechado | Só mostra "A barbearia não abre neste dia" ao clicar. Poderia desabilitar o dia visualmente. Cosmético menor. |
+| `ScheduleController@index` sem paginação | `Schedule::all()` enriquecido; ok para volume de teste. |
+| Seeders usam `updateOrCreate($arr)` com 1 argumento | Idempotente só se a linha estiver idêntica; ok em base de teste limpa. |
+| `.env` reais no servidor | Garantir que **não** vão pro git (o `.gitignore` da raiz já cobre `*.env` / `.env*`). |
 
 ---
 
-## 6. Ordem de subida recomendada
+## 7. Ordem de subida recomendada
 
-1. MySQL  →  2. Laravel (migrate --seed)  →  3. Node  →  4. Frontend
+1. MySQL  →  2. Laravel (`migrate --seed`) + `queue:work`  →  3. Node  →  4. Frontend
 
 Derrubar na ordem inversa.

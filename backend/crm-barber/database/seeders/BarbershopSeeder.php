@@ -18,6 +18,8 @@ class BarbershopSeeder extends Seeder
             [
                 'name' => 'Alpha Barber',
                 'slug' => 'alpha-barber',
+                'subtitle' => 'BARBEARIA',
+                'accent_color' => '#C89B3C',
                 'phone' => '(11) 99999-0001',
                 'email' => 'contato@alphabarber.com',
                 'zip_code' => '01001-000',
@@ -41,6 +43,8 @@ class BarbershopSeeder extends Seeder
             [
                 'name' => 'King Barber',
                 'slug' => 'king-barber',
+                'subtitle' => 'BARBEARIA',
+                'accent_color' => '#C89B3C',
                 'phone' => '(21) 99999-0002',
                 'email' => 'contato@kingbarber.com',
                 'zip_code' => '20010-000',
@@ -64,6 +68,8 @@ class BarbershopSeeder extends Seeder
             [
                 'name' => 'Old School Barber',
                 'slug' => 'old-school-barber',
+                'subtitle' => 'BARBEARIA',
+                'accent_color' => '#C89B3C',
                 'phone' => '(31) 99999-0003',
                 'email' => 'contato@oldschool.com',
                 'zip_code' => '30110-000',
@@ -87,6 +93,8 @@ class BarbershopSeeder extends Seeder
             [
                 'name' => 'Barbearia Império',
                 'slug' => 'barbearia-imperio',
+                'subtitle' => 'BARBEARIA',
+                'accent_color' => '#C89B3C',
                 'phone' => '(41) 99999-0004',
                 'email' => 'contato@imperio.com',
                 'zip_code' => '80010-000',
@@ -110,6 +118,8 @@ class BarbershopSeeder extends Seeder
             [
                 'name' => 'Dom Barber',
                 'slug' => 'dom-barber',
+                'subtitle' => 'BARBEARIA',
+                'accent_color' => '#C89B3C',
                 'phone' => '(51) 99999-0005',
                 'email' => 'contato@dombarber.com',
                 'zip_code' => '90010-000',
@@ -133,6 +143,8 @@ class BarbershopSeeder extends Seeder
             [
                 'name' => 'Barber Prime',
                 'slug' => 'barber-prime',
+                'subtitle' => 'BARBEARIA',
+                'accent_color' => '#C89B3C',
                 'phone' => '(71) 99999-0006',
                 'email' => 'contato@barberprime.com',
                 'zip_code' => '40010-000',
@@ -156,6 +168,8 @@ class BarbershopSeeder extends Seeder
             [
                 'name' => 'Corte Fino',
                 'slug' => 'corte-fino',
+                'subtitle' => 'BARBEARIA',
+                'accent_color' => '#C89B3C',
                 'phone' => '(81) 99999-0007',
                 'email' => 'contato@cortefino.com',
                 'zip_code' => '50010-000',
@@ -179,6 +193,8 @@ class BarbershopSeeder extends Seeder
             [
                 'name' => 'Black Beard',
                 'slug' => 'black-beard',
+                'subtitle' => 'BARBEARIA',
+                'accent_color' => '#C89B3C',
                 'phone' => '(61) 99999-0008',
                 'email' => 'contato@blackbeard.com',
                 'zip_code' => '70010-000',
@@ -202,6 +218,8 @@ class BarbershopSeeder extends Seeder
             [
                 'name' => 'Elite Barber',
                 'slug' => 'elite-barber',
+                'subtitle' => 'BARBEARIA',
+                'accent_color' => '#C89B3C',
                 'phone' => '(85) 99999-0009',
                 'email' => 'contato@elitebarber.com',
                 'zip_code' => '60010-000',
@@ -225,6 +243,8 @@ class BarbershopSeeder extends Seeder
             [
                 'name' => 'Premium Barber Shop',
                 'slug' => 'premium-barber-shop',
+                'subtitle' => 'BARBEARIA',
+                'accent_color' => '#C89B3C',
                 'phone' => '(27) 99999-0010',
                 'email' => 'contato@premiumbarber.com',
                 'zip_code' => '29010-000',

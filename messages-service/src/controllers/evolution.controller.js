@@ -27,7 +27,7 @@ const createnGetInstanceController = async (req, res) => {
     }
 
     const connectInstance = await conectInstance(name);
-    const qrCode = connectInstance.data;
+    const qrCode = connectInstance.data?.qrCode ?? null;
     const state = connectInstance.status;
 
     const responseConnect = {
@@ -69,7 +69,7 @@ const connectSecondInstanceController = async (req, res) => {
 
     if (state === "close" || state === "refused") {
       const connectInstance = await conectInstance(name);
-      const qrCode = connectInstance.data;
+      const qrCode = connectInstance.data?.qrCode ?? null;
 
       const responseConnect = {
         message: "Instancia não conectada, tente novamente",

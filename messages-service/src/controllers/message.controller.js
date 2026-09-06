@@ -16,7 +16,8 @@ const messageController = async (req, res) => {
       return res.status(400).json({ erros: parsed.error.flatten().fieldErrors });
     }
 
-    const newMessage = await messageService({ ...parsed.data, ip: req.ip });
+    const ip = req.ip || req.socket?.remoteAddress || null;
+    const newMessage = await messageService({ ...parsed.data, ip });
     console.log(newMessage);
     return res.status(200).json(newMessage);
   } catch (error) {

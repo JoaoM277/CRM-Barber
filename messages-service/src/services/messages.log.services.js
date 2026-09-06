@@ -5,14 +5,18 @@ const logProvider = require("../providers/message.log.provider");
 
 class logService {
   async logRegisterCreator({ action, model, client_id, description, ip }) {
-    if (!ip || !model) {
-      console.warn(
-        "[LogService Warning]: Tentativa de registro de log sem IP ou Gatilho",
-      );
+    if (!action) {
+      console.warn("[LogService Warning]: log sem 'action', ignorado");
       return null;
     }
 
-    const logData = { action, model, client_id, description, ip };
+    const logData = {
+      action,
+      model: model ?? null,
+      client_id: client_id ?? null,
+      description: description ?? null,
+      ip: ip ?? null,
+    };
 
     return await logProvider.logToBackend(logData);
   }

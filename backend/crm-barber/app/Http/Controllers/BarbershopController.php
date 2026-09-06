@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreBarbershopRequest;
 use App\Models\Barbershop;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class BarbershopController extends Controller
 {
@@ -14,6 +15,44 @@ class BarbershopController extends Controller
     public function index()
     {
         return response()->json(Barbershop::all(), 200);
+    }
+
+    /**
+     * Identidade visual pública da barbearia (single-tenant: a primeira ativa).
+     * Consumida pela página de agendamento.
+     */
+    public function publicIdentity()
+    {
+        $bs = Barbershop::where('active', true)->orderBy('id')->first();
+
+        $accentPadrao = '#C89B3C';
+
+        if (! $bs) {
+            return response()->json([
+                'name' => 'Barbearia',
+                'subtitle' => 'BARBEARIA',
+                'logo_url' => null,
+                'city' => null,
+                'state' => null,
+                'accent_color' => $accentPadrao,
+            ]);
+        }
+
+        $logoUrl = null;
+        if ($bs->logo_path) {
+            $logoUrl = str_starts_with($bs->logo_path, 'http')
+                ? $bs->logo_path
+                : Storage::disk('public')->url($bs->logo_path);
+        }
+
+        return response()->json([
+            'name' => $bs->name,
+            'subtitle' => $bs->subtitle ?: 'BARBEARIA',
+            'logo_url' => $logoUrl,
+            'city' => $bs->city,
+            'state' => $bs->state,
+            'accent_color' => $bs->accent_color ?: $accentPadrao,
+        ]);
     }
 
     /**
@@ -44,10 +83,10 @@ class BarbershopController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:barbershops,slug',
+            'slug' => ['required', 'string', 'max:255', \Illuminate\Validation\Rule::unique('barbershops', 'slug')->ignore($barbershop->id)],
 
             'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|unique:barbershops,email',
+            'email' => ['nullable', 'email', \Illuminate\Validation\Rule::unique('barbershops', 'email')->ignore($barbershop->id)],
 
             'zip_code' => 'nullable|string|max:10',
             'street' => 'nullable|string|max:255',
@@ -57,7 +96,7 @@ class BarbershopController extends Controller
             'city' => 'nullable|string|max:255',
             'state' => 'nullable|string|size:2',
 
-            'logo' => 'nullable|string|max:255',
+            'logo_path' => 'nullable|string|max:255',
 
             'opening_time' => 'nullable|date_format:H:i',
             'closing_time' => 'nullable|date_format:H:i',
@@ -76,7 +115,7 @@ class BarbershopController extends Controller
 
         $barbershop->update($validated);
 
-        return response()->json($barbershop, 201);
+        return response()->json($barbershop->fresh(), 200);
     }
 
     /**

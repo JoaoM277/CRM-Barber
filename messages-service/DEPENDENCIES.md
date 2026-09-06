@@ -52,19 +52,12 @@ As variáveis esperadas são (ver `.env.example`):
 Ponte com o backend Laravel:
 
 - `API_URL_BACKEND`
-- `API_TOKEN_BACKEND`
+- `MESSAGES_SERVICE_TOKEN`
 
-Provider WhatsApp (Evolution API):
+Provedor de WhatsApp (Evolution API — único):
 
 - `EVOLUTION_URL`
 - `EVOLUTION_API_KEY`
-
-Provider SMS/WhatsApp (Infobip — legado/fallback):
-
-- `INFOBIP_BASE_URL`
-- `INFOBIP_API_KEY`
-- `INFOBIP_SENDER_ID`
-- `INFOBIP_WHATSAPP_NUMBER`
 
 Opcionalmente, para definir a porta do servidor:
 

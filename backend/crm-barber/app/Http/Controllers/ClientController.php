@@ -62,15 +62,15 @@ class ClientController extends Controller
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'nullable|email|unique:clients,email',
-            'phone' => 'required|string|max:20',
+            'email' => ['nullable', 'email', \Illuminate\Validation\Rule::unique('clients', 'email')->ignore($client->id)],
+            'phone' => ['required', 'string', 'max:20', \Illuminate\Validation\Rule::unique('clients', 'phone')->ignore($client->id)],
             'birth_date' => 'nullable|date',
-            'observation' => 'nullable|string'
+            'observation' => 'nullable|string',
         ]);
 
         $client->update($data);
 
-        return response()->json(['message:' => 'Updated Successfully', 'data' => $client], 201);
+        return response()->json(['message' => 'Cliente atualizado com sucesso!', 'data' => $client->fresh()], 200);
     }
 
     /**

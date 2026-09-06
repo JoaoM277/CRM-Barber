@@ -16,15 +16,15 @@
     <header class="main-header">
         <div class="header-container">
             <div class="logo-box">
-                <div class="logo-icon"><span>✂</span></div>
+                <div class="logo-icon" id="bs-logo"><span>✂</span></div>
                 <div class="logo-text">
-                    <h1>NOME DA BARBEARIA</h1>
-                    <p>BARBEARIA</p>
+                    <h1 id="bs-name">NOME DA BARBEARIA</h1>
+                    <p id="bs-subtitle">BARBEARIA</p>
                 </div>
             </div>
             <div class="location-box">
                 <span class="pin-icon">📍</span>
-                <span class="location-text">CIDADE, ESTADO</span>
+                <span class="location-text" id="bs-location">CIDADE, ESTADO</span>
             </div>
         </div>
 
@@ -232,6 +232,7 @@
         <button id="btn-next" class="control-btn next-btn" disabled>Continuar</button>
     </div>
 
+    <script src="js/config.js"></script>
     <script src="js/script.js"></script>
     <!-- Fundo escuro do Modal -->
 <div id="modal-overlay" class="modal-escondido">

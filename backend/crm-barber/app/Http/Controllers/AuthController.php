@@ -13,6 +13,20 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
     /**
+     * Rotas web (routes/web.php): o front é estático e servido à parte,
+     * então só redirecionamos para as páginas correspondentes.
+     */
+    public function showLogin()
+    {
+        return redirect()->away(rtrim(config('app.frontend_url'), '/').'/login.html');
+    }
+
+    public function showRegister()
+    {
+        return redirect()->away(rtrim(config('app.frontend_url'), '/').'/index.html');
+    }
+
+    /**
      * Cadastro de dono de barbearia.
      * Cria a barbearia + o usuário admin vinculado e devolve o token.
      */

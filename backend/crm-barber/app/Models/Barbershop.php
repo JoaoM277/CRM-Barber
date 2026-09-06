@@ -12,6 +12,8 @@ class Barbershop extends Model
 
     protected $fillable = [
         'name',
+        'subtitle',
+        'accent_color',
         'slug',
         'phone',
         'email',
@@ -22,7 +24,7 @@ class Barbershop extends Model
         'neighborhood',
         'city',
         'state',
-        'logo',
+        'logo_path',
         'opening_time',
         'closing_time',
         'whatsapp',

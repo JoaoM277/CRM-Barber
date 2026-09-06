@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             ScheduleSeeder::class,
             BarbershopSeeder::class,
             UserSeeder::class,
+            AvisoSeeder::class,
         ]);
     }
 }

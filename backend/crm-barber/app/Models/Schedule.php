@@ -16,11 +16,14 @@ class Schedule extends Model
 
     public const STATUS_CONFIRMADO = 'confirmado';
 
+    public const STATUS_CONCLUIDO = 'concluido';
+
     public const STATUS_CANCELADO = 'cancelado';
 
     public const STATUSES = [
         self::STATUS_PENDENTE,
         self::STATUS_CONFIRMADO,
+        self::STATUS_CONCLUIDO,
         self::STATUS_CANCELADO,
     ];
 
@@ -32,11 +35,18 @@ class Schedule extends Model
         'client_id',
         'worker_id',
         'service_id',
+        'price',
+        'commission_value',
         'date',
         'start_time',
         'end_time',
         'status',
-        'observation'
+        'observation',
+    ];
+
+    protected $casts = [
+        'price' => 'decimal:2',
+        'commission_value' => 'decimal:2',
     ];
 
     public function client(){

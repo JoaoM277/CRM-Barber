@@ -39,6 +39,12 @@
                 <button class="menu-item" data-tab="barbeiros">
                     <span class="menu-icon">💈</span> Profissionais
                 </button>
+                <button class="menu-item" data-tab="faturamento">
+                    <span class="menu-icon">💰</span> Faturamento
+                </button>
+                <button class="menu-item" data-tab="instancias">
+                    <span class="menu-icon">📱</span> Instâncias
+                </button>
             </nav>
 
             <div class="sidebar-footer">
@@ -127,9 +133,26 @@
                                 </div>
                             </form>
                         </div>
+
+                        <!-- HORÁRIO DE FUNCIONAMENTO -->
+                        <div class="message-panel-container" style="margin-top: 40px;">
+                            <h2 style="margin-bottom: 8px; font-size: 18px;">Horário de Funcionamento</h2>
+                            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">O site só oferece horários dentro dessa grade (e fora do intervalo).</p>
+                            <div class="table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr><th>Dia</th><th>Aberto</th><th>Abre</th><th>Fecha</th><th>Intervalo início</th><th>Intervalo fim</th></tr>
+                                    </thead>
+                                    <tbody id="expediente-body"></tbody>
+                                </table>
+                            </div>
+                            <div style="text-align: right; margin-top: 16px;">
+                                <button type="button" class="btn-primary" id="btn-salvar-expediente">Salvar horários</button>
+                            </div>
+                        </div>
                 </div>
                 <!-- ====================================================================
-                     TELA 1: AGENDA 
+                     TELA 1: AGENDA
                      ==================================================================== -->
                 <div class="tab-panel" id="panel-agenda">
                     <div class="panel-header">
@@ -204,6 +227,105 @@
                     </div>
                 </div>
 
+                <!-- ====================================================================
+                     TELA 4: FATURAMENTO E FOLHA DE COMISSÕES
+                     ==================================================================== -->
+                <div class="tab-panel" id="panel-faturamento">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Faturamento e Repasses</h2>
+                            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Baseado nos agendamentos com status <strong>concluído</strong>.</p>
+                        </div>
+                        <div class="panel-actions">
+                            <input type="date" class="admin-input" id="fat-inicio">
+                            <input type="date" class="admin-input" id="fat-fim">
+                            <button class="btn-primary" id="btn-filtrar-fat">Filtrar</button>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="dash-card">
+                            <div class="dash-icon" style="background: rgba(46, 196, 182, 0.15); color: var(--success);">💰</div>
+                            <div class="dash-info"><h3>Faturamento do período</h3><p id="fat-total">R$ 0,00</p></div>
+                        </div>
+                        <div class="dash-card">
+                            <div class="dash-icon" style="background: rgba(200, 155, 60, 0.15); color: var(--brand-primary);">🤝</div>
+                            <div class="dash-info"><h3>Comissões</h3><p id="fat-comissoes">R$ 0,00</p></div>
+                        </div>
+                        <div class="dash-card">
+                            <div class="dash-icon" style="background: rgba(255,255,255,0.05); color: var(--text-main);">📄</div>
+                            <div class="dash-info"><h3>Salários fixos</h3><p id="fat-fixo">R$ 0,00</p></div>
+                        </div>
+                        <div class="dash-card">
+                            <div class="dash-icon" style="background: rgba(46, 196, 182, 0.15); color: var(--success);">📈</div>
+                            <div class="dash-info"><h3>Lucro líquido</h3><p id="fat-liquido">R$ 0,00</p></div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin: 32px 0 12px; font-size: 16px;">Por profissional</h3>
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Profissional</th><th>Tipo</th><th>Atend.</th><th>Bruto</th>
+                                    <th>Comissão</th><th>Fixo</th><th>Total a pagar</th><th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fat-profissionais-body"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="input-row" style="margin-top: 32px; align-items: flex-start;">
+                        <div style="flex:1;">
+                            <h3 style="margin-bottom: 12px; font-size: 16px;">Por serviço</h3>
+                            <div class="table-container">
+                                <table class="admin-table">
+                                    <thead><tr><th>Serviço</th><th>Qtd</th><th>Total</th></tr></thead>
+                                    <tbody id="fat-servicos-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div style="flex:1;">
+                            <h3 style="margin-bottom: 12px; font-size: 16px;">Histórico de repasses</h3>
+                            <div class="table-container">
+                                <table class="admin-table">
+                                    <thead><tr><th>Profissional</th><th>Período</th><th>Valor pago</th><th>Data</th></tr></thead>
+                                    <tbody id="fat-repasses-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin: 32px 0 12px; font-size: 16px;">Atendimentos do período</h3>
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead><tr><th>Data</th><th>Cliente</th><th>Serviço</th><th>Profissional</th><th>Valor</th><th>Comissão</th></tr></thead>
+                            <tbody id="fat-itens-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ====================================================================
+                     TELA 5: INSTÂNCIAS DE WHATSAPP
+                     ==================================================================== -->
+                <div class="tab-panel" id="panel-instancias">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Instâncias de WhatsApp</h2>
+                            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Conexões usadas para enviar as mensagens automáticas.</p>
+                        </div>
+                        <button class="btn-primary" onclick="abrirModalInstancia()">+ Nova instância</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr><th>Nome</th><th>Status</th><th>Número</th><th>Última conexão</th><th>Ações</th></tr>
+                            </thead>
+                            <tbody id="instancias-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
             </section>
         </main>
     </div>
@@ -264,9 +386,92 @@
                     <input type="text" id="barbeiro-telefone" placeholder="(xx)xxxxxxxxx" maxlength="13" required>
                 </div>
 
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Forma de pagamento</label>
+                        <select id="barbeiro-payment-type" class="admin-input">
+                            <option value="comissao">Só comissão</option>
+                            <option value="fixo">Só salário fixo</option>
+                            <option value="comissao_mais_fixo">Comissão + fixo</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Comissão (%)</label>
+                        <input type="number" id="barbeiro-comissao" min="0" max="100" step="0.01" placeholder="Ex: 40">
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Salário fixo (R$)</label>
+                        <input type="number" id="barbeiro-fixo" min="0" step="0.01" placeholder="0,00">
+                    </div>
+                    <div class="input-group">
+                        <label>Chave PIX</label>
+                        <input type="text" id="barbeiro-pix" placeholder="opcional">
+                    </div>
+                </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" onclick="fecharModalBarbeiro()">Cancelar</button>
                     <button type="submit" class="btn-primary">Salvar Profissional</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE INSTÂNCIA (QR CODE) -->
+    <div class="modal-overlay" id="modal-instancia">
+        <div class="modal-content" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3 id="modal-instancia-titulo">Nova instância</h3>
+                <button class="btn-close" onclick="fecharModalInstancia()">✖</button>
+            </div>
+            <form id="form-instancia" class="admin-form">
+                <div class="input-group" id="instancia-nome-wrap">
+                    <label>Nome da instância (sem espaços)</label>
+                    <input type="text" id="instancia-nome" placeholder="ex: minha-barbearia" pattern="[A-Za-z0-9_-]+" required>
+                </div>
+                <div id="instancia-qr-area" style="text-align:center; display:none;">
+                    <p id="instancia-qr-msg" style="color: var(--text-muted); font-size: 14px; margin-bottom: 12px;">Abra o WhatsApp &gt; Aparelhos conectados &gt; Conectar um aparelho e escaneie:</p>
+                    <img id="instancia-qr-img" alt="QR Code" style="width: 260px; height: 260px; background:#fff; border-radius: 8px;">
+                    <p id="instancia-status-label" style="margin-top: 12px; font-size: 14px;">Aguardando leitura...</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="fecharModalInstancia()">Fechar</button>
+                    <button type="submit" class="btn-primary" id="btn-criar-instancia">Criar e gerar QR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE REPASSE (PAYOUT) -->
+    <div class="modal-overlay" id="modal-payout">
+        <div class="modal-content" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3>Registrar repasse</h3>
+                <button class="btn-close" onclick="fecharModalPayout()">✖</button>
+            </div>
+            <form id="form-payout" class="admin-form">
+                <input type="hidden" id="payout-worker-id">
+                <p id="payout-resumo" style="color: var(--text-muted); font-size: 14px;"></p>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Início do período</label>
+                        <input type="date" id="payout-inicio" class="admin-input" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Fim do período</label>
+                        <input type="date" id="payout-fim" class="admin-input" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Observação</label>
+                    <input type="text" id="payout-obs" placeholder="opcional">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="fecharModalPayout()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Confirmar pagamento</button>
                 </div>
             </form>
         </div>
@@ -305,6 +510,7 @@
     </div>
 
     <!-- Script de controle do Painel -->
+    <script src="js/config.js"></script>
     <script src="js/admin.js"></script>
 </body>
 </html>

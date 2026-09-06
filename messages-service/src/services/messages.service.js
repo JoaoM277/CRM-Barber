@@ -1,4 +1,4 @@
-const { providerMessage } = require("../providers/message.provider");
+const { sendText } = require("./evolution.service");
 const messageList = require("../dictionary/templates.messages");
 const logController = require("../controllers/message.log.controller");
 // --------------------------------------------------------------------------
@@ -6,7 +6,7 @@ const logController = require("../controllers/message.log.controller");
 // --------------------------------------------------------------------------
 
 const messageService = async (mensageData) => {
-  const { phone, name, trigger, date, time, barber, ip } = mensageData;
+  const { phone, name, trigger, date, time, barber, ip, instance } = mensageData;
 
   // --------------------------------------------------------------------------
   // 2. Travas de segurança Anti-Gatilho-Invalido
@@ -87,7 +87,31 @@ const messageService = async (mensageData) => {
   // 5. Seleção de template baseado nas informações vindas do controller
   // --------------------------------------------------------------------------
   const respost = templateSelect(name, { date, time, barber });
-  const response = await providerMessage(phone, respost);
+
+  // Envio exclusivamente pela Evolution API (instância conectada)
+  if (!instance) {
+    console.warn("[BLOQUEADO] Envio sem instância de WhatsApp conectada");
+    await logController.ControllerLogs({
+      action: "WHATSAPP_MENSAGE_SENT",
+      model: trigger,
+      client_id: 1,
+      description: "Mensagem não enviada para: " + phone + " [MOTIVO: SEM_INSTANCIA]",
+      ip: ip,
+    });
+    return {
+      status: "failed",
+      error: "Nenhuma instância de WhatsApp conectada para enviar a mensagem.",
+    };
+  }
+
+  const evo = await sendText(instance, phone, respost);
+  const response = {
+    sucess: evo.success,
+    messageId: evo.data?.messageId ?? null,
+    errorMensage: evo.error?.message ?? null,
+    provider: "Evolution",
+  };
+
   if (!response.sucess) {
     await logController.ControllerLogs({
       action: "WHATSAPP_MENSAGE_SENT",

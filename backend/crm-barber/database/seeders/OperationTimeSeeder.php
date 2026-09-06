@@ -7,73 +7,41 @@ use Illuminate\Database\Seeder;
 
 class OperationTimeSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $operationTimes = [
-
-            [
-                'day_of_week' => '2026-07-20', // Segunda
-                'start_time' => '08:00:00',
-                'end_time' => '18:00:00',
-                'waiting_start' => '12:00:00',
-                'waiting_end' => '13:00:00',
-            ],
-
-            [
-                'day_of_week' => '2026-07-21', // Terça
-                'start_time' => '08:00:00',
-                'end_time' => '18:00:00',
-                'waiting_start' => '12:00:00',
-                'waiting_end' => '13:00:00',
-            ],
-
-            [
-                'day_of_week' => '2026-07-22', // Quarta
-                'start_time' => '08:00:00',
-                'end_time' => '18:00:00',
-                'waiting_start' => '12:00:00',
-                'waiting_end' => '13:00:00',
-            ],
-
-            [
-                'day_of_week' => '2026-07-23', // Quinta
-                'start_time' => '08:00:00',
-                'end_time' => '18:00:00',
-                'waiting_start' => '12:00:00',
-                'waiting_end' => '13:00:00',
-            ],
-
-            [
-                'day_of_week' => '2026-07-24', // Sexta
-                'start_time' => '08:00:00',
-                'end_time' => '19:00:00',
-                'waiting_start' => '12:00:00',
-                'waiting_end' => '13:00:00',
-            ],
-
-            [
-                'day_of_week' => '2026-07-25', // Sábado
-                'start_time' => '08:00:00',
-                'end_time' => '16:00:00',
-                'waiting_start' => '12:00:00',
-                'waiting_end' => '12:30:00',
-            ],
-
-            [
-                'day_of_week' => '2026-07-26', // Domingo
-                'start_time' => '00:00:00',
-                'end_time' => '00:00:00',
-                'waiting_start' => '00:00:00',
-                'waiting_end' => '00:00:00',
-            ],
-
+        // dia => [start, end, waiting_start, waiting_end]
+        $semana = [
+            1 => ['08:00', '19:00', '12:00', '13:00'], // Segunda
+            2 => ['08:00', '19:00', '12:00', '13:00'], // Terça
+            3 => ['08:00', '19:00', '12:00', '13:00'], // Quarta
+            4 => ['08:00', '19:00', '12:00', '13:00'], // Quinta
+            5 => ['08:00', '20:00', '12:00', '13:00'], // Sexta
+            6 => ['08:00', '16:00', '12:00', '12:30'], // Sábado
         ];
 
-        foreach ($operationTimes as $operationTime) {
-            OperationTime::updateOrcreate($operationTime);
+        foreach ($semana as $dow => [$start, $end, $ws, $we]) {
+            OperationTime::updateOrCreate(
+                ['day_of_week' => $dow],
+                [
+                    'active' => true,
+                    'start_time' => $start,
+                    'end_time' => $end,
+                    'waiting_start' => $ws,
+                    'waiting_end' => $we,
+                ],
+            );
         }
+
+        // Domingo fechado
+        OperationTime::updateOrCreate(
+            ['day_of_week' => 0],
+            [
+                'active' => false,
+                'start_time' => '00:00',
+                'end_time' => '00:00',
+                'waiting_start' => null,
+                'waiting_end' => null,
+            ],
+        );
     }
 }

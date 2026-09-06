@@ -37,7 +37,7 @@ class StoreBarbershopRequest extends FormRequest
             'city' => 'nullable|string|max:255',
             'state' => 'nullable|string|size:2',
 
-            'logo' => 'nullable|string|max:255',
+            'logo_path' => 'nullable|string|max:255',
 
             'opening_time' => 'nullable|date_format:H:i',
             'closing_time' => 'nullable|date_format:H:i',

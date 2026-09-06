@@ -28,6 +28,10 @@ class StoreWorkerRequest extends FormRequest
             'photo' => 'nullable|string',
             'speciality' => 'nullable|string',
             'active' => 'boolean',
+            'payment_type' => ['sometimes', \Illuminate\Validation\Rule::in(\App\Models\Worker::PAYMENT_TYPES)],
+            'commission_percent' => 'sometimes|nullable|numeric|min:0|max:100',
+            'fixed_salary' => 'sometimes|nullable|numeric|min:0',
+            'pix_key' => 'sometimes|nullable|string|max:255',
         ];
     }
 }

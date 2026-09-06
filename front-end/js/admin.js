@@ -5,6 +5,23 @@ const menuItems = document.querySelectorAll(".menu-item");
 const tabPanels = document.querySelectorAll(".tab-panel");
 const token = localStorage.getItem("admin_token");
 
+function authHeaders(extra = {}) {
+  return {
+    Accept: "application/json",
+    Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
+    ...extra,
+  };
+}
+
+async function checarSessao(res) {
+  if (res && res.status === 401) {
+    localStorage.removeItem("admin_token");
+    window.location.href = "login.html";
+    return false;
+  }
+  return true;
+}
+
 menuItems.forEach((item) => {
   item.addEventListener("click", () => {
     menuItems.forEach((btn) => btn.classList.remove("active"));
@@ -43,7 +60,7 @@ window.mostrarToastAdmin = function (mensagem, tipo = "sucesso") {
 // --------------------------------------------------------------------------
 // 2. CONFIGURAÇÕES BASE E MODAL UNIVERSAL
 // --------------------------------------------------------------------------
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL = window.API_BASE_URL || "http://localhost:8000/api";
 
 function formatarTelefoneAdmin(telefone) {
   if (!telefone) return "";
@@ -108,9 +125,10 @@ async function renderAgenda(dataFiltro = "") {
     
 
     const response = await fetch(url, {
-      headers: { Accept: "application/json", Authorization: `Bearer ${token}` }, // Garante retorno em JSON do Laravel
+      headers: authHeaders(), // Garante retorno em JSON do Laravel
     });
 
+    if (!(await checarSessao(response))) return;
     if (!response.ok) throw new Error("Erro de rede");
     const jsonBody = await response.json();
     const agendamentos = jsonBody.data ? jsonBody.data : jsonBody;
@@ -128,10 +146,13 @@ async function renderAgenda(dataFiltro = "") {
 
     agendamentosAtivos.forEach((agendamento) => {
       const tr = document.createElement("tr");
-      let badgeClass =
-        agendamento.status === "confirmado" ? "confirmed" : "pending";
-      let badgeText =
-        agendamento.status === "confirmado" ? "Confirmado" : "Aguardando";
+      const mapBadge = {
+        pendente: ["pending", "Aguardando"],
+        confirmado: ["confirmed", "Confirmado"],
+        concluido: ["confirmed", "Concluído"],
+        cancelado: ["cancel", "Cancelado"],
+      };
+      const [badgeClass, badgeText] = mapBadge[agendamento.status] || ["pending", agendamento.status];
 
       // Se o Laravel devolver os dados em inglês (client_name, client_phone, etc),
       // precisaremos ajustar essas chaves depois.
@@ -152,7 +173,8 @@ async function renderAgenda(dataFiltro = "") {
                 <td><span class="status-badge ${badgeClass}">${badgeText}</span></td>
                 <td>
                     ${agendamento.status === "pendente" ? `<button class="btn-action confirm" onclick="alterarStatus(${agendamento.id}, 'confirmado')" title="Confirmar">✔️</button>` : ""}
-                    <button class="btn-action cancel" onclick="alterarStatus(${agendamento.id}, 'cancelado')" title="Cancelar">❌</button>
+                    ${agendamento.status === "confirmado" ? `<button class="btn-action confirm" onclick="alterarStatus(${agendamento.id}, 'concluido')" title="Marcar como concluído">✅</button>` : ""}
+                    ${agendamento.status !== "cancelado" && agendamento.status !== "concluido" ? `<button class="btn-action cancel" onclick="alterarStatus(${agendamento.id}, 'cancelado')" title="Cancelar">❌</button>` : ""}
                 </td>
             `;
       tableBody.appendChild(tr);
@@ -171,19 +193,14 @@ window.alterarStatus = async function (id, novoStatus) {
     try {
       const res = await fetch(`${API_BASE_URL}/agendamentos/${id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`
-        },
+        headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ status: novoStatus }),
       });
       if (res.ok) {
         mostrarToastAdmin(
-          novoStatus === "confirmado"
-            ? "Horário confirmado!"
-            : "Agendamento cancelado com sucesso!",
+          { confirmado: "Horário confirmado!", concluido: "Atendimento concluído!", cancelado: "Agendamento cancelado com sucesso!" }[novoStatus] || "Status atualizado!",
         );
+        if (typeof renderFaturamento === "function") renderFaturamento();
         const dataAtualFiltro = document.getElementById("filter-date")
           ? document.getElementById("filter-date").value
           : "";
@@ -220,9 +237,9 @@ async function renderServicos() {
 
   try {
     const response = await fetch(`${API_BASE_URL}/servicos`, {
-      headers: { Accept: "application/json" },
-      Authorization: `Bearer ${token}`
+      headers: authHeaders()
     });
+    if (!(await checarSessao(response))) return;
     if (!response.ok) throw new Error("Erro");
     const jsonBody = await response.json();
 
@@ -271,8 +288,7 @@ window.deletarServico = function (id) {
       try {
         const response = await fetch(`${API_BASE_URL}/servicos/${id}`, {
           method: "DELETE",
-          headers: { Accept: "application/json" },
-          Authorization: `Bearer ${token}`
+          headers: authHeaders()
         });
         if (response.ok) {
           mostrarToastAdmin("Serviço excluído com sucesso!");
@@ -326,10 +342,7 @@ if (formServico) {
     try {
       const res = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json", // <-- EVITA REDIRECIONAMENTO DE ERRO
-        },
+        headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(payload),
       });
 
@@ -363,9 +376,9 @@ async function renderBarbeiros() {
   try {
     // CORRIGIDO PARA O ENDEREÇO CERTO DA API DO LARAVEL
     const response = await fetch(`${API_BASE_URL}/profissionais`, {
-      headers: { Accept: "application/json" },
-      Authorization: `Bearer ${token}`
+      headers: authHeaders()
     });
+    if (!(await checarSessao(response))) return;
     if (!response.ok) throw new Error("Erro");
 
     const jsonBody = await response.json();
@@ -411,7 +424,7 @@ window.deletarBarbeiro = function (id) {
         // CORRIGIDO PARA /profissionais
         const response = await fetch(`${API_BASE_URL}/profissionais/${id}`, {
           method: "DELETE",
-          headers: { Accept: "application/json" },
+          headers: authHeaders(),
         });
         if (response.ok) {
           mostrarToastAdmin("Profissional removido com sucesso!");
@@ -426,13 +439,26 @@ window.deletarBarbeiro = function (id) {
   );
 };
 
-window.abrirModalBarbeiro = function (id = null) {
-  document.getElementById("form-barbeiro").reset();
-  document.getElementById("modal-titulo-barbeiro").innerText = id
-    ? "Editar Profissional"
-    : "Novo Profissional";
+window.abrirModalBarbeiro = async function (id = null) {
+  const form = document.getElementById("form-barbeiro");
+  form.reset();
+  document.getElementById("modal-titulo-barbeiro").innerText = id ? "Editar Profissional" : "Novo Profissional";
   document.getElementById("barbeiro-id").value = id || "";
   document.getElementById("modal-barbeiro").classList.add("active");
+
+  if (!id) return;
+  try {
+    const res = await fetch(`${API_BASE_URL}/profissionais/${id}`, { headers: authHeaders() });
+    if (!res.ok) return;
+    const b = await res.json();
+    const w = b.data ? b.data : b;
+    document.getElementById("barbeiro-nome").value = w.name || "";
+    document.getElementById("barbeiro-telefone").value = w.phone || "";
+    document.getElementById("barbeiro-payment-type").value = w.payment_type || "comissao";
+    document.getElementById("barbeiro-comissao").value = w.commission_percent ?? "";
+    document.getElementById("barbeiro-fixo").value = w.fixed_salary ?? "";
+    document.getElementById("barbeiro-pix").value = w.pix_key || "";
+  } catch (e) { /* silencioso */ }
 };
 
 window.fecharModalBarbeiro = () =>
@@ -456,6 +482,10 @@ if (formBarbeiro) {
       speciality: "Geral",
       photo: "",
       active: true,
+      payment_type: document.getElementById("barbeiro-payment-type").value,
+      commission_percent: parseFloat(document.getElementById("barbeiro-comissao").value) || 0,
+      fixed_salary: parseFloat(document.getElementById("barbeiro-fixo").value) || 0,
+      pix_key: document.getElementById("barbeiro-pix").value || null,
     };
 
     const url = id
@@ -466,11 +496,7 @@ if (formBarbeiro) {
     try {
       const res = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`
-        },
+        headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(payload),
       });
 
@@ -507,9 +533,9 @@ async function renderDashboard() {
 
   try {
     const response = await fetch(`${API_BASE_URL}/faturamento`, {
-      headers: { Accept: "application/json" },
-      Authorization: `Bearer ${token}`
+      headers: authHeaders()
     });
+    if (!(await checarSessao(response))) return;
     if (!response.ok) throw new Error(`Erro na resposta do servidor`);
 
     const jsonBody = await response.json();
@@ -542,8 +568,7 @@ async function renderAviso() {
 
   try {
     const response = await fetch(`${API_BASE_URL}/avisos/1`, {
-      headers: { Accept: "application/json" },
-      Authorization: `Bearer ${token}`
+      headers: authHeaders()
       
     });
 
@@ -567,7 +592,6 @@ if (formAviso) {
   formAviso.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const token = getElementById("admin_token")
 
     const payload = {
       ativo: document.getElementById("aviso-status").value === "ativo",
@@ -578,11 +602,7 @@ if (formAviso) {
     try {
       const response = await fetch(`${API_BASE_URL}/avisos/1`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`
-        },
+        headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(payload),
       });
 
@@ -628,6 +648,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     await renderBarbeiros()
     await renderDashboard()
     await renderAviso()
+    await renderFaturamento()
+    await renderInstancias()
+    await renderExpediente()
 
   const btnFiltrar = document.getElementById("btn-filtrar-agenda");
   const inputData = document.getElementById("filter-date");
@@ -667,3 +690,402 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   esconderLoading();
 });
+
+// --------------------------------------------------------------------------
+// 9. MÓDULO: FATURAMENTO E FOLHA DE COMISSÕES
+// --------------------------------------------------------------------------
+function moedaBR(v) {
+  return Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+async function renderFaturamento() {
+  const corpoProf = document.getElementById("fat-profissionais-body");
+  if (!corpoProf) return;
+
+  const inicio = document.getElementById("fat-inicio") ? document.getElementById("fat-inicio").value : "";
+  const fim = document.getElementById("fat-fim") ? document.getElementById("fat-fim").value : "";
+  let url = `${API_BASE_URL}/faturamento`;
+  const qs = [];
+  if (inicio) qs.push(`inicio=${inicio}`);
+  if (fim) qs.push(`fim=${fim}`);
+  if (qs.length) url += `?${qs.join("&")}`;
+
+  corpoProf.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:16px;">Carregando...</td></tr>`;
+
+  try {
+    const res = await fetch(url, { headers: authHeaders() });
+    if (!(await checarSessao(res))) return;
+    if (!res.ok) throw new Error("erro");
+    const d = await res.json();
+
+    const p = d.periodo || {};
+    document.getElementById("fat-total").innerText = moedaBR(p.faturamento_total);
+    document.getElementById("fat-comissoes").innerText = moedaBR(p.total_comissoes);
+    document.getElementById("fat-fixo").innerText = moedaBR(p.total_fixo);
+    document.getElementById("fat-liquido").innerText = moedaBR(p.lucro_liquido);
+
+    const tipoLabel = { comissao: "Comissão", fixo: "Fixo", comissao_mais_fixo: "Com.+Fixo" };
+
+    corpoProf.innerHTML = "";
+    (d.por_profissional || []).forEach((r) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        `<td><strong>${r.profissional || "-"}</strong></td>` +
+        `<td>${tipoLabel[r.payment_type] || r.payment_type || "-"}</td>` +
+        `<td>${r.atendimentos}</td>` +
+        `<td>${moedaBR(r.bruto)}</td>` +
+        `<td>${moedaBR(r.comissao)}</td>` +
+        `<td>${moedaBR(r.fixo)}</td>` +
+        `<td style="color: var(--brand-primary); font-weight:600;">${moedaBR(r.total_a_pagar)}</td>` +
+        `<td><button class="btn-action confirm" title="Registrar repasse" onclick="abrirModalPayout(${r.worker_id}, '${(r.profissional || "").replace(/'/g, "")}', ${r.total_a_pagar})">💸</button></td>`;
+      corpoProf.appendChild(tr);
+    });
+    if (!(d.por_profissional || []).length) {
+      corpoProf.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:16px;color:var(--text-muted);">Nenhum atendimento concluído no período.</td></tr>`;
+    }
+
+    const corpoServ = document.getElementById("fat-servicos-body");
+    corpoServ.innerHTML = "";
+    (d.por_servico || []).forEach((r) => {
+      corpoServ.insertAdjacentHTML("beforeend", `<tr><td>${r.servico || "-"}</td><td>${r.quantidade}</td><td>${moedaBR(r.total)}</td></tr>`);
+    });
+
+    const corpoItens = document.getElementById("fat-itens-body");
+    corpoItens.innerHTML = "";
+    (d.itens || []).forEach((r) => {
+      const dt = (r.data || "").split("-").reverse().join("/");
+      corpoItens.insertAdjacentHTML("beforeend", `<tr><td>${dt}</td><td>${r.cliente || "-"}</td><td>${r.servico || "-"}</td><td>${r.profissional || "-"}</td><td>${moedaBR(r.valor)}</td><td>${moedaBR(r.comissao)}</td></tr>`);
+    });
+    if (!(d.itens || []).length) {
+      corpoItens.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text-muted);">Sem atendimentos.</td></tr>`;
+    }
+
+    await renderRepasses();
+  } catch (e) {
+    corpoProf.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--danger);">Servidor offline.</td></tr>`;
+  }
+}
+
+async function renderRepasses() {
+  const corpo = document.getElementById("fat-repasses-body");
+  if (!corpo) return;
+  try {
+    const res = await fetch(`${API_BASE_URL}/payouts`, { headers: authHeaders() });
+    if (!res.ok) return;
+    const d = await res.json();
+    corpo.innerHTML = "";
+    (d.data || []).forEach((r) => {
+      const ini = (r.periodo_inicio || "").slice(0, 10).split("-").reverse().join("/");
+      const fim = (r.periodo_fim || "").slice(0, 10).split("-").reverse().join("/");
+      const dtPago = (r.pago_em || "").slice(0, 10).split("-").reverse().join("/");
+      corpo.insertAdjacentHTML("beforeend", `<tr><td>${(r.worker && r.worker.name) || "-"}</td><td>${ini} – ${fim}</td><td>${moedaBR(r.valor_pago)}</td><td>${dtPago}</td></tr>`);
+    });
+    if (!(d.data || []).length) {
+      corpo.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--text-muted);">Nenhum repasse.</td></tr>`;
+    }
+  } catch (e) {
+    /* silencioso */
+  }
+}
+
+window.abrirModalPayout = function (workerId, nome, total) {
+  const hoje = new Date();
+  const campoIni = document.getElementById("fat-inicio");
+  const campoFim = document.getElementById("fat-fim");
+  const ini = (campoIni && campoIni.value) || new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().slice(0, 10);
+  const fim = (campoFim && campoFim.value) || new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().slice(0, 10);
+  document.getElementById("payout-worker-id").value = workerId;
+  document.getElementById("payout-inicio").value = ini;
+  document.getElementById("payout-fim").value = fim;
+  document.getElementById("payout-obs").value = "";
+  document.getElementById("payout-resumo").innerText = `${nome} — total estimado no período filtrado: ${moedaBR(total)}. O valor final é recalculado no servidor.`;
+  document.getElementById("modal-payout").classList.add("active");
+};
+window.fecharModalPayout = function () {
+  document.getElementById("modal-payout").classList.remove("active");
+};
+
+const formPayout = document.getElementById("form-payout");
+if (formPayout) {
+  formPayout.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const payload = {
+      worker_id: parseInt(document.getElementById("payout-worker-id").value, 10),
+      inicio: document.getElementById("payout-inicio").value,
+      fim: document.getElementById("payout-fim").value,
+      observacao: document.getElementById("payout-obs").value || null,
+    };
+    try {
+      const res = await fetch(`${API_BASE_URL}/payouts`, {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify(payload),
+      });
+      const d = await res.json();
+      if (res.ok) {
+        mostrarToastAdmin(`Repasse de ${moedaBR(d.payout && d.payout.valor_pago)} registrado!`);
+        fecharModalPayout();
+        renderFaturamento();
+      } else {
+        mostrarToastAdmin(d.message || "Erro ao registrar repasse.", "erro");
+      }
+    } catch (err) {
+      mostrarToastAdmin("Erro de conexão.", "erro");
+    }
+  });
+}
+
+const btnFiltrarFat = document.getElementById("btn-filtrar-fat");
+if (btnFiltrarFat) btnFiltrarFat.addEventListener("click", () => renderFaturamento());
+
+// --------------------------------------------------------------------------
+// 10. MÓDULO: INSTÂNCIAS DE WHATSAPP
+// --------------------------------------------------------------------------
+let _pollInstancia = null;
+
+const STATUS_INSTANCIA = {
+  conectado: ["confirmed", "Conectado"],
+  conectando: ["pending", "Aguardando conexão"],
+  desconectado: ["cancel", "Desconectado"],
+  erro: ["cancel", "Erro"],
+};
+
+async function renderInstancias() {
+  const corpo = document.getElementById("instancias-table-body");
+  if (!corpo) return;
+  corpo.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:16px;">Carregando...</td></tr>`;
+  try {
+    const res = await fetch(`${API_BASE_URL}/instances`, { headers: authHeaders() });
+    if (!(await checarSessao(res))) return;
+    if (!res.ok) throw new Error("erro");
+    const d = await res.json();
+    corpo.innerHTML = "";
+    (d.data || []).forEach((i) => {
+      const par = STATUS_INSTANCIA[i.status] || ["pending", i.status];
+      const ultima = i.last_connected_at ? new Date(i.last_connected_at).toLocaleString("pt-BR") : "—";
+      const nomeSeguro = (i.name || "").replace(/'/g, "");
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        `<td><strong>${i.name}</strong></td>` +
+        `<td><span class="status-badge ${par[0]}">${par[1]}</span></td>` +
+        `<td>${i.phone_number || "—"}</td>` +
+        `<td>${ultima}</td>` +
+        `<td>` +
+        `<button class="btn-action" title="Atualizar status" onclick="atualizarStatusInstancia(${i.id})">🔄</button> ` +
+        `<button class="btn-action confirm" title="Conectar / novo QR" onclick="conectarInstancia(${i.id}, '${nomeSeguro}')">🔗</button> ` +
+        `<button class="btn-action cancel" title="Excluir" onclick="excluirInstancia(${i.id}, '${nomeSeguro}')">🗑️</button>` +
+        `</td>`;
+      corpo.appendChild(tr);
+    });
+    if (!(d.data || []).length) {
+      corpo.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--text-muted);">Nenhuma instância. Crie uma para enviar mensagens.</td></tr>`;
+    }
+  } catch (e) {
+    corpo.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--danger);">Servidor offline.</td></tr>`;
+  }
+}
+
+window.atualizarStatusInstancia = async function (id) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/instances/${id}/status`, { headers: authHeaders() });
+    const d = await res.json();
+    if (res.ok) mostrarToastAdmin(`Status: ${d.status}`);
+    renderInstancias();
+  } catch (e) {
+    mostrarToastAdmin("Erro ao consultar status.", "erro");
+  }
+};
+
+window.excluirInstancia = function (id, nome) {
+  abrirModalConfirmacao(
+    "Excluir instância",
+    `A instância "${nome}" será desconectada e removida. Continuar?`,
+    "Excluir",
+    "danger",
+    async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/instances/${id}`, { method: "DELETE", headers: authHeaders() });
+        if (res.ok) {
+          mostrarToastAdmin("Instância removida.");
+          renderInstancias();
+        } else {
+          mostrarToastAdmin("Erro ao remover.", "erro");
+        }
+      } catch (e) {
+        mostrarToastAdmin("Erro de conexão.", "erro");
+      }
+    },
+  );
+};
+
+window.abrirModalInstancia = function () {
+  document.getElementById("form-instancia").reset();
+  document.getElementById("modal-instancia-titulo").innerText = "Nova instância";
+  document.getElementById("instancia-nome-wrap").style.display = "";
+  document.getElementById("instancia-qr-area").style.display = "none";
+  document.getElementById("btn-criar-instancia").style.display = "";
+  document.getElementById("btn-criar-instancia").innerText = "Criar e gerar QR";
+  document.getElementById("modal-instancia").classList.add("active");
+};
+
+window.fecharModalInstancia = function () {
+  if (_pollInstancia) {
+    clearInterval(_pollInstancia);
+    _pollInstancia = null;
+  }
+  document.getElementById("modal-instancia").classList.remove("active");
+  renderInstancias();
+};
+
+window.conectarInstancia = async function (id, nome) {
+  abrirModalInstancia();
+  document.getElementById("modal-instancia-titulo").innerText = `Conectar: ${nome}`;
+  document.getElementById("instancia-nome-wrap").style.display = "none";
+  document.getElementById("btn-criar-instancia").style.display = "none";
+  document.getElementById("instancia-qr-area").style.display = "";
+  document.getElementById("instancia-qr-img").src = "";
+  document.getElementById("instancia-status-label").innerText = "Gerando QR...";
+  try {
+    const res = await fetch(`${API_BASE_URL}/instances/${id}/qrcode`, { headers: authHeaders() });
+    const d = await res.json();
+    if (d.qrCode) {
+      document.getElementById("instancia-qr-img").src = d.qrCode;
+      document.getElementById("instancia-status-label").innerText = "Aguardando leitura...";
+      iniciarPollingInstancia(id);
+    } else {
+      document.getElementById("instancia-status-label").innerText = d.message || "Não foi possível gerar o QR.";
+    }
+  } catch (e) {
+    document.getElementById("instancia-status-label").innerText = "Serviço indisponível.";
+  }
+};
+
+function iniciarPollingInstancia(id) {
+  if (_pollInstancia) clearInterval(_pollInstancia);
+  _pollInstancia = setInterval(async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/instances/${id}/status`, { headers: authHeaders() });
+      const d = await res.json();
+      const label = document.getElementById("instancia-status-label");
+      if (d.status === "conectado") {
+        label.innerText = "✅ Conectado!";
+        clearInterval(_pollInstancia);
+        _pollInstancia = null;
+        setTimeout(fecharModalInstancia, 1200);
+      } else if (d.status === "erro") {
+        label.innerText = "Erro na conexão.";
+      } else {
+        label.innerText = "Aguardando leitura...";
+      }
+    } catch (e) {
+      /* segue tentando */
+    }
+  }, 3000);
+}
+
+const formInstancia = document.getElementById("form-instancia");
+if (formInstancia) {
+  formInstancia.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (document.getElementById("btn-criar-instancia").style.display === "none") return;
+    const nome = document.getElementById("instancia-nome").value.trim();
+    const btn = document.getElementById("btn-criar-instancia");
+    btn.disabled = true;
+    btn.innerText = "Criando...";
+    try {
+      const res = await fetch(`${API_BASE_URL}/instances`, {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ name: nome }),
+      });
+      const d = await res.json();
+      btn.disabled = false;
+      btn.innerText = "Criar e gerar QR";
+      if (!res.ok) {
+        mostrarToastAdmin(d.message || (d.errors ? Object.values(d.errors)[0][0] : "Erro ao criar."), "erro");
+        return;
+      }
+      document.getElementById("instancia-nome-wrap").style.display = "none";
+      btn.style.display = "none";
+      document.getElementById("instancia-qr-area").style.display = "";
+      if (d.qrCode) {
+        document.getElementById("instancia-qr-img").src = d.qrCode;
+        document.getElementById("instancia-status-label").innerText = "Aguardando leitura...";
+        iniciarPollingInstancia(d.instance.id);
+      } else {
+        document.getElementById("instancia-status-label").innerText = "Instância criada, mas o QR não foi retornado. Use o botão 🔗 na lista.";
+      }
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerText = "Criar e gerar QR";
+      mostrarToastAdmin("Erro de conexão com o servidor.", "erro");
+    }
+  });
+}
+
+// --------------------------------------------------------------------------
+// 11. MÓDULO: HORÁRIO DE FUNCIONAMENTO
+// --------------------------------------------------------------------------
+const DIAS_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+async function renderExpediente() {
+  const corpo = document.getElementById("expediente-body");
+  if (!corpo) return;
+  let grade = {};
+  try {
+    const res = await fetch(`${API_BASE_URL}/tempo_de_operacao`, { headers: authHeaders() });
+    if (!(await checarSessao(res))) return;
+    if (res.ok) {
+      const d = await res.json();
+      (d.data ? d.data : d).forEach((o) => (grade[Number(o.day_of_week)] = o));
+    }
+  } catch (e) { /* usa vazio */ }
+
+  const hm = (v) => (v ? String(v).slice(0, 5) : "");
+  corpo.innerHTML = "";
+  for (let dow = 0; dow < 7; dow++) {
+    const o = grade[dow] || {};
+    const tr = document.createElement("tr");
+    tr.dataset.dow = dow;
+    tr.innerHTML =
+      `<td><strong>${DIAS_SEMANA[dow]}</strong></td>` +
+      `<td><input type="checkbox" class="exp-active" ${o.active ? "checked" : ""}></td>` +
+      `<td><input type="time" class="admin-input exp-start" value="${hm(o.start_time) || "08:00"}"></td>` +
+      `<td><input type="time" class="admin-input exp-end" value="${hm(o.end_time) || "19:00"}"></td>` +
+      `<td><input type="time" class="admin-input exp-ws" value="${hm(o.waiting_start)}"></td>` +
+      `<td><input type="time" class="admin-input exp-we" value="${hm(o.waiting_end)}"></td>`;
+    corpo.appendChild(tr);
+  }
+}
+
+const btnSalvarExpediente = document.getElementById("btn-salvar-expediente");
+if (btnSalvarExpediente) {
+  btnSalvarExpediente.addEventListener("click", async () => {
+    const linhas = document.querySelectorAll("#expediente-body tr");
+    btnSalvarExpediente.disabled = true;
+    let erros = 0;
+    for (const tr of linhas) {
+      const payload = {
+        day_of_week: Number(tr.dataset.dow),
+        active: tr.querySelector(".exp-active").checked,
+        start_time: tr.querySelector(".exp-start").value || "08:00",
+        end_time: tr.querySelector(".exp-end").value || "19:00",
+        waiting_start: tr.querySelector(".exp-ws").value || null,
+        waiting_end: tr.querySelector(".exp-we").value || null,
+      };
+      try {
+        const res = await fetch(`${API_BASE_URL}/tempo_de_operacao`, {
+          method: "POST",
+          headers: authHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) erros++;
+      } catch (e) {
+        erros++;
+      }
+    }
+    btnSalvarExpediente.disabled = false;
+    mostrarToastAdmin(erros ? `Salvo com ${erros} erro(s).` : "Horários salvos!", erros ? "erro" : "sucesso");
+    renderExpediente();
+  });
+}

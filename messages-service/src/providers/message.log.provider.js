@@ -1,6 +1,7 @@
 class logProvider {
   constructor() {
-    ((this.apiUrl = process.env.API_URL_BACKEND), (this.apiToken = process.env.API_TOKEN_BACKEND));
+    this.apiUrl = process.env.API_URL_BACKEND;
+    this.serviceToken = process.env.MESSAGES_SERVICE_TOKEN;
   }
 
   async logToBackend(logData) {
@@ -16,6 +17,7 @@ class logProvider {
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
+        "X-Service-Token": this.serviceToken ?? "",
       };
 
       const controller = new AbortController();

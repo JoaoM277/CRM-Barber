@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreWorkerRequest;
 use App\Models\Worker;
 use Illuminate\Http\Request;
-use App\Http\Requests\UpdateWorkerRequest;
+use Illuminate\Validation\Rule;
 
 class WorkerController extends Controller
 {
@@ -47,15 +47,7 @@ class WorkerController extends Controller
      */
     public function show(Worker $worker)
     {
-        return response()->json($worker, 201);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Worker $worker)
-    {
-        //
+        return response()->json($worker, 200);
     }
 
     /**
@@ -64,17 +56,22 @@ class WorkerController extends Controller
     public function update(Request $request, Worker $worker)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:workers,phone',
-            'photo' => 'nullable|string',
-            'speciality' => 'nullable|string',
-            'active' => 'boolean'
+            'name' => 'sometimes|required|string|max:255',
+            'phone' => ['sometimes', 'required', 'string', 'max:20', Rule::unique('workers', 'phone')->ignore($worker->id)],
+            'photo' => 'sometimes|nullable|string',
+            'speciality' => 'sometimes|nullable|string',
+            'active' => 'sometimes|boolean',
+            'payment_type' => ['sometimes', Rule::in(\App\Models\Worker::PAYMENT_TYPES)],
+            'commission_percent' => 'sometimes|nullable|numeric|min:0|max:100',
+            'fixed_salary' => 'sometimes|nullable|numeric|min:0',
+            'pix_key' => 'sometimes|nullable|string|max:255',
         ]);
 
         $worker->update($data);
 
         return response()->json([
-            'message' => 'Profissional atualizado com sucesso!'
+            'message' => 'Profissional atualizado com sucesso!',
+            'worker' => $worker->fresh(),
         ], 200);
     }
 
