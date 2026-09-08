@@ -110,8 +110,9 @@ php artisan queue:work --tries=3
 > (`pendente`/`confirmado`/`concluido`/`cancelado`), `services.duration_time` em
 > minutos, `workers.photo`/`speciality` nullable, `operation_times` reformulado (dia da semana 0-6 + intervalo), `barbershops` ganhou `subtitle`/`accent_color` (identidade da página pública), campos de pagamento em `workers`
 > (`payment_type`, `commission_percent`, `fixed_salary`, `pix_key`), `price` +
-> `commission_value` em `schedules`, tabelas `avisos`, `instances`, `payouts` e as
-> tabelas de fila (`jobs`, `failed_jobs`, `job_batches`).
+> `commission_value` em `schedules`, pivô `schedule_service` (multi-serviço por
+> agendamento, com snapshot de preço/comissão por serviço), tabelas `avisos`,
+> `instances`, `payouts` e as tabelas de fila (`jobs`, `failed_jobs`, `job_batches`).
 
 Dados semeados úteis para o teste (senha de todos: **`123456`**):
 - `admin@alphabarber.test` / `admin@kingbarber.test` — role admin
@@ -151,6 +152,7 @@ Páginas: `index.html` (agendamento público), `login.html` (login admin), `admi
 3. **Cadastro base** (no painel): criar 1 serviço e 1 profissional → devem salvar sem erro (payloads já alinhados).
 4. **Agendamento público**: `index.html`, seguir o fluxo até "Finalizar" → resposta `201` e toast verde.
    - Conferir no banco: nova linha em `clients` (se telefone novo) e em `schedules` com `status = 'pendente'`.
+   - **Multi-serviço**: escolher 2+ serviços na tela 1 → `schedules.price` = soma dos preços, `end_time` = início + soma das durações, e N linhas em `schedule_service` (uma por serviço, com `price`/`commission_value` de cada). `schedules.service_id` guarda o 1º serviço (compat).
 5. **Disparo WhatsApp**: ao finalizar o agendamento o Laravel chama `POST {MESSAGE_SERVICE_URL}message` → conferir log do Node (`req.body` + `status: "dispatched"` ou o erro do provider).
    - Se o Node estiver fora do ar, o agendamento **ainda assim** é criado (o disparo é best-effort com timeout de 5s).
 6. **Log de mensagem**: `queue:work` processa o job `SendAppointmentWhatsapp`; conferir nova linha em `logs` (`action = WHATSAPP_MENSAGE_SENT`). O `POST /api/logs` do Node só passa se o `X-Service-Token` bater.

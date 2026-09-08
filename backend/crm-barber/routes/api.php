@@ -18,19 +18,28 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Rotas PÚBLICAS (site de agendamento + auth)
+| Auth (global — sem tenant; o login resolve a barbearia do usuário)
 |--------------------------------------------------------------------------
 */
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1')->name('users.login');
 Route::post('/cadastrar', [AuthController::class, 'register'])->middleware('throttle:6,1')->name('users.register');
 
-// O site público só precisa LISTAR serviços e profissionais e CRIAR o agendamento
-Route::get('/servicos', [ServiceController::class, 'index'])->name('servicos.index');
-Route::get('/profissionais', [WorkerController::class, 'index'])->name('profissionais.index');
-Route::post('/agendamentos', [ScheduleController::class, 'store'])->middleware('throttle:15,1')->name('agendamentos.store');
-Route::get('/disponibilidade', [ScheduleController::class, 'disponibilidade'])->name('agendamentos.disponibilidade');
-Route::get('/avisos/ativo', [AvisoController::class, 'ativo'])->name('avisos.ativo');
-Route::get('/barbearia', [BarbershopController::class, 'publicIdentity'])->name('barbearia.identidade');
+/*
+|--------------------------------------------------------------------------
+| Rotas PÚBLICAS por barbearia (site de agendamento)
+| A barbearia vem no path (/api/b/{slug}/...), no header X-Barbershop ou em ?barbershop=
+|--------------------------------------------------------------------------
+*/
+Route::middleware('tenant')->group(function () {
+    Route::prefix('b/{barbershop}')->group(function () {
+        Route::get('/servicos', [ServiceController::class, 'index'])->name('servicos.index');
+        Route::get('/profissionais', [WorkerController::class, 'index'])->name('profissionais.index');
+        Route::post('/agendamentos', [ScheduleController::class, 'store'])->middleware('throttle:15,1')->name('agendamentos.store');
+        Route::get('/disponibilidade', [ScheduleController::class, 'disponibilidade'])->name('agendamentos.disponibilidade');
+        Route::get('/avisos/ativo', [AvisoController::class, 'ativo'])->name('avisos.ativo');
+        Route::get('/barbearia', [BarbershopController::class, 'publicIdentity'])->name('barbearia.identidade');
+    });
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -46,7 +55,7 @@ Route::middleware('service.token')->group(function () {
 | Rotas AUTENTICADAS (painel administrativo)
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'tenant.user'])->group(function () {
     Route::get('/me', [AuthController::class, 'me'])->name('users.me');
     Route::post('/logout', [AuthController::class, 'logout'])->name('users.logout');
     Route::get('/pagina-inicial', [UserController::class, 'paginaInicial'])->name('users.pagina-inicial');
@@ -58,13 +67,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/clientes/{client}', [ClientController::class, 'update'])->name('clientes.update');
     Route::delete('/clientes/{client}', [ClientController::class, 'destroy'])->name('clientes.delete');
 
-    // Worker
+    // Worker (o painel lista pela rota autenticada; o site público usa /b/{slug}/profissionais)
+    Route::get('/profissionais', [WorkerController::class, 'index'])->name('profissionais.index.admin');
     Route::post('/profissionais', [WorkerController::class, 'store'])->name('profissionais.store');
     Route::get('/profissionais/{worker}', [WorkerController::class, 'show'])->name('profissionais.show');
     Route::put('/profissionais/{worker}', [WorkerController::class, 'update'])->name('profissionais.update');
     Route::delete('/profissionais/{worker}', [WorkerController::class, 'destroy'])->name('profissionais.delete');
 
-    // Service
+    // Service (idem)
+    Route::get('/servicos', [ServiceController::class, 'index'])->name('servicos.index.admin');
     Route::post('/servicos', [ServiceController::class, 'store'])->name('servicos.store');
     Route::get('/servicos/{service}', [ServiceController::class, 'show'])->name('servicos.show');
     Route::put('/servicos/{service}', [ServiceController::class, 'update'])->name('servicos.update');

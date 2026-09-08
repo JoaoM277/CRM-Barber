@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBarbershopRequest;
 use App\Models\Barbershop;
+use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -18,12 +19,12 @@ class BarbershopController extends Controller
     }
 
     /**
-     * Identidade visual pública da barbearia (single-tenant: a primeira ativa).
+     * Identidade visual pública da barbearia do tenant atual.
      * Consumida pela página de agendamento.
      */
-    public function publicIdentity()
+    public function publicIdentity(TenantContext $tenant)
     {
-        $bs = Barbershop::where('active', true)->orderBy('id')->first();
+        $bs = $tenant->barbershop();
 
         $accentPadrao = '#C89B3C';
 

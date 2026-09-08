@@ -162,12 +162,22 @@ async function renderAgenda(dataFiltro = "") {
       const dataAg = agendamento.data || agendamento.date || "";
       const horaAg = agendamento.horario || agendamento.time || "";
 
+      // Lista completa de serviços (multi-serviço); cai pro serviço "primário" nos registros antigos.
+      let servicosTxt = "N/A";
+      if (Array.isArray(agendamento.servicos) && agendamento.servicos.length) {
+        servicosTxt = agendamento.servicos.map((s) => s.nome).join(", ");
+      } else if (agendamento.servicos_nomes) {
+        servicosTxt = agendamento.servicos_nomes;
+      } else if (agendamento.Servico) {
+        servicosTxt = agendamento.Servico.nome;
+      }
+
       tr.innerHTML = `
                 <td>
                     <strong>${nomeCli}</strong><br>
                     <span class="text-small">${formatarTelefoneAdmin(telCli)}</span>
                 </td>
-                <td>${agendamento.Servico ? agendamento.Servico.nome : "N/A"}</td>
+                <td>${servicosTxt}</td>
                 <td>${agendamento.Barbeiro ? agendamento.Barbeiro.nome : "N/A"}</td>
                 <td>${dataAg.split("-").reverse().join("/")} às ${horaAg}</td>
                 <td><span class="status-badge ${badgeClass}">${badgeText}</span></td>

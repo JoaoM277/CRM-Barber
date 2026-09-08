@@ -17,6 +17,8 @@ class MessageController extends Controller
             'dataAgendamento' => 'required|date',
             'horario' => 'required|string|max:10',
             'barbeiroNome' => 'nullable|string|max:255',
+            'servicos' => 'nullable|array',
+            'servicos.*' => 'string|max:255',
         ]);
 
         
@@ -38,6 +40,7 @@ class MessageController extends Controller
             'date' => $data['dataAgendamento'],
             'time' => $data['horario'],
             'barber' => $data['barbeiroNome'] ?? null,
+            'services' => array_values($data['servicos'] ?? []),
         ];
 
         if ($instanceName) {

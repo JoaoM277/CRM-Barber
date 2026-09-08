@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Barbershop;
+use App\Models\OperationTime;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -57,6 +58,8 @@ class AuthController extends Controller
                 'role' => User::ROLE_ADMIN,
             ]);
 
+            $this->seedDefaultOperationTimes($barbershop->id);
+
             return [$user, $barbershop];
         });
 
@@ -69,6 +72,31 @@ class AuthController extends Controller
             'token_type' => 'Bearer',
             'user' => $user->load('barbershop'),
         ], 201);
+    }
+
+    /**
+     * Grade de horário padrão pra barbearia recém-criada ficar utilizável na hora:
+     * seg-sex 09:00-19:00 (almoço 12:00-13:00), sáb 09:00-17:00, dom fechado.
+     */
+    private function seedDefaultOperationTimes(int $barbershopId): void
+    {
+        $linhas = [];
+        foreach (range(0, 6) as $dow) {
+            $fechado = $dow === 0;
+            $linhas[] = [
+                'barbershop_id' => $barbershopId,
+                'day_of_week' => $dow,
+                'active' => ! $fechado,
+                'start_time' => '09:00:00',
+                'end_time' => $dow === 6 ? '17:00:00' : '19:00:00',
+                'waiting_start' => $fechado || $dow === 6 ? null : '12:00:00',
+                'waiting_end' => $fechado || $dow === 6 ? null : '13:00:00',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        OperationTime::insert($linhas);
     }
 
     /**

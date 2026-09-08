@@ -57,7 +57,7 @@ class WorkerController extends Controller
     {
         $data = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'phone' => ['sometimes', 'required', 'string', 'max:20', Rule::unique('workers', 'phone')->ignore($worker->id)],
+            'phone' => ['sometimes', 'required', 'string', 'max:20', Rule::unique('workers', 'phone')->where('barbershop_id', $worker->barbershop_id)->ignore($worker->id)],
             'photo' => 'sometimes|nullable|string',
             'speciality' => 'sometimes|nullable|string',
             'active' => 'sometimes|boolean',

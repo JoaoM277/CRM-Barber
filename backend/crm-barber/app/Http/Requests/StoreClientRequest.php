@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Support\TenantContext;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreClientRequest extends FormRequest
 {
@@ -22,10 +24,12 @@ class StoreClientRequest extends FormRequest
      */
     public function rules(): array
     {
+        $tenantId = app(TenantContext::class)->id();
+
         return [
             'name' => 'required|string|max:255',
-            'email' => 'nullable|email|unique:clients,email',
-            'phone' => 'required|string|max:20',
+            'email' => ['nullable', 'email', Rule::unique('clients', 'email')->where('barbershop_id', $tenantId)],
+            'phone' => ['required', 'string', 'max:20', Rule::unique('clients', 'phone')->where('barbershop_id', $tenantId)],
             'birth_date' => 'nullable|date',
             'observation' => 'nullable|string',
         ];

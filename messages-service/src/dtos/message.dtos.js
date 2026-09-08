@@ -14,10 +14,12 @@ const messageCreateSchema = z.object({
   trigger: z.enum(["AGENDAMENTO", "CANCELAMENTO", "LEMBRETE"], {
     errorMap: () => ({ message: "Gatilho de evento Invalido" }),
   }),
-  date: z.string().optional(),
-  time: z.string().optional(),
-  barber: z.string().optional(),
-  instance: z.string().optional(),
+  // nullish(): o Laravel pode mandar null nesses campos (ex.: barbeiro removido)
+  date: z.string().nullish(),
+  time: z.string().nullish(),
+  barber: z.string().nullish(),
+  services: z.array(z.string()).nullish(),
+  instance: z.string().nullish(),
 });
 
 const schemaEvolution = z.object({

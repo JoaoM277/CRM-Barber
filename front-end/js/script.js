@@ -2,14 +2,20 @@
 // 1. ESTADO GLOBAL DA APLICAÇÃO
 // ==========================================================================
 const agendamento = {
-    servicos: [],      
-    barbeiroId: null,  
-    data: null,        
+    servicos: [],
+    barbeiroId: null,
+    semPreferencia: false,
+    data: null,
     hora: null,
     cliente: { nome: "", telefone: "", notas: "" }
 };
 
 const API_BASE_URL = window.API_BASE_URL || "http://localhost:8000/api";
+const BARBERSHOP_SLUG = window.BARBERSHOP_SLUG || "alpha-barber";
+
+// Rotas públicas são escopadas por barbearia: /api/b/{slug}/...
+const apiPublic = (path) =>
+    `${API_BASE_URL}/b/${encodeURIComponent(BARBERSHOP_SLUG)}${path.startsWith("/") ? path : "/" + path}`;
 
 let currentStep = 1;
 let currentDateObj = new Date(); 
@@ -35,9 +41,9 @@ async function carregarDadosIniciais() {
     try {
         // 1. Dispara todas as requisições
         const [resServicos, resBarbeiros, resHorarios] = await Promise.all([
-            fetch(`${API_BASE_URL}/servicos`), 
-            fetch(`${API_BASE_URL}/profissionais`), 
-            fetch(`${API_BASE_URL}/disponibilidade`)
+            fetch(apiPublic("/servicos")),
+            fetch(apiPublic("/profissionais")),
+            fetch(apiPublic("/disponibilidade"))
         ]);
 
         // 2. Converte para JSON
@@ -94,8 +100,9 @@ async function carregarDadosIniciais() {
         dbBarbeiros = rawBarbeiros.map(item => ({
             id: item.id,
             nome: item.name || item.nome || "Profissional",
-            avatar: item.avatar || item.foto || "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&q=80", 
-            cargo: item.role || item.cargo || "Barber"
+            foto: item.photo || item.foto || item.avatar || null,
+            especialidade: item.speciality || item.especialidade || item.cargo || "",
+            ativo: item.active !== false && item.active !== 0
         }));
 
         // ==========================================
@@ -131,78 +138,198 @@ async function carregarDadosIniciais() {
 // ==========================================================================
 // 4. RENDERIZADORES DINÂMICOS
 // ==========================================================================
-function renderServicos() {
-    const container = document.getElementById("services-container");
-    container.innerHTML = "";
-    container.className = "mobile-service-list";
+const SVC_ICON = `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>`;
+const SVC_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
 
-    dbServicos.forEach(servico => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = `service-row ${agendamento.servicos.includes(servico.id) ? 'selected' : ''}`;
-        
-        // Formata o número (ex: 50 vira "50,00")
-        const precoFormatado = servico.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-        
-        btn.innerHTML = `
-            <div class="service-details">
-                <span class="service-title">${servico.nome}</span>
-                <span class="service-time">${servico.duracao}min</span>
-            </div>
-            <span class="service-price">R$ ${precoFormatado}</span> 
+function renderServicos() {
+    const track = document.getElementById("services-container");
+    if (!track) return;
+    track.innerHTML = "";
+
+    if (!dbServicos.length) {
+        track.innerHTML = `<p class="svc-empty">Nenhum serviço disponível no momento.</p>`;
+        return;
+    }
+
+    dbServicos.forEach((servico, i) => {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = `svc-card${agendamento.servicos.includes(servico.id) ? " selected" : ""}`;
+        card.style.setProperty("--i", i);
+        card.dataset.id = servico.id;
+
+        const preco = Number(servico.preco || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+        const num = String(i + 1).padStart(2, "0");
+
+        card.innerHTML = `
+            <span class="svc-card__in">
+                <div class="svc-top">
+                    <span class="svc-num">( ${num} )</span>
+                    <span class="svc-check">${SVC_CHECK}</span>
+                </div>
+                <span class="svc-icon">${SVC_ICON}</span>
+                <div class="svc-bottom">
+                    <div class="svc-name">${servico.nome}</div>
+                    <div class="svc-meta">
+                        <span>${servico.duracao || "—"} min</span>
+                        <span class="svc-price">R$ ${preco}</span>
+                    </div>
+                </div>
+            </span>
         `;
-        // ... (o resto da função continua igual)
-        
-        btn.addEventListener("click", () => {
-            const index = agendamento.servicos.indexOf(servico.id);
-            if (index > -1) agendamento.servicos.splice(index, 1);
+
+        card.addEventListener("click", () => {
+            const idx = agendamento.servicos.indexOf(servico.id);
+            if (idx > -1) agendamento.servicos.splice(idx, 1);
             else agendamento.servicos.push(servico.id);
-            renderServicos();
+            card.classList.toggle("selected");
             validateStep();
         });
-        
-        container.appendChild(btn);
+
+        track.appendChild(card);
     });
+
+    initServiceCarousel();
+}
+
+const _reduzirMovimento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* Efeito "coverflow" leve: cards mais longe da âncora do track ficam
+   levemente menores e o ícone faz um parallax. Só mexe em CSS vars
+   (--k, --px), então não briga com a animação de entrada. */
+function atualizarTransformCards() {
+    if (_reduzirMovimento) return;
+    const track = document.getElementById("services-container");
+    if (!track) return;
+    const tRect = track.getBoundingClientRect();
+    if (!tRect.width) return;
+    const padL = parseFloat(getComputedStyle(track).paddingLeft) || 0;
+    const ancora = tRect.left + padL;
+
+    track.querySelectorAll(".svc-card").forEach((card) => {
+        const cRect = card.getBoundingClientRect();
+        const d = Math.max(0, Math.min(2.4, (cRect.left - ancora) / tRect.width));
+        const escala = Math.max(0.9, 1 - d * 0.05).toFixed(3);
+        const px = (d * -18).toFixed(1);
+        card.style.setProperty("--k", escala);
+        card.style.setProperty("--px", px + "px");
+    });
+}
+
+let _rafCarrossel = null;
+function agendarAtualizacaoCards() {
+    if (_rafCarrossel) return;
+    _rafCarrossel = requestAnimationFrame(() => {
+        _rafCarrossel = null;
+        atualizarTransformCards();
+    });
+}
+
+function initServiceCarousel() {
+    const track = document.getElementById("services-container");
+    const wrap = track && track.closest(".service-carousel");
+    if (!wrap || wrap.dataset.wired) {
+        if (wrap) agendarAtualizacaoCards();
+        return;
+    }
+    wrap.dataset.wired = "1";
+
+    const prev = wrap.querySelector(".carousel-prev");
+    const next = wrap.querySelector(".carousel-next");
+
+    const passo = () => {
+        const card = track.querySelector(".svc-card");
+        if (!card) return 300;
+        const gap = parseInt(getComputedStyle(track).columnGap || getComputedStyle(track).gap, 10) || 16;
+        return card.getBoundingClientRect().width + gap;
+    };
+    const noFim = () => track.scrollLeft + track.clientWidth >= track.scrollWidth - 8;
+
+    if (prev) prev.onclick = () => {
+        if (track.scrollLeft < 8) track.scrollTo({ left: track.scrollWidth, behavior: "smooth" });
+        else track.scrollBy({ left: -passo(), behavior: "smooth" });
+    };
+    if (next) next.onclick = () => {
+        if (noFim()) track.scrollTo({ left: 0, behavior: "smooth" });
+        else track.scrollBy({ left: passo(), behavior: "smooth" });
+    };
+
+    track.addEventListener("scroll", agendarAtualizacaoCards, { passive: true });
+    window.addEventListener("resize", agendarAtualizacaoCards);
+    agendarAtualizacaoCards();
+}
+
+const BARB_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+const BARB_SHUFFLE = `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>`;
+
+function iniciais(nome) {
+    return (nome || "?").trim().split(/\s+/).slice(0, 2).map(p => p[0] || "").join("").toUpperCase();
 }
 
 function renderBarbeiros() {
     const container = document.getElementById("barbers-container");
     if (!container) return;
-    
+    container.className = "barbers-grid";
     container.innerHTML = "";
-    container.className = "barbers-list"; 
 
-    dbBarbeiros.forEach(barbeiro => {
-        const card = document.createElement("article");
-        
-        if (agendamento.barbeiroId === barbeiro.id) {
-            card.className = "barber-card selected";
-        } else {
-            card.className = "barber-card";
-        }
-        
-        const tagsHTML = barbeiro.tags ? barbeiro.tags.map(tag => `<span class="barber-tag">${tag}</span>`).join("") : "";
+    const ativos = dbBarbeiros.filter(b => b.ativo !== false);
 
-        card.innerHTML = `
-            <div class="barber-profile">
-                <div class="barber-avatar">
-                    <img src="${barbeiro.avatar}" alt="${barbeiro.nome}" style="width: 100%; height: 100%; object-fit: cover;">
-                </div>
-                <div class="barber-details">
-                    <h3>${barbeiro.nome}</h3>
-                    <span class="barber-role" style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">${barbeiro.cargo || 'BARBER'}</span>
-                    <div class="barber-tags-box" style="display: flex; gap: 6px; margin-top: 6px;">${tagsHTML}</div>
-                </div>
-            </div>
+    const selecionar = (tile, barbeiroId, semPref) => {
+        container.querySelectorAll(".barber-tile.selected").forEach(t => t.classList.remove("selected"));
+        tile.classList.add("selected");
+        agendamento.barbeiroId = barbeiroId;
+        agendamento.semPreferencia = semPref;
+        validateStep();
+    };
+
+    // --- Card "Sem preferência" (primeiro) ---
+    if (ativos.length) {
+        const semPref = document.createElement("button");
+        semPref.type = "button";
+        semPref.className = "barber-tile barber-tile--sempref" + (agendamento.semPreferencia ? " selected" : "");
+        semPref.style.setProperty("--i", 0);
+        semPref.innerHTML = `
+            <span class="barber-tile__num">( 00 )</span>
+            <span class="barber-tile__check">${BARB_CHECK}</span>
+            <span class="barber-tile__ico">${BARB_SHUFFLE}</span>
+            <span class="barber-tile__body">
+                <span class="barber-tile__name">Sem preferência</span>
+                <span class="barber-tile__spec">Primeiro disponível</span>
+            </span>
         `;
+        semPref.addEventListener("click", () => selecionar(semPref, ativos[0].id, true));
+        container.appendChild(semPref);
+    }
 
-        card.addEventListener("click", () => {
-            agendamento.barbeiroId = barbeiro.id;
-            renderBarbeiros(); 
-            validateStep();    
-        });
+    // --- Um card por barbeiro ativo ---
+    ativos.forEach((b, idx) => {
+        const marcado = !agendamento.semPreferencia && agendamento.barbeiroId === b.id;
+        const tile = document.createElement("button");
+        tile.type = "button";
+        tile.className = "barber-tile" + (marcado ? " selected" : "");
+        tile.style.setProperty("--i", idx + 1);
 
-        container.appendChild(card);
+        const num = String(idx + 1).padStart(2, "0");
+        const fotoHTML = b.foto
+            ? `<img class="barber-tile__photo" src="${b.foto}" alt="${b.nome}" onerror="this.style.display='none'">`
+            : "";
+        const spec = b.especialidade
+            ? `<span class="barber-tile__spec">${b.especialidade}</span>`
+            : "";
+
+        tile.innerHTML = `
+            <span class="barber-tile__initials">${iniciais(b.nome)}</span>
+            ${fotoHTML}
+            <span class="barber-tile__scrim"></span>
+            <span class="barber-tile__num">( ${num} )</span>
+            <span class="barber-tile__check">${BARB_CHECK}</span>
+            <span class="barber-tile__body">
+                <span class="barber-tile__name">${b.nome}</span>
+                ${spec}
+            </span>
+        `;
+        tile.addEventListener("click", () => selecionar(tile, b.id, false));
+        container.appendChild(tile);
     });
 }
 
@@ -212,30 +339,31 @@ function renderCalendario(date) {
 
     container.innerHTML = `
         <div class="section-intro">
-            <h2>Selecione o dia e horário</h2>
-            <p>Escolha a melhor data para o seu atendimento</p>
-        </div>
-        
-        <div class="calendar-wrapper">
-            <div class="calendar-header">
-                <button type="button" class="cal-btn" id="cal-prev">‹</button>
-                <span class="current-month" id="calendar-month-year"></span>
-                <button type="button" class="cal-btn" id="cal-next">›</button>
-            </div>
-            
-            <div class="weekdays-grid">
-                <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
-            </div>
-            
-            <div class="days-grid" id="calendar-days"></div>
+            <span class="intro-kicker">03 / HORÁRIO</span>
+            <h2>Escolha o dia e a hora</h2>
+            <p>Toque num dia e depois num horário livre</p>
         </div>
 
-        <div class="time-slots-wrapper">
-            <div class="time-period">
-                <h4>Horários Disponíveis</h4>
-                <div class="slots-grid" id="slots-container"></div>
+        <div class="agenda-card">
+            <div class="agenda-cal">
+                <div class="agenda-cal__head">
+                    <button type="button" class="agenda-nav" id="cal-prev" aria-label="Mês anterior">‹</button>
+                    <span class="agenda-cal__month" id="calendar-month-year"></span>
+                    <button type="button" class="agenda-nav" id="cal-next" aria-label="Próximo mês">›</button>
+                </div>
+                <div class="agenda-cal__weekdays">
+                    <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+                </div>
+                <div class="agenda-cal__days" id="calendar-days"></div>
+            </div>
+
+            <div class="agenda-times">
+                <div class="agenda-times__label" id="agenda-times-label">Horários</div>
+                <div class="agenda-times__list" id="slots-container"></div>
             </div>
         </div>
+
+        <p class="agenda-summary" id="agenda-summary">Escolha um dia e um horário.</p>
     `;
 
     const calendarDays = document.getElementById("calendar-days");
@@ -248,6 +376,9 @@ function renderCalendario(date) {
 
     const firstDayIndex = new Date(year, month, 1).getDay();
     const lastDay = new Date(year, month + 1, 0).getDate();
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     for (let i = 0; i < firstDayIndex; i++) {
         const emptySpan = document.createElement("span");
@@ -262,23 +393,17 @@ function renderCalendario(date) {
         dayBtn.textContent = day;
 
         const loopDate = new Date(year, month, day);
-        const today = new Date();
-        today.setHours(0,0,0,0);
 
-        if (loopDate < today) {
-            dayBtn.classList.add("disabled");
-        }
-        
+        if (loopDate < today) dayBtn.classList.add("disabled");
+        if (loopDate.getTime() === today.getTime()) dayBtn.classList.add("today");
         if (agendamento.data && agendamento.data.toDateString() === loopDate.toDateString()) {
             dayBtn.classList.add("selected");
         }
 
         dayBtn.addEventListener("click", () => {
-            if (loopDate < today) return; 
+            if (loopDate < today) return;
             agendamento.data = loopDate;
-            agendamento.hora = null; 
-            
-            
+            agendamento.hora = null;
             renderCalendario(date);
             validateStep();
         });
@@ -290,23 +415,46 @@ function renderCalendario(date) {
         currentDateObj.setMonth(currentDateObj.getMonth() - 1);
         renderCalendario(currentDateObj);
     });
-    
     document.getElementById("cal-next").addEventListener("click", () => {
         currentDateObj.setMonth(currentDateObj.getMonth() + 1);
         renderCalendario(currentDateObj);
     });
 
     renderHorarios();
+    atualizarRodapeAgenda();
+}
+
+function atualizarRodapeAgenda() {
+    const el = document.getElementById("agenda-summary");
+    if (!el) return;
+    if (!agendamento.data) {
+        el.textContent = "Escolha um dia e um horário.";
+        return;
+    }
+    const diaFmt = agendamento.data.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+    const exp = dbExpediente.find(e => Number(e.day_of_week) === agendamento.data.getDay());
+
+    if (!exp || !exp.active) {
+        el.innerHTML = `<strong>${diaFmt}</strong> — a barbearia não abre nesse dia. Escolha outro.`;
+    } else if (agendamento.hora) {
+        el.innerHTML = `Agendamento para <strong>${diaFmt}</strong> às <strong>${agendamento.hora}</strong>.`;
+    } else {
+        el.innerHTML = `<strong>${diaFmt}</strong> — agora escolha o horário.`;
+    }
 }
 
 const SLOT_INTERVALO = 30; // minutos entre horários oferecidos
 
 function renderHorarios() {
     const container = document.getElementById("slots-container");
+    if (!container) return;
     container.innerHTML = "";
+    const label = document.getElementById("agenda-times-label");
+    const setLabel = (t) => { if (label) label.textContent = t; };
 
     const aviso = (txt) => {
-        container.innerHTML = `<p style="color: var(--text-muted); font-size:14px; grid-column:1/-1; text-align:center;">${txt}</p>`;
+        setLabel("Horários");
+        container.innerHTML = `<p class="agenda-times__empty">${txt}</p>`;
     };
 
     if (!agendamento.data) return aviso("Selecione um dia primeiro");
@@ -351,14 +499,19 @@ function renderHorarios() {
 
     if (slots.length === 0) return aviso("Sem horários livres nesse dia.");
 
-    slots.forEach(hora => {
+    setLabel(`${slots.length} ${slots.length === 1 ? "horário livre" : "horários livres"}`);
+
+    slots.forEach((hora, i) => {
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = `slot-btn ${agendamento.hora === hora ? 'selected' : ''}`;
+        btn.className = `time-btn${agendamento.hora === hora ? " selected" : ""}`;
+        btn.style.setProperty("--i", i);
         btn.textContent = hora;
         btn.addEventListener("click", () => {
             agendamento.hora = hora;
-            renderHorarios();
+            container.querySelectorAll(".time-btn.selected").forEach(b => b.classList.remove("selected"));
+            btn.classList.add("selected");
+            atualizarRodapeAgenda();
             validateStep();
         });
         container.appendChild(btn);
@@ -390,7 +543,9 @@ function renderResumo() {
     document.getElementById("summary-total-duration").textContent = `${tempoTotal} min`;
 
     const barbeiro = dbBarbeiros.find(b => b.id === agendamento.barbeiroId);
-    document.getElementById("summary-barber-name").textContent = barbeiro ? barbeiro.nome : "Não selecionado";
+    document.getElementById("summary-barber-name").textContent = barbeiro
+        ? (agendamento.semPreferencia ? `Sem preferência (${barbeiro.nome})` : barbeiro.nome)
+        : "Não selecionado";
 
     if (agendamento.data && agendamento.hora) {
         document.getElementById("summary-date-time").textContent = `${agendamento.data.toLocaleDateString('pt-BR')} às ${agendamento.hora}`;
@@ -452,7 +607,7 @@ function validateStep() {
 // ==========================================================================
 async function verificarAvisoBarbearia() {
     try {
-        const response = await fetch(`${API_BASE_URL}/avisos/ativo`); 
+        const response = await fetch(apiPublic("/avisos/ativo"));
         const data = await response.json();
 
         if (data.exibir) {
@@ -585,7 +740,7 @@ if (btnNext) {
                 btnNext.textContent = "Aguarde...";
 
                 // Chamada para a sua API
-                const response = await fetch(`${API_BASE_URL}/agendamentos`, {
+                const response = await fetch(apiPublic("/agendamentos"), {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payloadParaBackend)
@@ -636,7 +791,7 @@ function esconderLoading() {
 // ==========================================================================
 async function carregarIdentidade() {
     try {
-        const res = await fetch(`${API_BASE_URL}/barbearia`);
+        const res = await fetch(apiPublic("/barbearia"));
         if (!res.ok) return;
         const bs = await res.json();
 

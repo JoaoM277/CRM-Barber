@@ -12,6 +12,7 @@ use App\Http\Requests\StoreScheduleRequest;
 use App\Http\Controllers\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -27,7 +28,7 @@ class ScheduleController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Schedule::with(['client', 'worker', 'service'])->orderBy('date')->orderBy('start_time');
+        $query = Schedule::with(['client', 'worker', 'service', 'services'])->orderBy('date')->orderBy('start_time');
 
         if ($request->filled('data')) {
             try {
@@ -40,25 +41,37 @@ class ScheduleController extends Controller
             }
         }
 
-        $schedules = $query->get()->map(fn (Schedule $s) => [
-            'id' => $s->id,
-            'status' => $s->status,
-            'date' => (string) $s->date,
-            'data' => (string) $s->date,
-            'start_time' => substr((string) $s->start_time, 0, 5),
-            'horario' => substr((string) $s->start_time, 0, 5),
-            'end_time' => substr((string) $s->end_time, 0, 5),
-            'observation' => $s->observation,
-            'price' => $s->price,
-            'commission_value' => $s->commission_value,
-            'cliente_nome' => $s->client?->name,
-            'cliente_telefone' => $s->client?->phone,
-            'client' => $s->client,
-            'worker' => $s->worker,
-            'service' => $s->service,
-            'Servico' => $s->service ? ['id' => $s->service->id, 'nome' => $s->service->name] : null,
-            'Barbeiro' => $s->worker ? ['id' => $s->worker->id, 'nome' => $s->worker->name] : null,
-        ]);
+        $schedules = $query->get()->map(function (Schedule $s) {
+            $servicos = $s->servicosResolvidos();
+
+            return [
+                'id' => $s->id,
+                'status' => $s->status,
+                'date' => (string) $s->date,
+                'data' => (string) $s->date,
+                'start_time' => substr((string) $s->start_time, 0, 5),
+                'horario' => substr((string) $s->start_time, 0, 5),
+                'end_time' => substr((string) $s->end_time, 0, 5),
+                'observation' => $s->observation,
+                'price' => $s->price,
+                'commission_value' => $s->commission_value,
+                'cliente_nome' => $s->client?->name,
+                'cliente_telefone' => $s->client?->phone,
+                'client' => $s->client,
+                'worker' => $s->worker,
+                'service' => $s->service,
+                // lista completa de serviços do agendamento
+                'servicos' => $servicos->map(fn ($sv) => [
+                    'id' => $sv->id,
+                    'nome' => $sv->name,
+                    'preco' => (float) ($sv->pivot?->price ?? $sv->price ?? 0),
+                ])->values(),
+                'servicos_nomes' => $servicos->pluck('name')->implode(', '),
+                // compat: serviço "primário"
+                'Servico' => $s->service ? ['id' => $s->service->id, 'nome' => $s->service->name] : null,
+                'Barbeiro' => $s->worker ? ['id' => $s->worker->id, 'nome' => $s->worker->name] : null,
+            ];
+        });
 
         return $this->Success(
             data: $schedules,
@@ -109,31 +122,60 @@ class ScheduleController extends Controller
             ['name' => $data['clienteNome']],
         );
 
-        $serviceId = $data['servicosIds'][0];
-        $service = Service::find($serviceId);
+        // Serviços na ordem em que o cliente escolheu (o 1º vira o "primário").
+        $idsPedidos = array_values(array_unique(array_map('intval', $data['servicosIds'])));
+        $servicos = Service::whereIn('id', $idsPedidos)->get()->keyBy('id');
+        $servicosOrdenados = collect($idsPedidos)
+            ->map(fn ($id) => $servicos->get($id))
+            ->filter()
+            ->values();
+
+        if ($servicosOrdenados->isEmpty()) {
+            throw ValidationException::withMessages([
+                'servicosIds' => ['Nenhum serviço válido foi selecionado.'],
+            ]);
+        }
+
         $worker = Worker::find($data['barbeiroId']);
+
+        $duracaoTotal = $servicosOrdenados->sum(fn (Service $s) => $this->serviceDurationMinutes($s));
+        $precoTotal = round($servicosOrdenados->sum(fn (Service $s) => (float) ($s->price ?? 0)), 2);
+        $comissaoTotal = $worker ? $worker->commissionOn($precoTotal) : 0.0;
 
         $dateStr = Carbon::parse($data['dataAgendamento'])->format('Y-m-d');
         $start = Carbon::parse($data['horario']);
-        $end = (clone $start)->addMinutes($this->serviceDurationMinutes($service));
+        $end = (clone $start)->addMinutes($duracaoTotal);
 
         $this->assertDentroDoExpediente($dateStr, $start->format('H:i:s'), $end->format('H:i:s'));
         $this->assertHorarioLivre($data['barbeiroId'], $dateStr, $start->format('H:i:s'), $end->format('H:i:s'));
 
-        $price = (float) ($service->price ?? 0);
+        $schedule = DB::transaction(function () use ($client, $data, $servicosOrdenados, $worker, $precoTotal, $comissaoTotal, $start, $end) {
+            $schedule = Schedule::create([
+                'client_id' => $client->id,
+                'worker_id' => $data['barbeiroId'],
+                'service_id' => $servicosOrdenados->first()->id,
+                'price' => $precoTotal,
+                'commission_value' => $comissaoTotal,
+                'date' => Carbon::parse($data['dataAgendamento'])->format('Y-m-d'),
+                'start_time' => $start->format('H:i:s'),
+                'end_time' => $end->format('H:i:s'),
+                'status' => Schedule::STATUS_PENDENTE,
+                'observation' => $data['observacoes'] ?? null,
+            ]);
 
-        $schedule = Schedule::create([
-            'client_id' => $client->id,
-            'worker_id' => $data['barbeiroId'],
-            'service_id' => $serviceId,
-            'price' => $price,
-            'commission_value' => $worker ? $worker->commissionOn($price) : 0,
-            'date' => Carbon::parse($data['dataAgendamento'])->format('Y-m-d'),
-            'start_time' => $start->format('H:i:s'),
-            'end_time' => $end->format('H:i:s'),
-            'status' => Schedule::STATUS_PENDENTE,
-            'observation' => $data['observacoes'] ?? null,
-        ]);
+            $pivot = $servicosOrdenados->mapWithKeys(function (Service $s) use ($worker) {
+                $preco = (float) ($s->price ?? 0);
+
+                return [$s->id => [
+                    'price' => round($preco, 2),
+                    'commission_value' => $worker ? $worker->commissionOn($preco) : 0.0,
+                ]];
+            })->all();
+
+            $schedule->services()->sync($pivot);
+
+            return $schedule;
+        });
 
         // Bus::dispatch enfileira na hora (não no __destruct), então um erro de
         // infra da fila é capturado aqui e não derruba o agendamento.
@@ -145,16 +187,30 @@ class ScheduleController extends Controller
 
         return response()->json([
             'message' => 'Agendamento feito com sucesso!',
-            'schedule' => $schedule->load(['client', 'worker', 'service']),
+            'schedule' => $schedule->load(['client', 'worker', 'service', 'services']),
         ], 201);
     }
 
     /**
-     * Duração do serviço em minutos; usa 30 min como padrão.
+     * Duração de um serviço em minutos; usa 30 min como padrão.
      */
     private function serviceDurationMinutes(?Service $service): int
     {
         return ($service && $service->duration_time > 0) ? (int) $service->duration_time : 30;
+    }
+
+    /**
+     * Duração total do agendamento = soma dos serviços (fallback 30 min).
+     */
+    private function scheduleDurationMinutes(Schedule $schedule): int
+    {
+        $servicos = $schedule->servicosResolvidos();
+
+        if ($servicos->isEmpty()) {
+            return 30;
+        }
+
+        return max(1, (int) $servicos->sum(fn (Service $s) => $this->serviceDurationMinutes($s)));
     }
 
     /**
@@ -163,7 +219,7 @@ class ScheduleController extends Controller
     public function show(Schedule $schedule)
     {
         return $this->Success(
-            data: $schedule->load(['client', 'worker', 'service']),
+            data: $schedule->load(['client', 'worker', 'service', 'services']),
             message: 'Detalhes do agendamento recuperados',
         );
     }
@@ -209,7 +265,7 @@ class ScheduleController extends Controller
             $novaData = $update['date'] ?? (string) $schedule->date;
             $novoInicio = $update['start_time'] ?? (string) $schedule->start_time;
             $novoFim = Carbon::parse($novoInicio)
-                ->addMinutes($this->serviceDurationMinutes($schedule->service))
+                ->addMinutes($this->scheduleDurationMinutes($schedule))
                 ->format('H:i:s');
             $update['end_time'] = $novoFim;
             $this->assertDentroDoExpediente($novaData, $novoInicio, $novoFim);

@@ -6,7 +6,8 @@ const logController = require("../controllers/message.log.controller");
 // --------------------------------------------------------------------------
 
 const messageService = async (mensageData) => {
-  const { phone, name, trigger, date, time, barber, ip, instance } = mensageData;
+  const { phone, name, trigger, date, time, barber, services, ip, instance } =
+    mensageData;
 
   // --------------------------------------------------------------------------
   // 2. Travas de segurança Anti-Gatilho-Invalido
@@ -86,7 +87,7 @@ const messageService = async (mensageData) => {
   // --------------------------------------------------------------------------
   // 5. Seleção de template baseado nas informações vindas do controller
   // --------------------------------------------------------------------------
-  const respost = templateSelect(name, { date, time, barber });
+  const respost = templateSelect(name, { date, time, barber, services });
 
   // Envio exclusivamente pela Evolution API (instância conectada)
   if (!instance) {

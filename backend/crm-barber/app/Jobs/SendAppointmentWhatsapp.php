@@ -24,7 +24,7 @@ class SendAppointmentWhatsapp implements ShouldQueue
 
     public function handle(): void
     {
-        $schedule = Schedule::with(['client', 'worker'])->find($this->scheduleId);
+        $schedule = Schedule::with(['client', 'worker', 'service', 'services'])->find($this->scheduleId);
 
         if (! $schedule || ! $schedule->client) {
             return;
@@ -37,17 +37,15 @@ class SendAppointmentWhatsapp implements ShouldQueue
 
         $url = rtrim(config('services.messages.url'), '/');
 
-        // Instância da Evolution a usar: a conectada da barbearia do agendamento,
-        // senão a mais recente conectada (cenário 1 barbearia). Sem instância,
-        // o Node cai no provider de fallback (Infobip).
-        $barbershopId = optional($schedule->worker)->barbershop_id
-            ?? optional($schedule->client)->barbershop_id;
-
+        // Instância da Evolution a usar: a conectada da barbearia do agendamento.
+        // Sem instância conectada, o Node registra SEM_INSTANCIA e nada é enviado.
         $instanceName = Instance::query()
+            ->where('barbershop_id', $schedule->barbershop_id)
             ->where('status', Instance::STATUS_CONECTADO)
-            ->when($barbershopId, fn ($q) => $q->where('barbershop_id', $barbershopId))
             ->latest('last_connected_at')
             ->value('name');
+
+        $servicos = $schedule->servicosResolvidos()->pluck('name')->filter()->values()->all();
 
         $payload = [
             'phone' => $phone,
@@ -56,6 +54,7 @@ class SendAppointmentWhatsapp implements ShouldQueue
             'date' => \Illuminate\Support\Carbon::parse($schedule->date)->format('Y-m-d'),
             'time' => substr((string) $schedule->start_time, 0, 5),
             'barber' => $schedule->worker?->name,
+            'services' => $servicos,
         ];
 
         if ($instanceName) {

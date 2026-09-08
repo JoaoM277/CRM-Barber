@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Support\TenantContext;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreWorkerRequest extends FormRequest
 {
@@ -24,7 +26,7 @@ class StoreWorkerRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:workers,phone',
+            'phone' => ['required', 'string', 'max:20', Rule::unique('workers', 'phone')->where('barbershop_id', app(TenantContext::class)->id())],
             'photo' => 'nullable|string',
             'speciality' => 'nullable|string',
             'active' => 'boolean',

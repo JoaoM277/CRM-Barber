@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'service.token' => \App\Http\Middleware\ServiceTokenMiddleware::class,
+            'tenant' => \App\Http\Middleware\IdentifyTenant::class,
+            'tenant.user' => \App\Http\Middleware\IdentifyTenantForUser::class,
         ]);
 
         // API-only: sem página de login web, então convidado não autenticado

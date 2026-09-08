@@ -28,6 +28,7 @@ class FaturamentoController extends Controller
             ->with([
                 'client:id,name',
                 'service:id,name,price',
+                'services:id,name,price',
                 'worker:id,name,payment_type,commission_percent,fixed_salary',
             ])
             ->where('status', Schedule::STATUS_CONCLUIDO)
@@ -44,11 +45,17 @@ class FaturamentoController extends Controller
             return $s->worker ? $s->worker->commissionOn($valorDe($s)) : 0.0;
         };
 
+        $nomesDe = function (Schedule $s) {
+            $nomes = $s->servicosResolvidos()->pluck('name')->filter()->values();
+
+            return $nomes->isNotEmpty() ? $nomes->implode(', ') : optional($s->service)->name;
+        };
+
         $itens = $schedules->map(fn (Schedule $s) => [
             'id' => $s->id,
             'data' => (string) $s->date,
             'cliente' => optional($s->client)->name,
-            'servico' => optional($s->service)->name,
+            'servico' => $nomesDe($s),
             'profissional' => optional($s->worker)->name,
             'valor' => round($valorDe($s), 2),
             'comissao' => round($comissaoDe($s), 2),
@@ -73,10 +80,26 @@ class FaturamentoController extends Controller
             ];
         })->values();
 
-        $porServico = $schedules->groupBy('service_id')->map(fn ($grp) => [
-            'servico' => optional($grp->first()->service)->name,
-            'quantidade' => $grp->count(),
-            'total' => round($grp->sum($valorDe), 2),
+        // "Por serviço" olha a lista completa de cada agendamento (pivô), com
+        // fallback para o service_id antigo quando não há pivô.
+        $porServico = collect();
+        foreach ($schedules as $s) {
+            foreach ($s->servicosResolvidos() as $sv) {
+                $valor = (float) ($sv->pivot?->price ?? $sv->price ?? 0);
+                $atual = $porServico->get($sv->id, [
+                    'servico' => $sv->name,
+                    'quantidade' => 0,
+                    'total' => 0.0,
+                ]);
+                $atual['quantidade']++;
+                $atual['total'] += $valor;
+                $porServico->put($sv->id, $atual);
+            }
+        }
+        $porServico = $porServico->map(fn ($r) => [
+            'servico' => $r['servico'],
+            'quantidade' => $r['quantidade'],
+            'total' => round($r['total'], 2),
         ])->values();
 
         $faturamentoTotal = round($itens->sum('valor'), 2);

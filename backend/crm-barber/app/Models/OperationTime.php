@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class OperationTime extends Model
 {
     /** @use HasFactory<\Database\Factories\OperationTimeFactory> */
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
 
     protected $table = 'operation_times';
 
@@ -24,6 +25,7 @@ class OperationTime extends Model
     ];
 
     protected $fillable = [
+        'barbershop_id',
         'day_of_week',
         'active',
         'start_time',

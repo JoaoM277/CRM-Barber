@@ -3,10 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Models\Aviso;
+use App\Support\TenantContext;
 use Illuminate\Http\Request;
 
 class AvisoController extends Controller
 {
+    public function __construct(protected TenantContext $tenant) {}
+
+    /**
+     * O aviso é um singleton por barbearia. Resolve (ou cria) o registro do
+     * tenant atual; o {id} da rota é ignorado (mantido só por compat do painel).
+     */
+    protected function avisoDoTenant(): Aviso
+    {
+        return Aviso::firstOrCreate(
+            ['barbershop_id' => $this->tenant->id()],
+            ['titulo' => '', 'mensagem' => '', 'ativo' => false],
+        );
+    }
+
     /**
      * Endpoint público consumido pelo site (script.js).
      * Formato: { exibir: bool, dados: { id, titulo, mensagem } | null }
@@ -38,12 +53,7 @@ class AvisoController extends Controller
      */
     public function show(string $id)
     {
-        $aviso = Aviso::firstOrCreate(
-            ['id' => (int) $id],
-            ['titulo' => '', 'mensagem' => '', 'ativo' => false],
-        );
-
-        return response()->json($aviso);
+        return response()->json($this->avisoDoTenant());
     }
 
     /**
@@ -57,7 +67,7 @@ class AvisoController extends Controller
             'ativo' => 'required|boolean',
         ]);
 
-        $aviso = Aviso::firstOrNew(['id' => (int) $id]);
+        $aviso = $this->avisoDoTenant();
         $aviso->fill($data)->save();
 
         return response()->json([

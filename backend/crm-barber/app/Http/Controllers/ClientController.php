@@ -62,8 +62,8 @@ class ClientController extends Controller
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['nullable', 'email', \Illuminate\Validation\Rule::unique('clients', 'email')->ignore($client->id)],
-            'phone' => ['required', 'string', 'max:20', \Illuminate\Validation\Rule::unique('clients', 'phone')->ignore($client->id)],
+            'email' => ['nullable', 'email', \Illuminate\Validation\Rule::unique('clients', 'email')->where('barbershop_id', $client->barbershop_id)->ignore($client->id)],
+            'phone' => ['required', 'string', 'max:20', \Illuminate\Validation\Rule::unique('clients', 'phone')->where('barbershop_id', $client->barbershop_id)->ignore($client->id)],
             'birth_date' => 'nullable|date',
             'observation' => 'nullable|string',
         ]);

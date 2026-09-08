@@ -2,15 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 class Payout extends Model
 {
+    use BelongsToTenant;
+
     public const STATUS_PENDENTE = 'pendente';
 
     public const STATUS_PAGO = 'pago';
 
     protected $fillable = [
+        'barbershop_id',
         'worker_id',
         'periodo_inicio',
         'periodo_fim',

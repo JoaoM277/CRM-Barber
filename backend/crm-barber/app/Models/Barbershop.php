@@ -47,4 +47,44 @@ class Barbershop extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    public function services()
+    {
+        return $this->hasMany(Service::class);
+    }
+
+    public function workers()
+    {
+        return $this->hasMany(Worker::class);
+    }
+
+    public function clients()
+    {
+        return $this->hasMany(Client::class);
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class);
+    }
+
+    public function operationTimes()
+    {
+        return $this->hasMany(OperationTime::class);
+    }
+
+    public function avisos()
+    {
+        return $this->hasMany(Aviso::class);
+    }
+
+    public function payouts()
+    {
+        return $this->hasMany(Payout::class);
+    }
+
+    public function instances()
+    {
+        return $this->hasMany(Instance::class);
+    }
 }

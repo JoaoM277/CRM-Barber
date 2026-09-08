@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Worker extends Model
 {
     /** @use HasFactory<\Database\Factories\WorkerFactory> */
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
 
     public const PAYMENT_COMISSAO = 'comissao';
 
@@ -23,6 +24,7 @@ class Worker extends Model
     ];
 
     protected $fillable = [
+        'barbershop_id',
         'name',
         'phone',
         'photo',

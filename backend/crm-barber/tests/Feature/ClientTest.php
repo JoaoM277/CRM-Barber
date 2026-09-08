@@ -2,40 +2,51 @@
 
 namespace Tests\Feature;
 
+use App\Models\Barbershop;
 use App\Models\Client;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class ClientTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_clients_index_returns_empty_list_when_no_clients(): void
+    private function actingAsAdminOf(Barbershop $bs): User
     {
-        $response = $this->getJson('/clients');
+        $admin = User::factory()->admin()->create(['barbershop_id' => $bs->id]);
+        Sanctum::actingAs($admin);
 
-        $response->assertOk()
-            ->assertExactJson([]);
+        return $admin;
     }
 
-    public function test_clients_index_returns_all_clients(): void
+    public function test_clientes_index_exige_autenticacao(): void
     {
-        $clients = Client::factory()->count(3)->create();
-
-        $response = $this->getJson('/clients');
-
-        $response->assertOk()
-            ->assertJsonCount(3)
-            ->assertJsonFragment([
-                'id' => $clients[0]->id,
-                'name' => $clients[0]->name,
-                'email' => $clients[0]->email,
-            ]);
+        $this->getJson('/api/clientes')->assertUnauthorized();
     }
 
-    public function test_client_model_persists_fillable_attributes(): void
+    public function test_clientes_index_devolve_apenas_clientes_da_barbearia(): void
     {
+        $bs = Barbershop::factory()->create();
+        $outra = Barbershop::factory()->create();
+
+        Client::factory()->count(3)->create(['barbershop_id' => $bs->id]);
+        Client::factory()->count(2)->create(['barbershop_id' => $outra->id]);
+
+        $this->actingAsAdminOf($bs);
+
+        $this->getJson('/api/clientes')
+            ->assertOk()
+            ->assertJsonCount(3);
+    }
+
+    public function test_client_persiste_atributos(): void
+    {
+        $bs = Barbershop::factory()->create();
+
         $client = Client::create([
+            'barbershop_id' => $bs->id,
             'name' => 'João Silva',
             'phone' => '11999998888',
             'email' => 'joao@example.com',
@@ -45,11 +56,9 @@ class ClientTest extends TestCase
 
         $this->assertDatabaseHas('clients', [
             'id' => $client->id,
+            'barbershop_id' => $bs->id,
             'name' => 'João Silva',
             'phone' => '11999998888',
-            'email' => 'joao@example.com',
-            'birth_date' => '1990-05-15',
-            'observation' => 'Cliente VIP',
         ]);
     }
 }

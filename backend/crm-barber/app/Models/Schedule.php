@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Schedule extends Model
 {
     /** @use HasFactory<\Database\Factories\ScheduleFactory> */
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
 
     // protected $table = 'schedules';
 
@@ -32,6 +33,7 @@ class Schedule extends Model
     ];
 
     protected $fillable = [
+        'barbershop_id',
         'client_id',
         'worker_id',
         'service_id',
@@ -55,7 +57,36 @@ class Schedule extends Model
     public function worker(){
         return $this->belongsTo(Worker::class);
     }
+
+    /**
+     * Serviço "primário" do agendamento (o primeiro escolhido). Mantido por
+     * compatibilidade; a lista completa está em services().
+     */
     public function service(){
         return $this->belongsTo(Service::class);
+    }
+
+    /**
+     * Todos os serviços do agendamento, com snapshot de preço/comissão no pivô.
+     */
+    public function services(){
+        return $this->belongsToMany(Service::class, 'schedule_service')
+            ->withPivot(['price', 'commission_value'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Coleção de serviços do agendamento com fallback para o service_id antigo
+     * (registros criados antes do multi-serviço).
+     */
+    public function servicosResolvidos()
+    {
+        $carregados = $this->relationLoaded('services') ? $this->services : $this->services()->get();
+
+        if ($carregados->isNotEmpty()) {
+            return $carregados;
+        }
+
+        return $this->service ? collect([$this->service]) : collect();
     }
 }
