@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Administrativo | La Palmas</title>
-    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin.css?v=20260914">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -148,6 +148,20 @@
                             </div>
                             <div style="text-align: right; margin-top: 16px;">
                                 <button type="button" class="btn-primary" id="btn-salvar-expediente">Salvar horários</button>
+                            </div>
+                        </div>
+
+                        <!-- ATIVIDADE RECENTE (auditoria) -->
+                        <div class="message-panel-container" style="margin-top: 40px;">
+                            <h2 style="margin-bottom: 8px; font-size: 18px;">Atividade Recente</h2>
+                            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">Últimas ações registradas no painel.</p>
+                            <div class="table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr><th>Quando</th><th>Quem</th><th>Ação</th><th>Detalhe</th></tr>
+                                    </thead>
+                                    <tbody id="auditoria-table-body"></tbody>
+                                </table>
                             </div>
                         </div>
                 </div>
@@ -511,7 +525,7 @@
     </div>
 
     <!-- Script de controle do Painel -->
-    <script src="js/config.js"></script>
-    <script src="js/admin.js"></script>
+    <script src="js/config.js?v=20260914"></script>
+    <script src="js/admin.js?v=20260914"></script>
 </body>
 </html>

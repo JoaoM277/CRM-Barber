@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreWorkerRequest;
 use App\Models\Worker;
+use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -31,10 +32,18 @@ class WorkerController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(StoreWorkerRequest $request)
-    {        
+    {
         $data = $request->validated();
 
-        $worker = Worker::create($data);
+        // Se existir um profissional excluído com o mesmo telefone, restaura
+        // em vez de tentar inserir (o índice único não distingue soft-deleted).
+        $worker = Worker::withTrashed()->where('phone', $data['phone'])->first();
+        if ($worker) {
+            $worker->restore();
+            $worker->update($data);
+        } else {
+            $worker = Worker::create($data);
+        }
 
         return response()->json([
             'message' => 'Profissional criado com sucesso!',
@@ -57,7 +66,7 @@ class WorkerController extends Controller
     {
         $data = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'phone' => ['sometimes', 'required', 'string', 'max:20', Rule::unique('workers', 'phone')->where('barbershop_id', $worker->barbershop_id)->ignore($worker->id)],
+            'phone' => ['sometimes', 'required', 'string', 'max:20', Rule::unique('workers', 'phone')->where('barbershop_id', $worker->barbershop_id)->whereNull('deleted_at')->ignore($worker->id)],
             'photo' => 'sometimes|nullable|string',
             'speciality' => 'sometimes|nullable|string',
             'active' => 'sometimes|boolean',
@@ -80,7 +89,10 @@ class WorkerController extends Controller
      */
     public function destroy(Worker $worker)
     {
+        $nome = $worker->name;
         $worker->delete();
+
+        Audit::log('profissional.excluido', $worker, "Profissional \"{$nome}\" excluído");
 
         return response()->json([
         'message' => 'Profissional deletado com sucesso!',

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use App\Http\Requests\StoreServiceRequest;
+use App\Support\Audit;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
@@ -65,7 +66,10 @@ class ServiceController extends Controller
      */
     public function destroy(Service $service)
     {
+        $nome = $service->name;
         $service->delete();
+
+        Audit::log('servico.excluido', $service, "Serviço \"{$nome}\" excluído");
 
         return response()->json([
             'message' => 'Serviço deletado com sucesso!',

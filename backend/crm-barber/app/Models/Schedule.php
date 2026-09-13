@@ -51,11 +51,13 @@ class Schedule extends Model
         'commission_value' => 'decimal:2',
     ];
 
+    // withTrashed(): histórico não pode sumir quando cliente/profissional/
+    // serviço é excluído (soft delete) depois do agendamento existir.
     public function client(){
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(Client::class)->withTrashed();
     }
     public function worker(){
-        return $this->belongsTo(Worker::class);
+        return $this->belongsTo(Worker::class)->withTrashed();
     }
 
     /**
@@ -63,7 +65,7 @@ class Schedule extends Model
      * compatibilidade; a lista completa está em services().
      */
     public function service(){
-        return $this->belongsTo(Service::class);
+        return $this->belongsTo(Service::class)->withTrashed();
     }
 
     /**
@@ -72,7 +74,8 @@ class Schedule extends Model
     public function services(){
         return $this->belongsToMany(Service::class, 'schedule_service')
             ->withPivot(['price', 'commission_value'])
-            ->withTimestamps();
+            ->withTimestamps()
+            ->withTrashed();
     }
 
     /**

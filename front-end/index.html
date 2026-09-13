@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barbearia La Palmas</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=20260914">
 </head>
 <body>
 
@@ -131,6 +131,12 @@
                         <label for="client-notes">Observações adicionais (opcional)</label>
                         <textarea id="client-notes" rows="4" placeholder="Alguma restrição, cabelo lavado, preferência, etc..."></textarea>
                     </div>
+
+                    <!-- honeypot anti-bot: campo invisível pra pessoa, alvo comum de preenchimento automático -->
+                    <div class="hp-field" aria-hidden="true">
+                        <label for="client-website">Não preencher este campo</label>
+                        <input type="text" id="client-website" name="website" tabindex="-1" autocomplete="off">
+                    </div>
                 </form>
 
                 <aside class="summary-card">
@@ -171,8 +177,8 @@
         <button id="btn-next" class="control-btn next-btn" disabled>Continuar</button>
     </div>
 
-    <script src="js/config.js"></script>
-    <script src="js/script.js"></script>
+    <script src="js/config.js?v=20260914"></script>
+    <script src="js/script.js?v=20260914"></script>
     <!-- Fundo escuro do Modal -->
 <div id="modal-overlay" class="modal-escondido">
   

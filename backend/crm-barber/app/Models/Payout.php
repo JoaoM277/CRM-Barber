@@ -40,6 +40,6 @@ class Payout extends Model
 
     public function worker()
     {
-        return $this->belongsTo(Worker::class);
+        return $this->belongsTo(Worker::class)->withTrashed();
     }
 }

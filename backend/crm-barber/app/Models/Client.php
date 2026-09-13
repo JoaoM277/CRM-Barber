@@ -7,11 +7,12 @@ use App\Support\Phone;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Client extends Model
 {
     /** @use HasFactory<\Database\Factories\ClientFactory> */
-    use BelongsToTenant, HasFactory;
+    use BelongsToTenant, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'barbershop_id',

@@ -661,6 +661,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     await renderFaturamento()
     await renderInstancias()
     await renderExpediente()
+    await renderAuditoria()
 
   const btnFiltrar = document.getElementById("btn-filtrar-agenda");
   const inputData = document.getElementById("filter-date");
@@ -1111,4 +1112,36 @@ if (btnSalvarExpediente) {
     mostrarToastAdmin(erros ? `Salvo com ${erros} erro(s).` : "Horários salvos!", erros ? "erro" : "sucesso");
     renderExpediente();
   });
+}
+
+// --------------------------------------------------------------------------
+// AUDITORIA: últimas ações do painel
+// --------------------------------------------------------------------------
+async function renderAuditoria() {
+  const corpo = document.getElementById("auditoria-table-body");
+  if (!corpo) return;
+  corpo.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:16px;">Carregando...</td></tr>`;
+  try {
+    const res = await fetch(`${API_BASE_URL}/auditoria?per_page=20`, { headers: authHeaders() });
+    if (!(await checarSessao(res))) return;
+    if (!res.ok) throw new Error("erro");
+    const d = await res.json();
+    const linhas = d.data || [];
+    corpo.innerHTML = "";
+    linhas.forEach((l) => {
+      const tr = document.createElement("tr");
+      const quando = l.created_at ? new Date(l.created_at).toLocaleString("pt-BR") : "—";
+      tr.innerHTML =
+        `<td>${quando}</td>` +
+        `<td>${l.user?.name || "—"}</td>` +
+        `<td>${l.action}</td>` +
+        `<td>${l.description || ""}</td>`;
+      corpo.appendChild(tr);
+    });
+    if (!linhas.length) {
+      corpo.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--text-muted);">Nenhuma atividade registrada ainda.</td></tr>`;
+    }
+  } catch (e) {
+    corpo.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--danger);">Servidor offline.</td></tr>`;
+  }
 }

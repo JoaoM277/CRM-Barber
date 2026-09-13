@@ -50,7 +50,10 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Tokens do painel expiram em N minutos (padrão 43200 = 30 dias). Depois
+    // disso o usuário precisa logar de novo. sanctum:prune-expired (agendado
+    // em routes/console.php) limpa os tokens vencidos da tabela.
+    'expiration' => env('SANCTUM_TOKEN_EXPIRATION', 60 * 24 * 30),
 
     /*
     |--------------------------------------------------------------------------

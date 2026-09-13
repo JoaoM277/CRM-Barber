@@ -486,6 +486,16 @@ body {
     .confirmation-container { grid-template-columns: 1fr 260px; }
 }
 
+/* honeypot anti-bot: fora da tela, nunca visível/focável por uma pessoa */
+.hp-field {
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
 /* ----- formulário ----- */
 .client-form {
     padding: 24px;

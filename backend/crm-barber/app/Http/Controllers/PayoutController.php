@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Payout;
 use App\Models\Schedule;
 use App\Models\Worker;
+use App\Support\Audit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -76,6 +77,8 @@ class PayoutController extends Controller
             'pago_em' => now(),
             'observacao' => $data['observacao'] ?? null,
         ]);
+
+        Audit::log('repasse.registrado', $payout, "Repasse de R$ {$total} pra {$worker->name} ({$inicio->toDateString()} a {$fim->toDateString()})");
 
         return response()->json([
             'message' => 'Repasse registrado com sucesso.',

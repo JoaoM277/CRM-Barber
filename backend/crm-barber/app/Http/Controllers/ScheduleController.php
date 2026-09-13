@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
@@ -41,7 +42,12 @@ class ScheduleController extends Controller
             }
         }
 
-        $schedules = $query->get()->map(function (Schedule $s) {
+        // Sem filtro de data a lista cresce sem limite com o tempo; pagina com
+        // um teto generoso (o painel de um dia normalmente nem chega perto).
+        $perPage = min(max((int) $request->query('per_page', 200), 1), 500);
+        $paginator = $query->paginate($perPage);
+
+        $schedules = collect($paginator->items())->map(function (Schedule $s) {
             $servicos = $s->servicosResolvidos();
 
             return [
@@ -73,10 +79,16 @@ class ScheduleController extends Controller
             ];
         });
 
-        return $this->Success(
-            data: $schedules,
-            message: 'Agendamentos listados com sucesso.',
-        );
+        return response()->json([
+            'message' => 'Agendamentos listados com sucesso.',
+            'data' => $schedules->values(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+            ],
+        ]);
     }
 
     /**
@@ -117,10 +129,27 @@ class ScheduleController extends Controller
 
         $phone = \App\Support\Phone::normalizeBr($data['clienteTelefone']);
 
-        $client = Client::firstOrCreate(
-            ['phone' => $phone],
-            ['name' => $data['clienteNome']],
-        );
+        // Anti-abuso: no máximo 5 agendamentos por telefone por hora (além do
+        // throttle:15,1 por IP da rota) — evita spam de envio de WhatsApp.
+        $rateLimitKey = 'agendamento-telefone:'.$phone;
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+            throw ValidationException::withMessages([
+                'clienteTelefone' => ['Muitas tentativas de agendamento com esse telefone. Tente novamente mais tarde.'],
+            ]);
+        }
+        RateLimiter::hit($rateLimitKey, 3600);
+
+        // withTrashed: se o cliente tinha sido excluído, restaura em vez de
+        // tentar inserir (o índice único [barbershop_id, phone] não distingue
+        // soft-deleted, então um create() bateria de frente com a linha antiga).
+        $client = Client::withTrashed()->where('phone', $phone)->first();
+        if ($client) {
+            if ($client->trashed()) {
+                $client->restore();
+            }
+        } else {
+            $client = Client::create(['phone' => $phone, 'name' => $data['clienteNome']]);
+        }
 
         // Serviços na ordem em que o cliente escolheu (o 1º vira o "primário").
         $idsPedidos = array_values(array_unique(array_map('intval', $data['servicosIds'])));
@@ -283,7 +312,16 @@ class ScheduleController extends Controller
             $this->assertHorarioLivre($schedule->worker_id, $novaData, $novoInicio, $novoFim, $schedule->id);
         }
 
+        $statusAnterior = $schedule->status;
         $schedule->update($update);
+
+        if (isset($update['status']) && $update['status'] !== $statusAnterior) {
+            \App\Support\Audit::log(
+                'agendamento.'.$update['status'],
+                $schedule,
+                "Agendamento #{$schedule->id}: {$statusAnterior} -> {$update['status']}",
+            );
+        }
 
         return response()->json([
             'message' => 'Agendamento atualizado com sucesso!',
@@ -360,6 +398,8 @@ class ScheduleController extends Controller
      */
     public function destroy(Schedule $schedule)
     {
+        \App\Support\Audit::log('agendamento.removido', $schedule, "Agendamento #{$schedule->id} removido");
+
         $schedule->delete();
 
         return response()->json(['message' => 'Agendamento removido com sucesso!'], 200);

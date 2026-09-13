@@ -5,11 +5,12 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Worker extends Model
 {
     /** @use HasFactory<\Database\Factories\WorkerFactory> */
-    use BelongsToTenant, HasFactory;
+    use BelongsToTenant, HasFactory, SoftDeletes;
 
     public const PAYMENT_COMISSAO = 'comissao';
 

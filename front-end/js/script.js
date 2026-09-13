@@ -727,12 +727,14 @@ if (btnNext) {
 
             const payloadParaBackend = {
                 barbeiroId: agendamento.barbeiroId,
-                servicosIds: agendamento.servicos, 
-                dataAgendamento: ymdLocal(agendamento.data), 
+                servicosIds: agendamento.servicos,
+                dataAgendamento: ymdLocal(agendamento.data),
                 horario: agendamento.hora,
                 clienteNome: agendamento.cliente.nome,
                 clienteTelefone: agendamento.cliente.telefone,
-                observacoes: agendamento.cliente.notas 
+                observacoes: agendamento.cliente.notas,
+                // honeypot: só um bot preenche isso; uma pessoa nunca vê o campo
+                website: document.getElementById("client-website")?.value || ""
             };
 
             try {

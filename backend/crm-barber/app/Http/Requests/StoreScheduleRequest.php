@@ -31,6 +31,9 @@ class StoreScheduleRequest extends FormRequest
             'dataAgendamento' => 'required|date',
             'horario' => ['required', 'regex:/^\d{2}:\d{2}$/'],
             'observacoes' => 'nullable|string|max:1000',
+            // honeypot anti-bot: campo escondido no front que uma pessoa nunca
+            // preenche; se vier algo aqui, rejeita como se fosse validação normal.
+            'website' => 'nullable|string|max:0',
         ];
     }
 }

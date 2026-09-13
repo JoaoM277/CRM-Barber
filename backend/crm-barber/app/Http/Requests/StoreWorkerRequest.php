@@ -26,7 +26,8 @@ class StoreWorkerRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'phone' => ['required', 'string', 'max:20', Rule::unique('workers', 'phone')->where('barbershop_id', app(TenantContext::class)->id())],
+            // exclui soft-deleted: um telefone de profissional excluído pode ser reusado (vira restore)
+            'phone' => ['required', 'string', 'max:20', Rule::unique('workers', 'phone')->where('barbershop_id', app(TenantContext::class)->id())->whereNull('deleted_at')],
             'photo' => 'nullable|string',
             'speciality' => 'nullable|string',
             'active' => 'boolean',

@@ -1,8 +1,11 @@
 # PRE_DEPLOY_CHECKLIST — CRM-Barber (MVP / ambiente de testes)
 
-> **Status:** smoke test local (seção 4) rodado end-to-end contra MySQL — os 10 passos passaram
-> (auth, RBAC/401, throttle, cadastro base, agendamento público, fila → WhatsApp → log,
-> confirmar/cancelar, faturamento, avisos).
+> **Status:** Tier 1 (robustez) e Tier 2 (produto) do endurecimento pré-produção
+> fechados: multi-tenant, multi-serviço, trava de concorrência, telefone
+> normalizado, timezone, monitor de instância de WhatsApp, anti-bot, paginação,
+> soft delete, expiração de token, cache-busting, log rotacionado, auditoria e
+> backup/restore testado. Suíte automatizada: 38/38. Falta só a configuração
+> específica do servidor de produção (seção 2) e o smoke test manual (seção 4).
 
 
 Três serviços + um MySQL compartilhado:
@@ -59,6 +62,8 @@ Copiar de `.env.example` e ajustar. Chaves que **precisam** ser revisadas:
 | `SESSION_DRIVER` | `database` | precisa da tabela `sessions` (já vem nas migrations) |
 | `CACHE_STORE` | `database` | idem tabela `cache` |
 | `QUEUE_CONNECTION` | `database` | **o disparo de WhatsApp virou job** — precisa de worker rodando (ver 3.1) |
+| `SANCTUM_TOKEN_EXPIRATION` | `43200` (30 dias) | minutos até o token do painel expirar; depois disso é 401 e login de novo |
+| `LOG_STACK` | `daily` | arquivo de log por dia (`LOG_DAILY_DAYS` controla a retenção, padrão 14) |
 
 > CORS agora é controlado por `config/cors.php` + `CORS_ALLOWED_ORIGINS`. Só as origens listadas conseguem consumir a API pelo navegador.
 
@@ -84,6 +89,8 @@ Sem `.env` e sem build. Config no `front-end/js/config.js`:
 - `window.BARBERSHOP_SLUG` (só o site público) é resolvido em runtime: `?b=slug` na URL → primeiro rótulo do subdomínio (`barbearia-x.agendar.seudominio.com`) → fallback fixo no arquivo. **O painel (`admin.html`/`login.html`) não usa slug** — o tenant vem do usuário logado.
 
 **Multi-tenant:** um único deploy atende N barbearias. Cada barbearia tem um `slug` (gerado no cadastro). O link de agendamento de uma barbearia é `https://agendar.seudominio.com/index.html?b=<slug>` (ou um subdomínio, se você configurar DNS/cert wildcard). As rotas públicas da API são `/api/b/<slug>/...`.
+
+**Cache-busting:** como não há build, o `<link>`/`<script>` dos 3 HTMLs (`index.html`, `admin.html`, `login.html`) carrega `css/*.css`/`js/*.js` com `?v=AAAAMMDD`. **Toda vez que editar CSS ou JS, bump esse `?v=`** (busca/substitui a data antiga pela nova nos 3 arquivos) — sem isso o navegador do cliente pode continuar servindo a versão em cache indefinidamente.
 
 ---
 
@@ -113,6 +120,8 @@ php artisan schedule:work
 
 > Em produção real: `queue:work` sob supervisor/systemd (`Restart=always`) e o
 > scheduler via cron (`* * * * * cd /app && php artisan schedule:run >> /dev/null 2>&1`).
+> O scheduler agora também roda `sanctum:prune-expired` (diário) — sem ele os
+> tokens vencidos só deixam de autenticar, mas ficam acumulando na tabela.
 > O comando `instances:check` marca instância caída e grava um `Log::error`
 > (`SendAppointmentWhatsapp` idem quando esgota as tentativas) — é o ponto pra
 > plugar Sentry/e-mail pro dono.
@@ -124,8 +133,12 @@ php artisan schedule:work
 > `commission_value` em `schedules`, pivô `schedule_service` (multi-serviço por
 > agendamento, com snapshot de preço/comissão por serviço), **`barbershop_id`
 > (multi-tenant) em services/workers/clients/schedules/operation_times/avisos/
-> payouts** com uniques compostos por barbearia, tabelas `avisos`, `instances`,
-> `payouts` e as tabelas de fila (`jobs`, `failed_jobs`, `job_batches`).
+> payouts** com uniques compostos por barbearia, **índices em `schedules`
+> (worker_id+date, barbershop_id+date+status, status) e `services`/`workers`
+> (barbershop_id+active)**, **soft delete em services/workers/clients**
+> (excluir não apaga mais o histórico — `deleted_at`), tabela **`audit_logs`**
+> (quem fez o quê no painel), tabelas `avisos`, `instances`, `payouts` e as
+> tabelas de fila (`jobs`, `failed_jobs`, `job_batches`).
 
 > **Multi-tenant no seed:** `db:seed` cria 10 barbearias e popula dados (serviços/
 > profissionais/clientes/horários/agendamentos) só nas 2 primeiras (`alpha-barber`,
@@ -190,6 +203,9 @@ Páginas: `index.html` (agendamento público), `login.html` (login admin), `admi
 10. **Segurança**: `curl` sem token em `GET /api/agendamentos` ou `GET /api/clientes` → `401`. `GET /api/servicos` sem token → `200` (público, o site precisa). Rotas admin (`/faturamento`, `/instances`, `/payouts`) com token de usuário comum → `403`.
 11. **Folha de comissões**: no modal de Profissional, definir `payment_type` + `%`/`fixo` → salvar. Concluir um agendamento (botão ✅ na Agenda). Aba **Faturamento** mostra o atendimento em "Por profissional" com `Total a pagar = comissão + fixo`. Botão 💸 → registrar repasse → aparece em "Histórico de repasses".
 12. **Instâncias**: aba **Instâncias** → "Nova instância" → nome sem espaços → o QR Code aparece; escanear no WhatsApp; o status passa a "Conectado" (polling). Botão 🗑️ remove (faz logout+delete na Evolution). Requer o serviço Node no ar e `EVOLUTION_URL`/`EVOLUTION_API_KEY` válidos.
+13. **Anti-bot**: `curl` pro `POST /b/{slug}/agendamentos` com `"website":"qualquer coisa"` no corpo → `422`. 6 agendamentos seguidos com o mesmo telefone (mesmo em horários diferentes) → o 6º dá `422` em `clienteTelefone`.
+14. **Auditoria**: confirme/cancele um agendamento ou exclua um profissional/serviço/cliente no painel → aparece na tabela "Atividade Recente" (Visão Geral) e em `GET /auditoria`.
+15. **Exclusão não apaga histórico**: exclua um profissional que tem agendamento — ele some da lista de profissionais, mas o agendamento antigo continua mostrando o nome dele (soft delete). Recriar um profissional/cliente com o mesmo telefone restaura o registro em vez de duplicar.
 
 ---
 
@@ -203,7 +219,7 @@ Páginas: `index.html` (agendamento público), `login.html` (login admin), `admi
 
 **Autenticadas (`auth:sanctum` + `tenant.user`):** todo o resto de clientes / serviços / profissionais (inclui `GET` lista p/ o painel) / tempo_de_operação / barbearias / agendamentos / logs (leitura) / avisos (leitura) / `POST /message` / `instances/*`. Tudo escopado à barbearia do usuário logado (global scope + route-model binding resolvem só recursos do tenant; cross-tenant → 404).
 
-**Somente admin (`auth:sanctum` + `admin`):** `usuarios/*` · `GET/PUT /avisos/{id}` · `GET /faturamento` · `GET|POST /payouts` · `GET|POST /instances`, `GET /instances/{id}/qrcode`, `GET /instances/{id}/status`, `DELETE /instances/{id}`
+**Somente admin (`auth:sanctum` + `admin`):** `usuarios/*` · `GET/PUT /avisos/{id}` · `GET /faturamento` · `GET|POST /payouts` · `GET|POST /instances`, `GET /instances/{id}/qrcode`, `GET /instances/{id}/status`, `DELETE /instances/{id}` · `GET /auditoria`
 
 ---
 
@@ -212,14 +228,38 @@ Páginas: `index.html` (agendamento público), `login.html` (login admin), `admi
 | Item | Impacto |
 |---|---|
 | Calendário do site permite clicar em dia fechado | Só mostra "A barbearia não abre neste dia" ao clicar. Poderia desabilitar o dia visualmente. Cosmético menor. |
-| `ScheduleController@index` sem paginação | `Schedule::all()` enriquecido; ok para volume de teste. |
-| Seeders usam `updateOrCreate($arr)` com 1 argumento | Idempotente só se a linha estiver idêntica; ok em base de teste limpa. |
+| `ClientController@index`/`WorkerController@index`/`ServiceController@index` sem paginação | Cresce com o número de clientes/profissionais/serviços cadastrados (não com o histórico de agendamentos, que já pagina). Ok até algumas centenas; revisitar se crescer muito. |
 | `.env` reais no servidor | Garantir que **não** vão pro git (o `.gitignore` da raiz já cobre `*.env` / `.env*`). |
+| Log rotacionado só no Laravel | `messages-service` (Node) ainda loga no stdout puro — em produção real, rode sob PM2 com `pm2 install pm2-logrotate` (ou redirecione pro logrotate do sistema) pra não deixar o arquivo de log crescer pra sempre. |
 
 ---
 
-## 7. Ordem de subida recomendada
+## 7. Backup e restore
 
-1. MySQL  →  2. Laravel (`migrate --seed`) + `queue:work`  →  3. Node  →  4. Frontend
+Scripts em `scripts/backup-mysql.sh` e `scripts/restore-mysql.sh` (testados de
+verdade nesta sessão: dump do banco real → restore num banco novo → contagem de
+linhas bateu 100% em `barbershops`/`services`/`workers`/`clients`/`schedules`).
+
+```bash
+# backup manual (ou via cron diário — exemplo no topo do script)
+DB_PASSWORD='suasenha' BACKUP_DIR=/var/backups/crm-barber ./scripts/backup-mysql.sh
+
+# restore — SEMPRE teste primeiro num banco separado, nunca direto em cima do de produção
+DB_PASSWORD='suasenha' ./scripts/restore-mysql.sh /var/backups/crm-barber/crm_barber_20260914_030000.sql.gz crm_barber_teste_restore
+```
+
+Cron sugerido (3h da manhã, mantém 14 dias):
+```
+0 3 * * * DB_PASSWORD='suasenha' BACKUP_DIR=/var/backups/crm-barber /app/scripts/backup-mysql.sh >> /var/log/crm-barber-backup.log 2>&1
+```
+
+Some com o snapshot semanal do provedor (Hostinger) — o dump diário cobre o
+intervalo entre snapshots.
+
+---
+
+## 8. Ordem de subida recomendada
+
+1. MySQL  →  2. Laravel (`migrate --seed`) + `queue:work` + `schedule:work`  →  3. Node  →  4. Frontend
 
 Derrubar na ordem inversa.

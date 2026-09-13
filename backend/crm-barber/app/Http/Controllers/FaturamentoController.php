@@ -24,6 +24,12 @@ class FaturamentoController extends Controller
             ? Carbon::parse($request->query('fim'))->endOfDay()
             : Carbon::now()->endOfMonth();
 
+        // Teto de 1 ano por consulta — evita um relatório varrer anos de
+        // histórico de uma vez (a agregação abaixo é feita em memória).
+        if ($inicio->diffInDays($fim) > 366) {
+            $fim = $inicio->copy()->addDays(366)->endOfDay();
+        }
+
         $schedules = Schedule::query()
             ->with([
                 'client:id,name',

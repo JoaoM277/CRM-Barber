@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreClientRequest;
 use App\Models\Client;
+use App\Support\Audit;
+use App\Support\Phone;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ClientController extends Controller
 {
@@ -33,7 +36,15 @@ class ClientController extends Controller
     {
         $data = $request->validated();
 
-        $client = Client::create($data);
+        // Cliente excluído com o mesmo telefone -> restaura em vez de inserir
+        // (o índice único não distingue soft-deleted).
+        $client = Client::withTrashed()->where('phone', $data['phone'])->first();
+        if ($client) {
+            $client->restore();
+            $client->update($data);
+        } else {
+            $client = Client::create($data);
+        }
 
         return response()->json($client, 201);
     }
@@ -49,7 +60,7 @@ class ClientController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Client $client)    
+    public function edit(Client $client)
     {
         //
     }
@@ -59,11 +70,12 @@ class ClientController extends Controller
      */
     public function update(Request $request, Client $client)
     {
+        $request->merge(['phone' => Phone::normalizeBr((string) $request->input('phone'))]);
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['nullable', 'email', \Illuminate\Validation\Rule::unique('clients', 'email')->where('barbershop_id', $client->barbershop_id)->ignore($client->id)],
-            'phone' => ['required', 'string', 'max:20', \Illuminate\Validation\Rule::unique('clients', 'phone')->where('barbershop_id', $client->barbershop_id)->ignore($client->id)],
+            'email' => ['nullable', 'email', Rule::unique('clients', 'email')->where('barbershop_id', $client->barbershop_id)->whereNull('deleted_at')->ignore($client->id)],
+            'phone' => ['required', 'string', 'max:20', Rule::unique('clients', 'phone')->where('barbershop_id', $client->barbershop_id)->whereNull('deleted_at')->ignore($client->id)],
             'birth_date' => 'nullable|date',
             'observation' => 'nullable|string',
         ]);
@@ -78,11 +90,14 @@ class ClientController extends Controller
      */
     public function destroy(Client $client)
     {
+        $nome = $client->name;
         $client->delete();
+
+        Audit::log('cliente.excluido', $client, "Cliente \"{$nome}\" excluído");
 
         return response()->json([
             'message' => 'Client removed successfully!'
         ], 200);
-        
+
     }
 }

@@ -14,6 +14,7 @@ use App\Http\Controllers\InstanceController;
 use App\Http\Controllers\AvisoController;
 use App\Http\Controllers\FaturamentoController;
 use App\Http\Controllers\PayoutController;
+use App\Http\Controllers\AuditLogController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -138,5 +139,8 @@ Route::middleware(['auth:sanctum', 'tenant.user'])->group(function () {
         Route::get('/instances/{instance}/qrcode', [InstanceController::class, 'qrcode'])->name('instances.qrcode');
         Route::get('/instances/{instance}/status', [InstanceController::class, 'status'])->name('instances.status');
         Route::delete('/instances/{instance}', [InstanceController::class, 'destroy'])->name('instances.destroy');
+
+        // Auditoria (quem fez o quê no painel)
+        Route::get('/auditoria', [AuditLogController::class, 'index'])->name('auditoria.index');
     });
 });
