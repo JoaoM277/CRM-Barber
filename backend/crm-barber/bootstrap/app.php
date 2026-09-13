@@ -20,6 +20,18 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.user' => \App\Http\Middleware\IdentifyTenantForUser::class,
         ]);
 
+        // O tenant precisa ser resolvido ANTES do route-model binding, senão
+        // um {service}/{worker}/... de outra barbearia é resolvido sem o escopo.
+        // (auth:sanctum já roda antes de SubstituteBindings na lista de prioridade.)
+        $middleware->prependToPriorityList(
+            before: \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            prepend: \App\Http\Middleware\IdentifyTenantForUser::class,
+        );
+        $middleware->prependToPriorityList(
+            before: \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            prepend: \App\Http\Middleware\IdentifyTenant::class,
+        );
+
         // API-only: sem página de login web, então convidado não autenticado
         // recebe 401 JSON em vez de redirect para a rota "login" (inexistente).
         $middleware->redirectGuestsTo(fn () => null);

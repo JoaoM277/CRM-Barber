@@ -115,7 +115,7 @@ class ScheduleController extends Controller
     {
         $data = $request->validated();
 
-        $phone = preg_replace('/\D/', '', $data['clienteTelefone']);
+        $phone = \App\Support\Phone::normalizeBr($data['clienteTelefone']);
 
         $client = Client::firstOrCreate(
             ['phone' => $phone],
@@ -145,11 +145,22 @@ class ScheduleController extends Controller
         $dateStr = Carbon::parse($data['dataAgendamento'])->format('Y-m-d');
         $start = Carbon::parse($data['horario']);
         $end = (clone $start)->addMinutes($duracaoTotal);
+        $startStr = $start->format('H:i:s');
+        $endStr = $end->format('H:i:s');
 
-        $this->assertDentroDoExpediente($dateStr, $start->format('H:i:s'), $end->format('H:i:s'));
-        $this->assertHorarioLivre($data['barbeiroId'], $dateStr, $start->format('H:i:s'), $end->format('H:i:s'));
+        // Expediente não corre risco de corrida (não depende de outras linhas).
+        $this->assertDentroDoExpediente($dateStr, $startStr, $endStr);
 
-        $schedule = DB::transaction(function () use ($client, $data, $servicosOrdenados, $worker, $precoTotal, $comissaoTotal, $start, $end) {
+        $schedule = DB::transaction(function () use ($client, $data, $servicosOrdenados, $worker, $precoTotal, $comissaoTotal, $start, $end, $dateStr, $startStr, $endStr) {
+            // Trava as linhas do profissional naquele dia até o fim da transação:
+            // dois POSTs simultâneos pro mesmo slot serializam aqui, e o 2º vê o 1º.
+            Schedule::where('worker_id', $data['barbeiroId'])
+                ->whereDate('date', $dateStr)
+                ->lockForUpdate()
+                ->get();
+
+            $this->assertHorarioLivre($data['barbeiroId'], $dateStr, $startStr, $endStr);
+
             $schedule = Schedule::create([
                 'client_id' => $client->id,
                 'worker_id' => $data['barbeiroId'],

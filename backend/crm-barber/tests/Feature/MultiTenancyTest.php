@@ -116,7 +116,9 @@ class MultiTenancyTest extends TestCase
         $schedule = Schedule::withoutGlobalScope('tenant')->latest('id')->first();
         $this->assertSame($bs->id, $schedule->barbershop_id);
 
-        $client = Client::withoutGlobalScope('tenant')->where('phone', '11988887777')->first();
+        // o telefone é gravado normalizado (DDI 55)
+        $client = Client::withoutGlobalScope('tenant')->where('phone', '5511988887777')->first();
+        $this->assertNotNull($client);
         $this->assertSame($bs->id, $client->barbershop_id);
     }
 
@@ -126,5 +128,40 @@ class MultiTenancyTest extends TestCase
         Client::factory()->create(['barbershop_id' => $this->lojaB->id, 'phone' => '11955554444']);
 
         $this->assertDatabaseCount('clients', 2);
+    }
+
+    public function test_barbearias_index_so_devolve_a_do_usuario(): void
+    {
+        Sanctum::actingAs(User::factory()->admin()->create(['barbershop_id' => $this->lojaA->id]));
+
+        $this->getJson('/api/barbearias')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonFragment(['slug' => 'loja-a'])
+            ->assertJsonMissing(['slug' => 'loja-b']);
+    }
+
+    public function test_admin_nao_ve_agendamento_de_outra_barbearia_na_listagem(): void
+    {
+        $agA = Schedule::factory()->create([
+            'barbershop_id' => $this->lojaA->id,
+            'client_id' => Client::factory()->create(['barbershop_id' => $this->lojaA->id])->id,
+            'worker_id' => Worker::where('barbershop_id', $this->lojaA->id)->first()->id,
+            'service_id' => Service::where('barbershop_id', $this->lojaA->id)->first()->id,
+        ]);
+        $agB = Schedule::factory()->create([
+            'barbershop_id' => $this->lojaB->id,
+            'client_id' => Client::factory()->create(['barbershop_id' => $this->lojaB->id])->id,
+            'worker_id' => Worker::where('barbershop_id', $this->lojaB->id)->first()->id,
+            'service_id' => Service::where('barbershop_id', $this->lojaB->id)->first()->id,
+        ]);
+
+        Sanctum::actingAs(User::factory()->admin()->create(['barbershop_id' => $this->lojaA->id]));
+
+        $resp = $this->getJson('/api/agendamentos')->assertOk();
+        $ids = collect($resp->json('data'))->pluck('id');
+
+        $this->assertTrue($ids->contains($agA->id));
+        $this->assertFalse($ids->contains($agB->id));
     }
 }

@@ -2,132 +2,75 @@
 
 namespace Database\Seeders;
 
+use App\Models\Client;
 use App\Models\Schedule;
+use App\Models\Service;
+use App\Models\Worker;
+use App\Support\TenantContext;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 
 class ScheduleSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Alguns agendamentos de exemplo para a barbearia do TenantContext,
+     * resolvendo cliente/profissional/serviço dentro do próprio tenant.
      */
     public function run(): void
     {
-        $schedules = [
+        $bsId = app(TenantContext::class)->id();
 
-            [
-                'client_id' => 1,
-                'worker_id' => 1,
-                'service_id' => 1,
-                'date' => '2026-07-20',
-                'start_time' => '08:00:00',
-                'end_time' => '08:30:00',
-                'status' => 'pendente',
-                'observation' => 'Primeiro horário do dia.',
-            ],
+        $clientes = Client::withoutGlobalScope('tenant')->where('barbershop_id', $bsId)->orderBy('id')->take(6)->get();
+        $profissionais = Worker::withoutGlobalScope('tenant')->where('barbershop_id', $bsId)->where('active', true)->orderBy('id')->take(4)->get();
+        $servicos = Service::withoutGlobalScope('tenant')->where('barbershop_id', $bsId)->where('active', true)->orderBy('id')->take(4)->get();
 
-            [
-                'client_id' => 2,
-                'worker_id' => 2,
-                'service_id' => 2,
-                'date' => '2026-07-20',
-                'start_time' => '09:00:00',
-                'end_time' => '09:20:00',
-                'status' => 'pendente',
-                'observation' => 'Cliente prefere navalha.',
-            ],
+        if ($clientes->isEmpty() || $profissionais->isEmpty() || $servicos->isEmpty()) {
+            return;
+        }
 
-            [
-                'client_id' => 3,
-                'worker_id' => 3,
-                'service_id' => 3,
-                'date' => '2026-07-20',
-                'start_time' => '10:00:00',
-                'end_time' => '10:50:00',
-                'status' => 'pendente',
-                'observation' => 'Pacote completo.',
-            ],
+        $base = Carbon::today()->addDay();
 
-            [
-                'client_id' => 4,
-                'worker_id' => 4,
-                'service_id' => 4,
-                'date' => '2026-07-21',
-                'start_time' => '08:30:00',
-                'end_time' => '09:10:00',
-                'status' => 'pendente',
-                'observation' => 'Pigmentação da barba.',
-            ],
+        for ($i = 0; $i < 6; $i++) {
+            $cliente = $clientes[$i % $clientes->count()];
+            $worker = $profissionais[$i % $profissionais->count()];
+            $servico = $servicos[$i % $servicos->count()];
 
-            [
-                'client_id' => 5,
-                'worker_id' => 5,
-                'service_id' => 5,
-                'date' => '2026-07-21',
-                'start_time' => '10:00:00',
-                'end_time' => '10:30:00',
-                'status' => 'pendente',
-                'observation' => 'Hidratação capilar.',
-            ],
+            $dur = (int) ($servico->duration_time ?: 30);
+            $inicio = Carbon::parse('09:00')->addMinutes($i * 60);
+            $fim = (clone $inicio)->addMinutes($dur);
+            $data = (clone $base)->addDays(intdiv($i, 3));
 
-            [
-                'client_id' => 6,
-                'worker_id' => 6,
-                'service_id' => 6,
-                'date' => '2026-07-22',
-                'start_time' => '09:00:00',
-                'end_time' => '10:00:00',
-                'status' => 'pendente',
-                'observation' => 'Selagem completa.',
-            ],
+            // pula domingo
+            if ($data->dayOfWeek === 0) {
+                $data->addDay();
+            }
 
-            [
-                'client_id' => 7,
-                'worker_id' => 7,
-                'service_id' => 7,
-                'date' => '2026-07-22',
-                'start_time' => '11:00:00',
-                'end_time' => '11:15:00',
-                'status' => 'pendente',
-                'observation' => 'Design de sobrancelha.',
-            ],
+            $preco = (float) $servico->price;
 
-            [
-                'client_id' => 8,
-                'worker_id' => 8,
-                'service_id' => 8,
-                'date' => '2026-07-23',
-                'start_time' => '08:00:00',
-                'end_time' => '08:25:00',
-                'status' => 'pendente',
-                'observation' => 'Corte infantil.',
-            ],
+            $schedule = Schedule::withoutGlobalScope('tenant')->updateOrCreate(
+                [
+                    'barbershop_id' => $bsId,
+                    'worker_id' => $worker->id,
+                    'date' => $data->toDateString(),
+                    'start_time' => $inicio->format('H:i:s'),
+                ],
+                [
+                    'client_id' => $cliente->id,
+                    'service_id' => $servico->id,
+                    'price' => $preco,
+                    'commission_value' => $worker->commissionOn($preco),
+                    'end_time' => $fim->format('H:i:s'),
+                    'status' => $i === 5 ? Schedule::STATUS_CANCELADO : Schedule::STATUS_PENDENTE,
+                    'observation' => 'Agendamento de exemplo.',
+                ],
+            );
 
-            [
-                'client_id' => 9,
-                'worker_id' => 9,
-                'service_id' => 10,
-                'date' => '2026-07-23',
-                'start_time' => '15:00:00',
-                'end_time' => '15:15:00',
-                'status' => 'cancelado',
-                'observation' => 'Cliente cancelou.',
-            ],
-
-            [
-                'client_id' => 10,
-                'worker_id' => 10,
-                'service_id' => 1,
-                'date' => '2026-07-24',
-                'start_time' => '16:00:00',
-                'end_time' => '16:30:00',
-                'status' => 'pendente',
-                'observation' => 'Cliente recorrente.',
-            ],
-
-        ];
-
-        foreach ($schedules as $schedule) {
-            Schedule::updateOrcreate($schedule);
+            $schedule->services()->syncWithoutDetaching([
+                $servico->id => [
+                    'price' => $preco,
+                    'commission_value' => $worker->commissionOn($preco),
+                ],
+            ]);
         }
     }
 }

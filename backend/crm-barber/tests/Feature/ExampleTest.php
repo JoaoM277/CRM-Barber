@@ -8,12 +8,10 @@ use Tests\TestCase;
 class ExampleTest extends TestCase
 {
     /**
-     * A basic test example.
+     * A app é API-only (sem rota web em "/"); o health check responde em /up.
      */
-    public function test_the_application_returns_a_successful_response(): void
+    public function test_health_check_responde(): void
     {
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
+        $this->get('/up')->assertOk();
     }
 }

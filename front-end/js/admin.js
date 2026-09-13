@@ -869,6 +869,19 @@ async function renderInstancias() {
     if (!(await checarSessao(res))) return;
     if (!res.ok) throw new Error("erro");
     const d = await res.json();
+
+    // Aviso no topo quando nenhuma instância está conectada
+    const aviso = document.getElementById("instancias-alerta");
+    if (aviso) {
+      if (d.alerta_sem_whatsapp) {
+        aviso.style.display = "";
+        aviso.textContent =
+          "⚠️ Nenhuma instância de WhatsApp conectada — as confirmações de agendamento NÃO estão sendo enviadas. Reconecte uma instância abaixo.";
+      } else {
+        aviso.style.display = "none";
+      }
+    }
+
     corpo.innerHTML = "";
     (d.data || []).forEach((i) => {
       const par = STATUS_INSTANCIA[i.status] || ["pending", i.status];

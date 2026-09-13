@@ -3,15 +3,18 @@
 namespace Database\Seeders;
 
 use App\Models\Service;
+use App\Support\TenantContext;
 use Illuminate\Database\Seeder;
 
 class ServiceSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Run the database seeds. Escopado: usa a barbearia do TenantContext.
      */
     public function run(): void
     {
+        $bsId = app(TenantContext::class)->id();
+
         $services = [
 
             [
@@ -97,7 +100,10 @@ class ServiceSeeder extends Seeder
         ];
 
         foreach ($services as $service) {
-            Service::updateOrcreate($service);
+            Service::withoutGlobalScope('tenant')->updateOrCreate(
+                ['barbershop_id' => $bsId, 'name' => $service['name']],
+                $service + ['barbershop_id' => $bsId],
+            );
         }
     }
 }

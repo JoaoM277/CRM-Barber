@@ -77,7 +77,9 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // Agenda/faturamento raciocinam em horário local; "hoje" e "já passou"
+    // dependem disso. Ajuste APP_TIMEZONE no .env se a barbearia não for BRT.
+    'timezone' => env('APP_TIMEZONE', 'America/Sao_Paulo'),
 
     /*
     |--------------------------------------------------------------------------

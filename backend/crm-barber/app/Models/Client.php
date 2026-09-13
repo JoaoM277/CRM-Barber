@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use App\Support\Phone;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -19,6 +21,12 @@ class Client extends Model
         'birth_date',
         'observation'
     ];
+
+    /** Telefone sempre gravado normalizado (só dígitos, DDI 55). */
+    protected function phone(): Attribute
+    {
+        return Attribute::set(fn ($value) => $value === null ? null : Phone::normalizeBr((string) $value));
+    }
 
     public function schedules(){
         return $this->hasMany(Schedule::class);

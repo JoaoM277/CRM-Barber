@@ -4,14 +4,17 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Worker;
+use App\Support\TenantContext;
 
 class WorkerSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Run the database seeds. Escopado: usa a barbearia do TenantContext.
      */
     public function run(): void
     {
+        $bsId = app(TenantContext::class)->id();
+
         $workers = [
 
             [
@@ -97,7 +100,10 @@ class WorkerSeeder extends Seeder
         ];
 
         foreach ($workers as $worker) {
-            Worker::updateOrcreate($worker);
+            Worker::withoutGlobalScope('tenant')->updateOrCreate(
+                ['barbershop_id' => $bsId, 'phone' => $worker['phone']],
+                $worker + ['barbershop_id' => $bsId],
+            );
         }
     }
 }

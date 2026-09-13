@@ -42,6 +42,7 @@ Copiar de `.env.example` e ajustar. Chaves que **precisam** ser revisadas:
 | Var | Valor no teste | Observação |
 |---|---|---|
 | `APP_ENV` | `production` (ou `staging`) | `.env.example` vem como `local` |
+| `APP_TIMEZONE` | `America/Sao_Paulo` | fuso da agenda/faturamento; padrão já é BRT |
 | `APP_DEBUG` | `false` | deixar `true` só se precisar depurar |
 | `APP_KEY` | *(gerado)* | `php artisan key:generate` preenche |
 | `APP_URL` | `http://SEU_HOST:8000` | URL pública da API |
@@ -77,11 +78,12 @@ Copiar de `messages-service/.env.example`:
 
 ### 2.3 Frontend — `front-end/`
 
-Sem `.env` e sem build. A URL da API fica num **único arquivo**:
+Sem `.env` e sem build. Config no `front-end/js/config.js`:
 
-- `front-end/js/config.js` → `window.API_BASE_URL = "http://SEU_HOST:8000/api";`
+- `window.API_BASE_URL` → URL pública do Laravel (ex.: `https://api.seudominio.com/api`).
+- `window.BARBERSHOP_SLUG` (só o site público) é resolvido em runtime: `?b=slug` na URL → primeiro rótulo do subdomínio (`barbearia-x.agendar.seudominio.com`) → fallback fixo no arquivo. **O painel (`admin.html`/`login.html`) não usa slug** — o tenant vem do usuário logado.
 
-Trocar só essa linha para a URL pública do Laravel. Os 3 scripts (`admin.js`, `script.js`, `login.js`) já leem de `window.API_BASE_URL`.
+**Multi-tenant:** um único deploy atende N barbearias. Cada barbearia tem um `slug` (gerado no cadastro). O link de agendamento de uma barbearia é `https://agendar.seudominio.com/index.html?b=<slug>` (ou um subdomínio, se você configurar DNS/cert wildcard). As rotas públicas da API são `/api/b/<slug>/...`.
 
 ---
 
@@ -104,19 +106,45 @@ php artisan serve --host=0.0.0.0 --port=8000
 
 # em OUTRO processo — worker da fila (disparo de WhatsApp):
 php artisan queue:work --tries=3
+
+# em OUTRO processo — scheduler (monitor de instância de WhatsApp a cada 5 min):
+php artisan schedule:work
 ```
+
+> Em produção real: `queue:work` sob supervisor/systemd (`Restart=always`) e o
+> scheduler via cron (`* * * * * cd /app && php artisan schedule:run >> /dev/null 2>&1`).
+> O comando `instances:check` marca instância caída e grava um `Log::error`
+> (`SendAppointmentWhatsapp` idem quando esgota as tentativas) — é o ponto pra
+> plugar Sentry/e-mail pro dono.
 
 > O `migrate` já inclui as migrations novas: `status` do agendamento
 > (`pendente`/`confirmado`/`concluido`/`cancelado`), `services.duration_time` em
 > minutos, `workers.photo`/`speciality` nullable, `operation_times` reformulado (dia da semana 0-6 + intervalo), `barbershops` ganhou `subtitle`/`accent_color` (identidade da página pública), campos de pagamento em `workers`
 > (`payment_type`, `commission_percent`, `fixed_salary`, `pix_key`), `price` +
 > `commission_value` em `schedules`, pivô `schedule_service` (multi-serviço por
-> agendamento, com snapshot de preço/comissão por serviço), tabelas `avisos`,
-> `instances`, `payouts` e as tabelas de fila (`jobs`, `failed_jobs`, `job_batches`).
+> agendamento, com snapshot de preço/comissão por serviço), **`barbershop_id`
+> (multi-tenant) em services/workers/clients/schedules/operation_times/avisos/
+> payouts** com uniques compostos por barbearia, tabelas `avisos`, `instances`,
+> `payouts` e as tabelas de fila (`jobs`, `failed_jobs`, `job_batches`).
+
+> **Multi-tenant no seed:** `db:seed` cria 10 barbearias e popula dados (serviços/
+> profissionais/clientes/horários/agendamentos) só nas 2 primeiras (`alpha-barber`,
+> `king-barber`). Em produção real, cada barbearia entra pelo cadastro (`POST
+> /cadastrar`), que já cria a grade de horário padrão.
 
 Dados semeados úteis para o teste (senha de todos: **`123456`**):
-- `admin@alphabarber.test` / `admin@kingbarber.test` — role admin
+- `admin@alphabarber.test` (barbearia `alpha-barber`) / `admin@kingbarber.test` (`king-barber`) — role admin
 - `cliente@test.com` / `joao.cliente@test.com` — role user
+- Site público: `index.html?b=alpha-barber` ou `index.html?b=king-barber`
+
+### 3.1.1 Rodar a suíte de testes
+
+```bash
+# precisa de pdo_sqlite habilitado no php.ini, OU um banco MySQL de teste:
+php artisan test
+# com MySQL de teste (ex.: banco crm_barber_test):
+DB_DATABASE=crm_barber_test php artisan test
+```
 
 ### 3.2 Node (messages-service)
 
@@ -167,11 +195,13 @@ Páginas: `index.html` (agendamento público), `login.html` (login admin), `admi
 
 ## 5. Mapa de acesso das rotas
 
-**Públicas (sem token):** `POST /login`, `POST /cadastrar` (throttle 6/min) · `GET /servicos` · `GET /profissionais` · `POST /agendamentos` (throttle 15/min) · `GET /disponibilidade` · `GET /avisos/ativo`
+**Auth global (sem token):** `POST /login`, `POST /cadastrar` (throttle 6/min)
+
+**Públicas por barbearia (middleware `tenant`, slug no path):** `GET /b/{slug}/servicos` · `GET /b/{slug}/profissionais` · `POST /b/{slug}/agendamentos` (throttle 15/min) · `GET /b/{slug}/disponibilidade` · `GET /b/{slug}/avisos/ativo` · `GET /b/{slug}/barbearia`. Slug inválido/inativo → 404.
 
 **Interna (header `X-Service-Token`):** `POST /logs`
 
-**Autenticadas (`auth:sanctum`):** todo o resto de clientes / serviços / profissionais / tempo_de_operação / barbearias / agendamentos (GET lista, show, update, delete) / logs (leitura) / avisos (leitura) / `POST /message` / `instances/*`
+**Autenticadas (`auth:sanctum` + `tenant.user`):** todo o resto de clientes / serviços / profissionais (inclui `GET` lista p/ o painel) / tempo_de_operação / barbearias / agendamentos / logs (leitura) / avisos (leitura) / `POST /message` / `instances/*`. Tudo escopado à barbearia do usuário logado (global scope + route-model binding resolvem só recursos do tenant; cross-tenant → 404).
 
 **Somente admin (`auth:sanctum` + `admin`):** `usuarios/*` · `GET/PUT /avisos/{id}` · `GET /faturamento` · `GET|POST /payouts` · `GET|POST /instances`, `GET /instances/{id}/qrcode`, `GET /instances/{id}/status`, `DELETE /instances/{id}`
 

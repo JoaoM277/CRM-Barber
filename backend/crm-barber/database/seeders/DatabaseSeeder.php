@@ -2,29 +2,42 @@
 
 namespace Database\Seeders;
 
-use App\Models\Service;
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Barbershop;
+use App\Support\TenantContext;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
+     *
+     * Multi-tenant: cria as barbearias + usuários primeiro, depois popula os
+     * dados de cada barbearia (das 2 primeiras) com o TenantContext setado —
+     * os seeders escopados leem o id de lá.
      */
     public function run(): void
     {
         $this->call([
-            ClientSeeder::class,
-            OperationTimeSeeder::class,
-            ServiceSeeder::class,
-            WorkerSeeder::class,
-            ScheduleSeeder::class,
             BarbershopSeeder::class,
             UserSeeder::class,
-            AvisoSeeder::class,
         ]);
+
+        $tenant = app(TenantContext::class);
+        $slugsSeed = ['alpha-barber', 'king-barber'];
+
+        foreach (Barbershop::whereIn('slug', $slugsSeed)->orderBy('id')->get() as $bs) {
+            $tenant->set($bs);
+
+            $this->call([
+                OperationTimeSeeder::class,
+                ServiceSeeder::class,
+                WorkerSeeder::class,
+                ClientSeeder::class,
+                ScheduleSeeder::class,
+                AvisoSeeder::class,
+            ]);
+        }
+
+        $tenant->forget();
     }
 }

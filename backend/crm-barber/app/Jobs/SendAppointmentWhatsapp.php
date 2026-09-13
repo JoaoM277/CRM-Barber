@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Instance;
 use App\Models\Schedule;
+use App\Support\Phone;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -11,6 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class SendAppointmentWhatsapp implements ShouldQueue
 {
@@ -30,10 +32,7 @@ class SendAppointmentWhatsapp implements ShouldQueue
             return;
         }
 
-        $phone = preg_replace('/\D/', '', (string) $schedule->client->phone);
-        if (! str_starts_with($phone, '55')) {
-            $phone = '55'.$phone;
-        }
+        $phone = Phone::normalizeBr((string) $schedule->client->phone);
 
         $url = rtrim(config('services.messages.url'), '/');
 
@@ -63,12 +62,32 @@ class SendAppointmentWhatsapp implements ShouldQueue
 
         $response = Http::timeout(15)->post("{$url}/message", $payload);
 
-        if ($response->failed()) {
-            Log::warning('Serviço de mensagens respondeu com erro', [
+        // O Node responde 200 mesmo quando o envio falha (corpo status:"failed").
+        // "dispatched" = enviado; "held" = lembrete retido por horário (ok, não é erro).
+        $statusMsg = data_get($response->json(), 'status');
+        $enviou = $response->successful() && in_array($statusMsg, ['dispatched', 'held'], true);
+
+        if (! $enviou) {
+            Log::warning('Confirmação de WhatsApp não saiu', [
                 'schedule_id' => $this->scheduleId,
-                'status' => $response->status(),
+                'http' => $response->status(),
                 'body' => $response->body(),
             ]);
+
+            // relança pra fila tentar de novo (até $tries); no fim cai em failed()
+            throw new \RuntimeException('Message service não confirmou o envio ('.($statusMsg ?? 'HTTP '.$response->status()).')');
         }
+    }
+
+    /**
+     * Chamado quando o job esgota as tentativas. Ponto único pra alertar
+     * (log agora; plugar Sentry/e-mail pro dono depois).
+     */
+    public function failed(Throwable $e): void
+    {
+        Log::error('SendAppointmentWhatsapp falhou definitivamente — confirmação NÃO enviada', [
+            'schedule_id' => $this->scheduleId,
+            'erro' => $e->getMessage(),
+        ]);
     }
 }

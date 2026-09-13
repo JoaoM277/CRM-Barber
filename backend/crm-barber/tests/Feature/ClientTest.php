@@ -58,7 +58,7 @@ class ClientTest extends TestCase
             'id' => $client->id,
             'barbershop_id' => $bs->id,
             'name' => 'João Silva',
-            'phone' => '11999998888',
+            'phone' => '5511999998888', // gravado normalizado (DDI 55)
         ]);
     }
 }

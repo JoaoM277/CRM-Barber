@@ -10,12 +10,23 @@ use Illuminate\Support\Facades\Storage;
 
 class BarbershopController extends Controller
 {
+    public function __construct(protected TenantContext $tenant) {}
+
+    /** 404 se a barbearia da rota não for a do tenant logado. */
+    protected function assertTenant(Barbershop $barbershop): void
+    {
+        abort_unless($barbershop->id === $this->tenant->id(), 404);
+    }
+
     /**
-     * Display a listing of the resource.
+     * Só a barbearia do usuário logado (nunca a lista global).
      */
     public function index()
     {
-        return response()->json(Barbershop::all(), 200);
+        return response()->json(
+            Barbershop::where('id', $this->tenant->id())->get(),
+            200,
+        );
     }
 
     /**
@@ -72,9 +83,11 @@ class BarbershopController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Barbershop $barbershop)
     {
-        return response()->json(Barbershop::findOrFail($id));
+        $this->assertTenant($barbershop);
+
+        return response()->json($barbershop);
     }
 
     /**
@@ -82,6 +95,8 @@ class BarbershopController extends Controller
      */
     public function update(Request $request, Barbershop $barbershop)
     {
+        $this->assertTenant($barbershop);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => ['required', 'string', 'max:255', \Illuminate\Validation\Rule::unique('barbershops', 'slug')->ignore($barbershop->id)],
@@ -124,6 +139,8 @@ class BarbershopController extends Controller
      */
     public function destroy(Barbershop $barbershop)
     {
+        $this->assertTenant($barbershop);
+
         $barbershop->delete();
 
         return response()->json(['Barbearia deletada com sucesso'], 200);

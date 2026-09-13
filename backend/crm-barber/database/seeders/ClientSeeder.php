@@ -3,15 +3,18 @@
 namespace Database\Seeders;
 
 use App\Models\Client;
+use App\Support\TenantContext;
 use Illuminate\Database\Seeder;
 
 class ClientSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Run the database seeds. Escopado: usa a barbearia do TenantContext.
      */
     public function run(): void
     {
+        $bsId = app(TenantContext::class)->id();
+
         $clients = [
             [
                 'name' => 'João Silva',
@@ -86,7 +89,10 @@ class ClientSeeder extends Seeder
         ];
 
         foreach ($clients as $client) {
-            Client::updateOrcreate($client);
+            Client::withoutGlobalScope('tenant')->updateOrCreate(
+                ['barbershop_id' => $bsId, 'phone' => $client['phone']],
+                $client + ['barbershop_id' => $bsId],
+            );
         }
     }
 }

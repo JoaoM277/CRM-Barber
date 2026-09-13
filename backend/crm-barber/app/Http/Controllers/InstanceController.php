@@ -26,7 +26,14 @@ class InstanceController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        return response()->json(['data' => $instances]);
+        $conectadas = $instances->where('status', Instance::STATUS_CONECTADO)->count();
+
+        return response()->json([
+            'data' => $instances,
+            // o painel usa isso pra mostrar um aviso quando o WhatsApp está fora do ar
+            'alerta_sem_whatsapp' => $instances->isNotEmpty() && $conectadas === 0,
+            'conectadas' => $conectadas,
+        ]);
     }
 
     /**
