@@ -1,0 +1,13 @@
+[Unit]
+Description=CRM-Barber - Laravel scheduler (instances:check, sanctum:prune-expired)
+After=network.target mysql.service
+
+[Service]
+User=www-data
+WorkingDirectory=/var/www/crm-barber/backend/crm-barber
+ExecStart=/usr/bin/php artisan schedule:work
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

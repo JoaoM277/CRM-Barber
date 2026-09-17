@@ -1,0 +1,14 @@
+[Unit]
+Description=CRM-Barber - messages-service (Node/Express, ponte com a Evolution API)
+After=network.target
+
+[Service]
+User=www-data
+WorkingDirectory=/var/www/crm-barber/messages-service
+ExecStart=/usr/bin/node src/server.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

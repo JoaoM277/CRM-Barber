@@ -1,0 +1,76 @@
+# ==========================================================================
+#  Evolution API — stack isolada (Postgres + Redis + Evolution).
+#  Fica separada do resto da app (que roda nativo via nginx/php-fpm/systemd)
+#  porque a Evolution tem dependências próprias (Baileys, Postgres, Redis)
+#  que não vale a pena instalar na unha.
+#
+#  Imagem oficial: evoapicloud/evolution-api (confirmado no docker-compose.yaml
+#  e no .env.example do repo oficial evolution-foundation/evolution-api).
+#  Versão fixada em v2.3.7 (última estável não-RC) em vez de "latest", pra não
+#  quebrar silenciosamente num "docker compose pull" futuro.
+#
+#  Uso:
+#    cp deploy/evolution.env.example deploy/evolution.env   # edite os segredos
+#    docker compose -f deploy/docker-compose.evolution.yml --env-file deploy/evolution.env up -d
+#
+#  Depois disso, no .env do Laravel e do messages-service:
+#    EVOLUTION_URL=http://127.0.0.1:8090      (mesma máquina; não expõe a porta 8090 pra fora)
+#    EVOLUTION_API_KEY=<AUTHENTICATION_API_KEY definido abaixo>
+# ==========================================================================
+services:
+  evolution-api:
+    image: evoapicloud/evolution-api:v2.3.7
+    restart: always
+    ports:
+      - "127.0.0.1:8090:8080"   # só localhost — o messages-service roda na mesma VPS
+    environment:
+      - SERVER_URL=${EVOLUTION_SERVER_URL}
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY}
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://evolution:${EVOLUTION_DB_PASSWORD}@postgres:5432/evolution?schema=evolution_api
+      - DATABASE_CONNECTION_CLIENT_NAME=evolution_crm_barber
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_URI=redis://redis:6379/6
+      - CACHE_REDIS_PREFIX_KEY=evolution
+      - CACHE_LOCAL_ENABLED=false
+      - CORS_ORIGIN=*
+    volumes:
+      - evolution_instances:/evolution/instances
+    depends_on:
+      - postgres
+      - redis
+    # teto de recurso — protege o resto da VPS se a Evolution/Baileys surtar
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1536M
+
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=evolution
+      - POSTGRES_PASSWORD=${EVOLUTION_DB_PASSWORD}
+      - POSTGRES_DB=evolution
+    volumes:
+      - evolution_pg:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - evolution_redis:/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+volumes:
+  evolution_instances:
+  evolution_pg:
+  evolution_redis:
