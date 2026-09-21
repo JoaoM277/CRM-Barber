@@ -10,9 +10,10 @@
     --bg-card: #14120E;          
     
     /* Cores de Destaque */
-    --primary: #C89B3C;          
-    --primary-disabled: #3E3522; 
-    --border-color: #24201A;     
+    --primary: #C89B3C;
+    --primary-disabled: #3E3522;
+    --secondary: #C89B3C;
+    --border-color: #24201A;
     
     /* Cores de Texto */
     --text-white: #FFFFFF;       
@@ -904,6 +905,7 @@ body {
     border: 1px solid var(--border-color);
     background:
         radial-gradient(135% 100% at 100% 0%, color-mix(in srgb, var(--primary) 15%, transparent), transparent 58%),
+        radial-gradient(135% 100% at 0% 100%, color-mix(in srgb, var(--secondary) 12%, transparent), transparent 58%),
         var(--bg-card);
     padding: 0;
     text-align: left;
@@ -948,6 +950,7 @@ body {
     border-color: var(--primary);
     background:
         radial-gradient(135% 100% at 100% 0%, color-mix(in srgb, var(--primary) 30%, transparent), transparent 58%),
+        radial-gradient(135% 100% at 0% 100%, color-mix(in srgb, var(--secondary) 22%, transparent), transparent 58%),
         var(--bg-card);
     /* brilho por dentro (inset) — não vaza nem é cortado pelo overflow do track */
     box-shadow:
@@ -1162,6 +1165,7 @@ body {
     color: color-mix(in srgb, var(--primary) 55%, var(--text-muted));
     background:
         radial-gradient(130% 90% at 100% 0%, color-mix(in srgb, var(--primary) 16%, transparent), transparent 60%),
+        radial-gradient(130% 90% at 0% 100%, color-mix(in srgb, var(--secondary) 12%, transparent), transparent 60%),
         var(--bg-card);
 }
 
@@ -1263,6 +1267,7 @@ body {
     color: var(--primary);
     background:
         radial-gradient(130% 90% at 100% 0%, color-mix(in srgb, var(--primary) 14%, transparent), transparent 60%),
+        radial-gradient(130% 90% at 0% 100%, color-mix(in srgb, var(--secondary) 10%, transparent), transparent 60%),
         var(--bg-card);
     transition: transform .3s cubic-bezier(.22, .68, 0, 1);
 }

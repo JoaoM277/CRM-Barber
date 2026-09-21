@@ -45,6 +45,9 @@
                 <button class="menu-item" data-tab="instancias">
                     <span class="menu-icon">📱</span> Instâncias
                 </button>
+                <button class="menu-item" data-tab="configuracoes">
+                    <span class="menu-icon">🎨</span> Configurações
+                </button>
             </nav>
 
             <div class="sidebar-footer">
@@ -341,6 +344,96 @@
                     </div>
                 </div>
 
+                <!-- ====================================================================
+                     TELA 6: CONFIGURAÇÕES (IDENTIDADE VISUAL DA PÁGINA PÚBLICA)
+                     ==================================================================== -->
+                <div class="tab-panel" id="panel-configuracoes">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Identidade Visual</h2>
+                            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Como sua barbearia aparece para o cliente na página de agendamento.</p>
+                        </div>
+                    </div>
+
+                    <div class="message-panel-container">
+                        <form id="form-configuracoes" class="admin-form">
+                            <input type="hidden" id="config-id">
+
+                            <div class="input-row">
+                                <div class="input-group">
+                                    <label>Nome da barbearia</label>
+                                    <input type="text" id="config-nome" class="admin-input" placeholder="Ex: La Palmas Barbearia" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>Subtítulo (aparece abaixo do nome)</label>
+                                    <input type="text" id="config-subtitulo" class="admin-input" placeholder="Ex: BARBEARIA & ESTÚDIO">
+                                </div>
+                            </div>
+
+                            <div class="input-row">
+                                <div class="input-group">
+                                    <label>Cidade</label>
+                                    <input type="text" id="config-cidade" class="admin-input" placeholder="Ex: São Paulo">
+                                </div>
+                                <div class="input-group">
+                                    <label>Estado (UF)</label>
+                                    <select id="config-estado" class="admin-input">
+                                        <option value="">Selecione</option>
+                                        <option value="AC">AC</option>
+                                        <option value="AL">AL</option>
+                                        <option value="AP">AP</option>
+                                        <option value="AM">AM</option>
+                                        <option value="BA">BA</option>
+                                        <option value="CE">CE</option>
+                                        <option value="DF">DF</option>
+                                        <option value="ES">ES</option>
+                                        <option value="GO">GO</option>
+                                        <option value="MA">MA</option>
+                                        <option value="MT">MT</option>
+                                        <option value="MS">MS</option>
+                                        <option value="MG">MG</option>
+                                        <option value="PA">PA</option>
+                                        <option value="PB">PB</option>
+                                        <option value="PR">PR</option>
+                                        <option value="PE">PE</option>
+                                        <option value="PI">PI</option>
+                                        <option value="RJ">RJ</option>
+                                        <option value="RN">RN</option>
+                                        <option value="RS">RS</option>
+                                        <option value="RO">RO</option>
+                                        <option value="RR">RR</option>
+                                        <option value="SC">SC</option>
+                                        <option value="SP">SP</option>
+                                        <option value="SE">SE</option>
+                                        <option value="TO">TO</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="input-row">
+                                <div class="input-group">
+                                    <label>Cor principal (botões, destaques)</label>
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        <input type="color" id="config-cor-principal" value="#C89B3C" style="width:48px; height:40px; padding:2px; background:transparent; border:1px solid var(--border-color); border-radius:8px; cursor:pointer;">
+                                        <input type="text" id="config-cor-principal-hex" class="admin-input" placeholder="#C89B3C" maxlength="7">
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Cor secundária (gradientes/detalhes)</label>
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        <input type="color" id="config-cor-secundaria" value="#C89B3C" style="width:48px; height:40px; padding:2px; background:transparent; border:1px solid var(--border-color); border-radius:8px; cursor:pointer;">
+                                        <input type="text" id="config-cor-secundaria-hex" class="admin-input" placeholder="#C89B3C" maxlength="7">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="text-align: right; margin-top: 20px;">
+                                <button type="submit" class="btn-primary">Salvar identidade visual</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
             </section>
         </main>
     </div>
@@ -526,6 +619,6 @@
 
     <!-- Script de controle do Painel -->
     <script src="js/config.js?v=20260917a"></script>
-    <script src="js/admin.js?v=20260917a"></script>
+    <script src="js/admin.js?v=20260921a"></script>
 </body>
 </html>

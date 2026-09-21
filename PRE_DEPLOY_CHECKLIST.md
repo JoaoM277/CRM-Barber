@@ -138,7 +138,10 @@ php artisan schedule:work
 > (barbershop_id+active)**, **soft delete em services/workers/clients**
 > (excluir não apaga mais o histórico — `deleted_at`), tabela **`audit_logs`**
 > (quem fez o quê no painel), tabelas `avisos`, `instances`, `payouts` e as
-> tabelas de fila (`jobs`, `failed_jobs`, `job_batches`).
+> tabelas de fila (`jobs`, `failed_jobs`, `job_batches`), **`barbershops.secondary_color`**
+> (2ª cor de marca, editável pelo painel em Configurações → Identidade Visual,
+> ao lado de `accent_color`; default igual a `accent_color` então não muda a
+> aparência de quem já está cadastrado até o admin trocar).
 
 > **Multi-tenant no seed:** `db:seed` cria 10 barbearias e popula dados (serviços/
 > profissionais/clientes/horários/agendamentos) só nas 2 primeiras (`alpha-barber`,

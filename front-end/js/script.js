@@ -821,6 +821,9 @@ async function carregarIdentidade() {
         if (bs.accent_color) {
             document.documentElement.style.setProperty("--primary", bs.accent_color);
         }
+        if (bs.secondary_color) {
+            document.documentElement.style.setProperty("--secondary", bs.secondary_color);
+        }
     } catch (e) {
         /* mantém os placeholders do HTML */
     }

@@ -14,6 +14,7 @@ class Barbershop extends Model
         'name',
         'subtitle',
         'accent_color',
+        'secondary_color',
         'slug',
         'phone',
         'email',

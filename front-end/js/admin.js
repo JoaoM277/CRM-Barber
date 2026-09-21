@@ -662,6 +662,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     await renderInstancias()
     await renderExpediente()
     await renderAuditoria()
+    await renderConfiguracoes()
 
   const btnFiltrar = document.getElementById("btn-filtrar-agenda");
   const inputData = document.getElementById("filter-date");
@@ -1144,4 +1145,103 @@ async function renderAuditoria() {
   } catch (e) {
     corpo.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--danger);">Servidor offline.</td></tr>`;
   }
+}
+
+// --------------------------------------------------------------------------
+// 12. MÓDULO: CONFIGURAÇÕES (IDENTIDADE VISUAL DA PÁGINA PÚBLICA)
+// --------------------------------------------------------------------------
+let barbershopAtual = null;
+
+function sincronizarCorHex(inputColor, inputHex) {
+  if (!inputColor || !inputHex) return;
+  inputColor.addEventListener("input", () => {
+    inputHex.value = inputColor.value.toUpperCase();
+  });
+  inputHex.addEventListener("input", () => {
+    const v = inputHex.value.trim();
+    if (/^#([0-9A-Fa-f]{6})$/.test(v)) {
+      inputColor.value = v;
+    }
+  });
+}
+
+async function renderConfiguracoes() {
+  const form = document.getElementById("form-configuracoes");
+  if (!form) return;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/barbearias`, { headers: authHeaders() });
+    if (!(await checarSessao(res))) return;
+    if (!res.ok) return;
+    const lista = await res.json();
+    const bs = Array.isArray(lista) ? lista[0] : (lista.data ? lista.data[0] : null);
+    if (!bs) return;
+
+    barbershopAtual = bs;
+
+    document.getElementById("config-id").value = bs.id;
+    document.getElementById("config-nome").value = bs.name || "";
+    document.getElementById("config-subtitulo").value = bs.subtitle || "";
+    document.getElementById("config-cidade").value = bs.city || "";
+    document.getElementById("config-estado").value = bs.state || "";
+
+    const corPrincipal = bs.accent_color || "#C89B3C";
+    const corSecundaria = bs.secondary_color || "#C89B3C";
+    document.getElementById("config-cor-principal").value = corPrincipal;
+    document.getElementById("config-cor-principal-hex").value = corPrincipal.toUpperCase();
+    document.getElementById("config-cor-secundaria").value = corSecundaria;
+    document.getElementById("config-cor-secundaria-hex").value = corSecundaria.toUpperCase();
+  } catch (e) {
+    console.error("Não foi possível carregar as configurações da barbearia.");
+  }
+}
+
+sincronizarCorHex(
+  document.getElementById("config-cor-principal"),
+  document.getElementById("config-cor-principal-hex")
+);
+sincronizarCorHex(
+  document.getElementById("config-cor-secundaria"),
+  document.getElementById("config-cor-secundaria-hex")
+);
+
+const formConfiguracoes = document.getElementById("form-configuracoes");
+if (formConfiguracoes) {
+  formConfiguracoes.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!barbershopAtual) return;
+
+    const id = document.getElementById("config-id").value;
+
+    // Mantém os demais campos do cadastro (o endpoint exige nome/slug),
+    // só sobrescreve o que essa tela edita.
+    const payload = {
+      ...barbershopAtual,
+      name: document.getElementById("config-nome").value,
+      subtitle: document.getElementById("config-subtitulo").value || null,
+      city: document.getElementById("config-cidade").value || null,
+      state: document.getElementById("config-estado").value || null,
+      accent_color: document.getElementById("config-cor-principal-hex").value || "#C89B3C",
+      secondary_color: document.getElementById("config-cor-secundaria-hex").value || "#C89B3C",
+    };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/barbearias/${id}`, {
+        method: "PUT",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify(payload),
+      });
+
+      if (!(await checarSessao(response))) return;
+
+      if (response.ok) {
+        barbershopAtual = await response.json();
+        mostrarToastAdmin("Identidade visual atualizada com sucesso!");
+      } else {
+        mostrarToastAdmin("Erro ao salvar. Confira os campos.", "erro");
+      }
+    } catch (error) {
+      mostrarToastAdmin("Erro de conexão com o servidor.", "erro");
+    }
+  });
 }
