@@ -40,8 +40,8 @@ class StoreBarbershopRequest extends FormRequest
             'logo_path' => 'nullable|string|max:255',
 
             'subtitle' => 'nullable|string|max:255',
-            'accent_color' => 'nullable|string|regex:/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/',
-            'secondary_color' => 'nullable|string|regex:/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/',
+            'accent_color' => ['nullable', 'string', 'regex:/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/'],
+            'secondary_color' => ['nullable', 'string', 'regex:/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/'],
 
             'opening_time' => 'nullable|date_format:H:i',
             'closing_time' => 'nullable|date_format:H:i',
