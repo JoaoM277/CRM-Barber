@@ -2,13 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Barbershop;
-use App\Models\OperationTime;
 use App\Models\User;
+use App\Support\TenantProvisioner;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -31,7 +28,7 @@ class AuthController extends Controller
      * Cadastro de dono de barbearia.
      * Cria a barbearia + o usuário admin vinculado e devolve o token.
      */
-    public function register(Request $request)
+    public function register(Request $request, TenantProvisioner $provisioner)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -42,28 +39,7 @@ class AuthController extends Controller
             'barbershop_whatsapp' => 'nullable|string|max:20',
         ]);
 
-        $result = DB::transaction(function () use ($validated) {
-            $barbershop = Barbershop::create([
-                'name' => $validated['barbershop_name'],
-                'slug' => $this->generateUniqueSlug($validated['barbershop_name']),
-                'phone' => $validated['barbershop_phone'] ?? null,
-                'whatsapp' => $validated['barbershop_whatsapp'] ?? null,
-            ]);
-
-            $user = User::create([
-                'barbershop_id' => $barbershop->id,
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => $validated['password'],
-                'role' => User::ROLE_ADMIN,
-            ]);
-
-            $this->seedDefaultOperationTimes($barbershop->id);
-
-            return [$user, $barbershop];
-        });
-
-        [$user, $barbershop] = $result;
+        [$user, $barbershop] = $provisioner->create($validated);
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
@@ -72,47 +48,6 @@ class AuthController extends Controller
             'token_type' => 'Bearer',
             'user' => $user->load('barbershop'),
         ], 201);
-    }
-
-    /**
-     * Grade de horário padrão pra barbearia recém-criada ficar utilizável na hora:
-     * seg-sex 09:00-19:00 (almoço 12:00-13:00), sáb 09:00-17:00, dom fechado.
-     */
-    private function seedDefaultOperationTimes(int $barbershopId): void
-    {
-        $linhas = [];
-        foreach (range(0, 6) as $dow) {
-            $fechado = $dow === 0;
-            $linhas[] = [
-                'barbershop_id' => $barbershopId,
-                'day_of_week' => $dow,
-                'active' => ! $fechado,
-                'start_time' => '09:00:00',
-                'end_time' => $dow === 6 ? '17:00:00' : '19:00:00',
-                'waiting_start' => $fechado || $dow === 6 ? null : '12:00:00',
-                'waiting_end' => $fechado || $dow === 6 ? null : '13:00:00',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        }
-
-        OperationTime::insert($linhas);
-    }
-
-    /**
-     * Gera um slug único para a barbearia a partir do nome.
-     */
-    private function generateUniqueSlug(string $name): string
-    {
-        $base = Str::slug($name) ?: 'barbearia';
-        $slug = $base;
-        $i = 1;
-
-        while (Barbershop::where('slug', $slug)->exists()) {
-            $slug = $base.'-'.$i++;
-        }
-
-        return $slug;
     }
 
     /**

@@ -226,6 +226,23 @@ Páginas: `index.html` (agendamento público), `login.html` (login admin), `admi
 
 ---
 
+## 5b. Onboarding de cliente novo (barbearia)
+
+Não existe autocadastro público — é intencional (decisão de produto: só o dono da plataforma cria a conta do cliente depois de fechar negócio). `POST /cadastrar` existe e funciona, mas não tem nenhuma tela usando ele; a rota web `showRegister()` é só um placeholder que redireciona pro `index.html`.
+
+Forma oficial de cadastrar uma barbearia nova, via SSH no servidor:
+
+```bash
+cd backend/crm-barber
+php artisan tenant:criar
+# ou tudo via flag, sem prompt interativo:
+php artisan tenant:criar --nome="Fulano" --email="fulano@ex.com" --senha="..." --barbearia="Beta Barber" --whatsapp="55119..."
+```
+
+Cria a barbearia (slug único gerado do nome) + usuário admin + grade de horário padrão (a mesma lógica do `/cadastrar`, compartilhada via `App\Support\TenantProvisioner`), e no final imprime o link de agendamento e a URL do painel. O cliente também pode ver/copiar esse link depois em Configurações → Link de agendamento, dentro do próprio painel.
+
+---
+
 ## 6. Pendências conhecidas (não bloqueiam)
 
 | Item | Impacto |
