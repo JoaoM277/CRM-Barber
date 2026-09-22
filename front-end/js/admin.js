@@ -1197,6 +1197,11 @@ async function renderConfiguracoes() {
 
     barbershopAtual = bs;
 
+    const linkInput = document.getElementById("config-link-agendamento");
+    if (linkInput && bs.slug) {
+      linkInput.value = `${window.location.origin}/index.html?b=${encodeURIComponent(bs.slug)}`;
+    }
+
     document.getElementById("config-id").value = bs.id;
     document.getElementById("config-nome").value = bs.name || "";
     document.getElementById("config-subtitulo").value = bs.subtitle || "";
@@ -1222,6 +1227,21 @@ sincronizarCorHex(
   document.getElementById("config-cor-secundaria"),
   document.getElementById("config-cor-secundaria-hex")
 );
+
+const btnCopiarLink = document.getElementById("btn-copiar-link");
+if (btnCopiarLink) {
+  btnCopiarLink.addEventListener("click", async () => {
+    const linkInput = document.getElementById("config-link-agendamento");
+    if (!linkInput || !linkInput.value) return;
+    try {
+      await navigator.clipboard.writeText(linkInput.value);
+    } catch (e) {
+      linkInput.select();
+      document.execCommand("copy");
+    }
+    mostrarToastAdmin("Link copiado!");
+  });
+}
 
 const formConfiguracoes = document.getElementById("form-configuracoes");
 if (formConfiguracoes) {
