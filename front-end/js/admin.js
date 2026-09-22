@@ -33,6 +33,22 @@ menuItems.forEach((item) => {
   });
 });
 
+document.querySelectorAll(".btn-logout").forEach((btnLogout) => {
+  btnLogout.addEventListener("click", async () => {
+    try {
+      await fetch(`${window.API_BASE_URL || "http://localhost:8000/api"}/logout`, {
+        method: "POST",
+        headers: authHeaders(),
+      });
+    } catch (e) {
+      /* mesmo se a API estiver fora do ar, ainda derruba a sessão local */
+    } finally {
+      localStorage.removeItem("admin_token");
+      window.location.href = "login.html";
+    }
+  });
+});
+
 window.mostrarToastAdmin = function (mensagem, tipo = "sucesso") {
   const toast = document.getElementById("admin-toast");
   const texto = document.getElementById("admin-toast-texto");
@@ -173,15 +189,17 @@ async function renderAgenda(dataFiltro = "") {
       }
 
       tr.innerHTML = `
-                <td>
-                    <strong>${nomeCli}</strong><br>
-                    <span class="text-small">${formatarTelefoneAdmin(telCli)}</span>
+                <td data-label="Cliente">
+                    <div>
+                        <strong>${nomeCli}</strong><br>
+                        <span class="text-small">${formatarTelefoneAdmin(telCli)}</span>
+                    </div>
                 </td>
-                <td>${servicosTxt}</td>
-                <td>${agendamento.Barbeiro ? agendamento.Barbeiro.nome : "N/A"}</td>
-                <td>${dataAg.split("-").reverse().join("/")} às ${horaAg}</td>
-                <td><span class="status-badge ${badgeClass}">${badgeText}</span></td>
-                <td>
+                <td data-label="Serviço">${servicosTxt}</td>
+                <td data-label="Barbeiro">${agendamento.Barbeiro ? agendamento.Barbeiro.nome : "N/A"}</td>
+                <td data-label="Data e Hora">${dataAg.split("-").reverse().join("/")} às ${horaAg}</td>
+                <td data-label="Status"><span class="status-badge ${badgeClass}">${badgeText}</span></td>
+                <td data-label="Ações">
                     ${agendamento.status === "pendente" ? `<button class="btn-action confirm" onclick="alterarStatus(${agendamento.id}, 'confirmado')" title="Confirmar">✔️</button>` : ""}
                     ${agendamento.status === "confirmado" ? `<button class="btn-action confirm" onclick="alterarStatus(${agendamento.id}, 'concluido')" title="Marcar como concluído">✅</button>` : ""}
                     ${agendamento.status !== "cancelado" && agendamento.status !== "concluido" ? `<button class="btn-action cancel" onclick="alterarStatus(${agendamento.id}, 'cancelado')" title="Cancelar">❌</button>` : ""}
@@ -273,10 +291,10 @@ async function renderServicos() {
       const precoFormatado = Number(precoSvc).toFixed(2).replace(".", ",");
 
       tr.innerHTML = `
-                <td><strong>${nomeSvc}</strong></td>
-                <td style="color: var(--brand-primary); font-weight: 600;">R$ ${precoFormatado}</td>
-                <td>${duracaoSvc} min</td>
-                <td>
+                <td data-label="Serviço"><strong>${nomeSvc}</strong></td>
+                <td data-label="Preço" style="color: var(--brand-primary); font-weight: 600;">R$ ${precoFormatado}</td>
+                <td data-label="Tempo">${duracaoSvc} min</td>
+                <td data-label="Ações">
                     <button class="btn-action" onclick="abrirModalServico(${servico.id})" title="Editar">✏️</button>
                     <button class="btn-action cancel" onclick="deletarServico(${servico.id})" title="Excluir">🗑️</button>
                 </td>
@@ -408,10 +426,10 @@ async function renderBarbeiros() {
       const inicial = nomeBarb ? nomeBarb.charAt(0).toUpperCase() : "?";
 
       tr.innerHTML = `
-                <td><div class="table-avatar">${inicial}</div></td>
-                <td><strong>${nomeBarb}</strong></td>
-                <td>${formatarTelefoneAdmin(telBarb)}</td>
-                <td>
+                <td data-label="Perfil"><div class="table-avatar">${inicial}</div></td>
+                <td data-label="Nome"><strong>${nomeBarb}</strong></td>
+                <td data-label="Telefone">${formatarTelefoneAdmin(telBarb)}</td>
+                <td data-label="Ações">
                     <button class="btn-action" onclick="abrirModalBarbeiro(${barbeiro.id})" title="Editar">✏️</button>
                     <button class="btn-action cancel" onclick="deletarBarbeiro(${barbeiro.id})" title="Excluir">🗑️</button>
                 </td>
@@ -742,14 +760,14 @@ async function renderFaturamento() {
     (d.por_profissional || []).forEach((r) => {
       const tr = document.createElement("tr");
       tr.innerHTML =
-        `<td><strong>${r.profissional || "-"}</strong></td>` +
-        `<td>${tipoLabel[r.payment_type] || r.payment_type || "-"}</td>` +
-        `<td>${r.atendimentos}</td>` +
-        `<td>${moedaBR(r.bruto)}</td>` +
-        `<td>${moedaBR(r.comissao)}</td>` +
-        `<td>${moedaBR(r.fixo)}</td>` +
-        `<td style="color: var(--brand-primary); font-weight:600;">${moedaBR(r.total_a_pagar)}</td>` +
-        `<td><button class="btn-action confirm" title="Registrar repasse" onclick="abrirModalPayout(${r.worker_id}, '${(r.profissional || "").replace(/'/g, "")}', ${r.total_a_pagar})">💸</button></td>`;
+        `<td data-label="Profissional"><strong>${r.profissional || "-"}</strong></td>` +
+        `<td data-label="Tipo">${tipoLabel[r.payment_type] || r.payment_type || "-"}</td>` +
+        `<td data-label="Atend.">${r.atendimentos}</td>` +
+        `<td data-label="Bruto">${moedaBR(r.bruto)}</td>` +
+        `<td data-label="Comissão">${moedaBR(r.comissao)}</td>` +
+        `<td data-label="Fixo">${moedaBR(r.fixo)}</td>` +
+        `<td data-label="Total a pagar" style="color: var(--brand-primary); font-weight:600;">${moedaBR(r.total_a_pagar)}</td>` +
+        `<td data-label="Ação"><button class="btn-action confirm" title="Registrar repasse" onclick="abrirModalPayout(${r.worker_id}, '${(r.profissional || "").replace(/'/g, "")}', ${r.total_a_pagar})">💸</button></td>`;
       corpoProf.appendChild(tr);
     });
     if (!(d.por_profissional || []).length) {
@@ -759,14 +777,14 @@ async function renderFaturamento() {
     const corpoServ = document.getElementById("fat-servicos-body");
     corpoServ.innerHTML = "";
     (d.por_servico || []).forEach((r) => {
-      corpoServ.insertAdjacentHTML("beforeend", `<tr><td>${r.servico || "-"}</td><td>${r.quantidade}</td><td>${moedaBR(r.total)}</td></tr>`);
+      corpoServ.insertAdjacentHTML("beforeend", `<tr><td data-label="Serviço">${r.servico || "-"}</td><td data-label="Qtd">${r.quantidade}</td><td data-label="Total">${moedaBR(r.total)}</td></tr>`);
     });
 
     const corpoItens = document.getElementById("fat-itens-body");
     corpoItens.innerHTML = "";
     (d.itens || []).forEach((r) => {
       const dt = (r.data || "").split("-").reverse().join("/");
-      corpoItens.insertAdjacentHTML("beforeend", `<tr><td>${dt}</td><td>${r.cliente || "-"}</td><td>${r.servico || "-"}</td><td>${r.profissional || "-"}</td><td>${moedaBR(r.valor)}</td><td>${moedaBR(r.comissao)}</td></tr>`);
+      corpoItens.insertAdjacentHTML("beforeend", `<tr><td data-label="Data">${dt}</td><td data-label="Cliente">${r.cliente || "-"}</td><td data-label="Serviço">${r.servico || "-"}</td><td data-label="Profissional">${r.profissional || "-"}</td><td data-label="Valor">${moedaBR(r.valor)}</td><td data-label="Comissão">${moedaBR(r.comissao)}</td></tr>`);
     });
     if (!(d.itens || []).length) {
       corpoItens.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text-muted);">Sem atendimentos.</td></tr>`;
@@ -790,7 +808,7 @@ async function renderRepasses() {
       const ini = (r.periodo_inicio || "").slice(0, 10).split("-").reverse().join("/");
       const fim = (r.periodo_fim || "").slice(0, 10).split("-").reverse().join("/");
       const dtPago = (r.pago_em || "").slice(0, 10).split("-").reverse().join("/");
-      corpo.insertAdjacentHTML("beforeend", `<tr><td>${(r.worker && r.worker.name) || "-"}</td><td>${ini} – ${fim}</td><td>${moedaBR(r.valor_pago)}</td><td>${dtPago}</td></tr>`);
+      corpo.insertAdjacentHTML("beforeend", `<tr><td data-label="Profissional">${(r.worker && r.worker.name) || "-"}</td><td data-label="Período">${ini} – ${fim}</td><td data-label="Valor pago">${moedaBR(r.valor_pago)}</td><td data-label="Data">${dtPago}</td></tr>`);
     });
     if (!(d.data || []).length) {
       corpo.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--text-muted);">Nenhum repasse.</td></tr>`;
@@ -891,11 +909,11 @@ async function renderInstancias() {
       const nomeSeguro = (i.name || "").replace(/'/g, "");
       const tr = document.createElement("tr");
       tr.innerHTML =
-        `<td><strong>${i.name}</strong></td>` +
-        `<td><span class="status-badge ${par[0]}">${par[1]}</span></td>` +
-        `<td>${i.phone_number || "—"}</td>` +
-        `<td>${ultima}</td>` +
-        `<td>` +
+        `<td data-label="Nome"><strong>${i.name}</strong></td>` +
+        `<td data-label="Status"><span class="status-badge ${par[0]}">${par[1]}</span></td>` +
+        `<td data-label="Número">${i.phone_number || "—"}</td>` +
+        `<td data-label="Última conexão">${ultima}</td>` +
+        `<td data-label="Ações">` +
         `<button class="btn-action" title="Atualizar status" onclick="atualizarStatusInstancia(${i.id})">🔄</button> ` +
         `<button class="btn-action confirm" title="Conectar / novo QR" onclick="conectarInstancia(${i.id}, '${nomeSeguro}')">🔗</button> ` +
         `<button class="btn-action cancel" title="Excluir" onclick="excluirInstancia(${i.id}, '${nomeSeguro}')">🗑️</button>` +
@@ -1073,12 +1091,12 @@ async function renderExpediente() {
     const tr = document.createElement("tr");
     tr.dataset.dow = dow;
     tr.innerHTML =
-      `<td><strong>${DIAS_SEMANA[dow]}</strong></td>` +
-      `<td><input type="checkbox" class="exp-active" ${o.active ? "checked" : ""}></td>` +
-      `<td><input type="time" class="admin-input exp-start" value="${hm(o.start_time) || "08:00"}"></td>` +
-      `<td><input type="time" class="admin-input exp-end" value="${hm(o.end_time) || "19:00"}"></td>` +
-      `<td><input type="time" class="admin-input exp-ws" value="${hm(o.waiting_start)}"></td>` +
-      `<td><input type="time" class="admin-input exp-we" value="${hm(o.waiting_end)}"></td>`;
+      `<td data-label="Dia"><strong>${DIAS_SEMANA[dow]}</strong></td>` +
+      `<td data-label="Aberto"><input type="checkbox" class="exp-active" ${o.active ? "checked" : ""}></td>` +
+      `<td data-label="Abre"><input type="time" class="admin-input exp-start" value="${hm(o.start_time) || "08:00"}"></td>` +
+      `<td data-label="Fecha"><input type="time" class="admin-input exp-end" value="${hm(o.end_time) || "19:00"}"></td>` +
+      `<td data-label="Intervalo início"><input type="time" class="admin-input exp-ws" value="${hm(o.waiting_start)}"></td>` +
+      `<td data-label="Intervalo fim"><input type="time" class="admin-input exp-we" value="${hm(o.waiting_end)}"></td>`;
     corpo.appendChild(tr);
   }
 }
@@ -1133,10 +1151,10 @@ async function renderAuditoria() {
       const tr = document.createElement("tr");
       const quando = l.created_at ? new Date(l.created_at).toLocaleString("pt-BR") : "—";
       tr.innerHTML =
-        `<td>${quando}</td>` +
-        `<td>${l.user?.name || "—"}</td>` +
-        `<td>${l.action}</td>` +
-        `<td>${l.description || ""}</td>`;
+        `<td data-label="Quando">${quando}</td>` +
+        `<td data-label="Quem">${l.user?.name || "—"}</td>` +
+        `<td data-label="Ação">${l.action}</td>` +
+        `<td data-label="Detalhe">${l.description || ""}</td>`;
       corpo.appendChild(tr);
     });
     if (!linhas.length) {
