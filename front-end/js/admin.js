@@ -22,6 +22,30 @@ async function checarSessao(res) {
   return true;
 }
 
+// --------------------------------------------------------------------------
+// 1b. GAVETA DE NAVEGAÇÃO (MOBILE)
+// --------------------------------------------------------------------------
+const sidebarEl = document.getElementById("sidebar");
+const drawerBackdrop = document.getElementById("drawer-backdrop");
+const btnAbrirMenu = document.getElementById("btn-abrir-menu");
+
+function fecharGaveta() {
+  if (sidebarEl) sidebarEl.classList.remove("open");
+  if (drawerBackdrop) drawerBackdrop.classList.remove("active");
+}
+
+function abrirGaveta() {
+  if (sidebarEl) sidebarEl.classList.add("open");
+  if (drawerBackdrop) drawerBackdrop.classList.add("active");
+}
+
+if (btnAbrirMenu) {
+  btnAbrirMenu.addEventListener("click", abrirGaveta);
+}
+if (drawerBackdrop) {
+  drawerBackdrop.addEventListener("click", fecharGaveta);
+}
+
 menuItems.forEach((item) => {
   item.addEventListener("click", () => {
     menuItems.forEach((btn) => btn.classList.remove("active"));
@@ -30,6 +54,8 @@ menuItems.forEach((item) => {
     const targetTab = item.getAttribute("data-tab");
     tabPanels.forEach((panel) => panel.classList.remove("active"));
     document.getElementById(`panel-${targetTab}`).classList.add("active");
+
+    fecharGaveta();
   });
 });
 

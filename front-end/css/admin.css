@@ -210,7 +210,8 @@ input[type="number"] {
     background-color: rgba(231, 29, 54, 0.1);
 }
 
-.btn-logout-mobile {
+/* Fundo escuro atrás da gaveta de navegação — só existe/aparece no mobile */
+.drawer-backdrop {
     display: none;
 }
 
@@ -228,6 +229,27 @@ input[type="number"] {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.btn-menu {
+    display: none;
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    font-size: 17px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .header-title h1 {
@@ -568,81 +590,42 @@ textarea.admin-input:focus {
         flex-direction: column;
     }
 
-    /* ---- Barra de navegação inferior ---- */
+    /* ---- Gaveta de navegação (some por padrão, desliza da esquerda) ---- */
     .sidebar {
         position: fixed;
-        bottom: 0;
+        top: 0;
         left: 0;
-        width: 100%;
-        height: calc(64px + env(safe-area-inset-bottom));
-        padding: 0 6px env(safe-area-inset-bottom);
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-        z-index: 100;
-        border-right: none;
-        border-top: 1px solid var(--border-color);
-        background-color: rgba(11, 10, 8, 0.94);
-        -webkit-backdrop-filter: blur(18px);
-        backdrop-filter: blur(18px);
-        box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.35);
+        height: 100vh;
+        width: min(280px, 82vw);
+        transform: translateX(-100%);
+        transition: transform 0.28s cubic-bezier(0.22, 0.68, 0, 1);
+        z-index: 200;
+        padding: 20px;
+        padding-top: calc(20px + env(safe-area-inset-top));
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+        box-shadow: 16px 0 40px rgba(0, 0, 0, 0.45);
+        overflow-y: auto;
     }
 
-    .sidebar-brand, .sidebar-footer {
-        display: none;
+    .sidebar.open {
+        transform: translateX(0);
     }
 
-    .sidebar-menu {
-        flex-direction: row;
-        width: 100%;
-        height: 100%;
-        justify-content: space-around;
-        align-items: center;
-        margin: 0;
+    /* Fundo escuro por trás da gaveta — clicar nele fecha o menu */
+    .drawer-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.55);
+        z-index: 190;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
     }
 
-    .menu-item {
-        position: relative;
-        flex-direction: column;
-        gap: 3px;
-        padding: 8px 4px;
-        font-size: 10px;
-        text-align: center;
-        justify-content: center;
-        border-radius: 12px;
-        background: transparent;
-        transition: color 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
-    }
-
-    .menu-item:active {
-        transform: scale(0.9);
-    }
-
-    .menu-item.active {
-        border-left: none;
-        border-radius: 12px;
-        color: var(--brand-primary);
-        background-color: rgba(200, 155, 60, 0.12);
-    }
-
-    .menu-item.active::after {
-        content: "";
-        position: absolute;
-        top: -1px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 20px;
-        height: 3px;
-        border-radius: 0 0 4px 4px;
-        background-color: var(--brand-primary);
-    }
-
-    .menu-icon {
-        font-size: 19px;
-    }
-
-    .main-content {
-        padding-bottom: calc(64px + env(safe-area-inset-bottom));
+    .drawer-backdrop.active {
+        opacity: 1;
+        visibility: visible;
     }
 
     /* ---- Cabeçalho ---- */
@@ -653,6 +636,10 @@ textarea.admin-input:focus {
         z-index: 50;
         background-color: var(--brand-bg-dark);
         box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+    }
+
+    .btn-menu {
+        display: flex;
     }
 
     .header-title h1 {
@@ -667,7 +654,7 @@ textarea.admin-input:focus {
         gap: 10px;
     }
 
-    /* "Olá, Administrador" some no celular, sobra avatar + botão de sair */
+    /* "Olá, Administrador" some no celular, sobra só o avatar */
     .admin-profile > span {
         display: none;
     }
@@ -676,18 +663,6 @@ textarea.admin-input:focus {
         width: 30px;
         height: 30px;
         font-size: 13px;
-    }
-
-    .btn-logout-mobile {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        background-color: rgba(231, 29, 54, 0.14);
-        font-size: 15px;
-        padding: 0;
     }
 
     .content-body {
