@@ -1309,3 +1309,53 @@ if (formConfiguracoes) {
     }
   });
 }
+
+// --------------------------------------------------------------------------
+// 13. MÓDULO: TROCAR SENHA
+// --------------------------------------------------------------------------
+const formSenha = document.getElementById("form-senha");
+if (formSenha) {
+  formSenha.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const senhaAtual = document.getElementById("senha-atual").value;
+    const senhaNova = document.getElementById("senha-nova").value;
+    const senhaNovaConfirmacao = document.getElementById("senha-nova-confirmacao").value;
+
+    if (senhaNova !== senhaNovaConfirmacao) {
+      mostrarToastAdmin("A confirmação não bate com a nova senha.", "erro");
+      return;
+    }
+    if (senhaNova.length < 6) {
+      mostrarToastAdmin("A nova senha precisa ter pelo menos 6 caracteres.", "erro");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/me/senha`, {
+        method: "PUT",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          senha_atual: senhaAtual,
+          nova_senha: senhaNova,
+          nova_senha_confirmation: senhaNovaConfirmacao,
+        }),
+      });
+
+      if (!(await checarSessao(response))) return;
+
+      const dados = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        mostrarToastAdmin("Senha atualizada com sucesso!");
+        formSenha.reset();
+      } else {
+        let erroMsg = dados.message || "Erro ao trocar a senha.";
+        if (dados.errors) erroMsg = Object.values(dados.errors)[0][0];
+        mostrarToastAdmin(erroMsg, "erro");
+      }
+    } catch (error) {
+      mostrarToastAdmin("Erro de conexão com o servidor.", "erro");
+    }
+  });
+}

@@ -447,6 +447,30 @@
                             </div>
                         </form>
                     </div>
+
+                    <div class="message-panel-container">
+                        <h2 style="margin-bottom: 4px; font-size: 16px;">Trocar senha</h2>
+                        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 14px;">Sua senha de acesso ao painel.</p>
+                        <form id="form-senha" class="admin-form">
+                            <div class="input-group">
+                                <label>Senha atual</label>
+                                <input type="password" id="senha-atual" class="admin-input" autocomplete="current-password" required>
+                            </div>
+                            <div class="input-row">
+                                <div class="input-group">
+                                    <label>Nova senha</label>
+                                    <input type="password" id="senha-nova" class="admin-input" minlength="6" autocomplete="new-password" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>Confirmar nova senha</label>
+                                    <input type="password" id="senha-nova-confirmacao" class="admin-input" minlength="6" autocomplete="new-password" required>
+                                </div>
+                            </div>
+                            <div style="text-align: right; margin-top: 20px;">
+                                <button type="submit" class="btn-primary">Salvar nova senha</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
             </section>
@@ -634,6 +658,6 @@
 
     <!-- Script de controle do Painel -->
     <script src="js/config.js?v=20260917a"></script>
-    <script src="js/admin.js?v=20260922c"></script>
+    <script src="js/admin.js?v=20260922e"></script>
 </body>
 </html>

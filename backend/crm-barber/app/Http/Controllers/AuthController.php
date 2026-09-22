@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\Audit;
 use App\Support\TenantProvisioner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -94,5 +95,31 @@ class AuthController extends Controller
         return response()->json([
             'message'=> 'Logout realizado com sucesso'
         ]);
+    }
+
+    /**
+     * Troca a senha do próprio usuário logado. Exige a senha atual pra
+     * confirmar (não é o mesmo fluxo de UserController@update, que é o
+     * admin editando qualquer usuário da barbearia sem precisar da senha antiga).
+     */
+    public function updatePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'senha_atual' => 'required|string',
+            'nova_senha' => ['required', 'string', 'min:6', 'confirmed'],
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($validated['senha_atual'], $user->password)) {
+            return response()->json(['message' => 'Senha atual incorreta.'], 422);
+        }
+
+        $user->password = $validated['nova_senha'];
+        $user->save();
+
+        Audit::log('senha.alterada', $user, 'Senha do usuário alterada');
+
+        return response()->json(['message' => 'Senha atualizada com sucesso!']);
     }
 }

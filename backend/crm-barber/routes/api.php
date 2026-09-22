@@ -59,6 +59,7 @@ Route::middleware('service.token')->group(function () {
 Route::middleware(['auth:sanctum', 'tenant.user'])->group(function () {
     Route::get('/me', [AuthController::class, 'me'])->name('users.me');
     Route::post('/logout', [AuthController::class, 'logout'])->name('users.logout');
+    Route::put('/me/senha', [AuthController::class, 'updatePassword'])->name('users.update-password');
     Route::get('/pagina-inicial', [UserController::class, 'paginaInicial'])->name('users.pagina-inicial');
 
     // Client
