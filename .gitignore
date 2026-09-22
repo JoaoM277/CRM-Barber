@@ -11,3 +11,6 @@ vendor/
 # Logs / temporários
 *.log
 .DS_Store
+
+# Runbook local de operação da VPS (caminhos/detalhes internos, não vai pro repo)
+ATUALIZAR_VPS.md
