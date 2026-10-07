@@ -40,13 +40,16 @@ auditoria, backup MySQL, 38 testes.
 Gateway recomendado: **Asaas** (assinatura recorrente nativa com Pix/boleto/cartão,
 webhooks, sandbox, emissão de NFS-e, subcontas para split na Fase 5).
 
-- [ ] Tabelas `plans` (preço, limites, features), `subscriptions` (`trialing`, `active`, `past_due`, `canceled`), `billing_events` (webhook idempotente)
-- [ ] Integração Asaas: cliente, assinatura, webhook assinado
-- [ ] Trial de 14 dias sem cartão
-- [ ] Inadimplência: carência de ~7 dias → painel em modo leitura (site público **nunca** cai)
-- [ ] Feature gating por plano (limite de profissionais, WhatsApp, financeiro…)
-- [ ] Tela "Minha assinatura": plano atual, upgrade/downgrade, faturas, cartão, cancelar
-- [ ] Avisos de cobrança (fim do trial, falha de pagamento, renovação)
+- [x] Tabelas `plans` (preço, limites, features), `subscriptions` (`trialing`, `active`, `past_due`, `canceled`), `billing_events` (webhook idempotente)
+- [x] Integração Asaas: cliente, assinatura, webhook com token (código pronto; falta testar no sandbox)
+- [x] Trial de 14 dias sem cartão (no plano Premium)
+- [x] Inadimplência: carência de ~7 dias → painel em modo leitura (site público **nunca** cai)
+- [x] Feature gating por plano (limite de profissionais, WhatsApp, financeiro…)
+- [x] Tela "Minha assinatura": plano atual, upgrade/downgrade, faturas, cartão, cancelar
+- [x] Avisos no painel (fim do trial, atraso, modo leitura)
+- [ ] Avisos de cobrança por e-mail/WhatsApp (depende do e-mail da Fase 2; o Asaas já notifica as cobranças)
+- [ ] Teste ponta a ponta no sandbox do Asaas + configurar webhook
+- [ ] Validar preços (hoje: Básico R$ 49,90 · Pro R$ 99,90 · Premium R$ 179,90 — editáveis na tabela `plans`)
 
 ## Fase 2 — Aquisição e onboarding self-service (~2 semanas) ⭐
 
