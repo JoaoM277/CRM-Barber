@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Administrativo | La Palmas</title>
-    <link rel="stylesheet" href="css/admin.css?v=20260922d">
+    <link rel="stylesheet" href="css/admin.css?v=20261007a">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -48,6 +48,9 @@
                 <button class="menu-item" data-tab="instancias">
                     <span class="menu-icon">📱</span> Instâncias
                 </button>
+                <button class="menu-item" data-tab="assinatura">
+                    <span class="menu-icon">💳</span> Assinatura
+                </button>
                 <button class="menu-item" data-tab="configuracoes">
                     <span class="menu-icon">🎨</span> Configurações
                 </button>
@@ -75,6 +78,8 @@
             </header>
 
             <section class="content-body" id="admin-content">
+                <!-- aviso de trial / atraso / modo leitura (preenchido por admin.js) -->
+                <div id="assinatura-banner" class="assinatura-banner" style="display:none"></div>
                 
                 <!-- ====================================================================
                      TELA 0: DASHBOARD (FATURAMENTO E VISÃO GERAL)
@@ -348,6 +353,55 @@
                             <tbody id="instancias-table-body"></tbody>
                         </table>
                     </div>
+                </div>
+
+                <!-- ====================================================================
+                     TELA: ASSINATURA DO SISTEMA (PLANO, PAGAMENTO, FATURAS)
+                     ==================================================================== -->
+                <div class="tab-panel" id="panel-assinatura">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Assinatura</h2>
+                            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Seu plano, forma de pagamento e faturas.</p>
+                        </div>
+                    </div>
+
+                    <div class="assinatura-status" id="assinatura-status">Carregando…</div>
+
+                    <h3 class="assinatura-subtitulo">Planos</h3>
+                    <div class="planos-grid" id="planos-grid"></div>
+
+                    <form id="form-assinatura" class="assinatura-form">
+                        <input type="hidden" id="assinatura-plano">
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label for="assinatura-forma">Forma de pagamento</label>
+                                <select id="assinatura-forma" class="admin-input">
+                                    <option value="PIX">Pix</option>
+                                    <option value="BOLETO">Boleto</option>
+                                    <option value="CREDIT_CARD">Cartão de crédito (renova sozinho)</option>
+                                </select>
+                            </div>
+                            <div class="input-group" id="assinatura-cpf-group">
+                                <label for="assinatura-cpf">CPF ou CNPJ do titular</label>
+                                <input type="text" id="assinatura-cpf" class="admin-input" placeholder="000.000.000-00" inputmode="numeric">
+                            </div>
+                        </div>
+                        <p class="assinatura-ajuda" id="assinatura-resumo"></p>
+                        <button type="submit" class="btn-primary" id="btn-assinar">Continuar para o pagamento</button>
+                    </form>
+
+                    <h3 class="assinatura-subtitulo">Faturas</h3>
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr><th>Vencimento</th><th>Valor</th><th>Forma</th><th>Status</th><th></th></tr>
+                            </thead>
+                            <tbody id="faturas-table-body"></tbody>
+                        </table>
+                    </div>
+
+                    <button type="button" class="btn-cancelar-assinatura" id="btn-cancelar-assinatura" style="display:none">Cancelar assinatura</button>
                 </div>
 
                 <!-- ====================================================================
@@ -659,6 +713,7 @@
     <!-- Script de controle do Painel -->
     <script src="js/env.js"></script>
     <script src="js/config.js?v=20261007a"></script>
-    <script src="js/admin.js?v=20260922e"></script>
+    <script src="js/admin.js?v=20261007a"></script>
+    <script src="js/assinatura.js?v=20261007a"></script>
 </body>
 </html>
