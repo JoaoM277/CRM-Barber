@@ -15,6 +15,12 @@ class User extends Authenticatable
 
     public const ROLE_USER = 'user';
 
+    /** Dono da plataforma (painel universal). Não pertence a nenhuma barbearia. */
+    public const ROLE_SUPER_ADMIN = 'super_admin';
+
+    /** Prefixo do nome dos tokens de acesso de suporte (super admin entrando no painel de uma barbearia). */
+    public const SUPPORT_TOKEN_PREFIX = 'suporte:';
+
     protected $fillable = [
         'barbershop_id',
         'name',
@@ -43,5 +49,18 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === self::ROLE_SUPER_ADMIN;
+    }
+
+    /** A requisição atual veio de um token de suporte (acesso do super admin)? */
+    public function isSupportSession(): bool
+    {
+        $token = $this->currentAccessToken();
+
+        return $token && isset($token->name) && str_starts_with($token->name, self::SUPPORT_TOKEN_PREFIX);
     }
 }

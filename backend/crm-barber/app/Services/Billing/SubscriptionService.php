@@ -10,6 +10,7 @@ use App\Models\SubscriptionPayment;
 use App\Models\User;
 use App\Models\Worker;
 use App\Services\Asaas\AsaasClient;
+use App\Support\PlatformSettings;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -24,14 +25,14 @@ class SubscriptionService
     /** Trial da barbearia recém-criada (chamado pelo TenantProvisioner). */
     public function startTrial(Barbershop $barbershop): Subscription
     {
-        $plan = Plan::where('slug', config('billing.trial_plan'))->first()
+        $plan = Plan::where('slug', PlatformSettings::get('trial_plan'))->first()
             ?? Plan::active()->get()->last();
 
         return Subscription::create([
             'barbershop_id' => $barbershop->id,
             'plan_id' => $plan->id,
             'status' => Subscription::STATUS_TRIALING,
-            'trial_ends_at' => now()->addDays(config('billing.trial_days')),
+            'trial_ends_at' => now()->addDays(PlatformSettings::trialDays()),
         ]);
     }
 
@@ -104,6 +105,54 @@ class SubscriptionService
         $sub->save();
 
         return [$sub->refresh(), $this->syncPayments($sub)];
+    }
+
+    /**
+     * Painel universal: concede dias de acesso. Em trial (sem nunca ter pago)
+     * estende o trial; senão estende o período pago como cortesia e tira do atraso.
+     */
+    public function grantDays(Subscription $sub, int $days): Subscription
+    {
+        if (in_array($sub->status, [Subscription::STATUS_TRIALING, Subscription::STATUS_CANCELED], true) && ! $sub->hasEverPaid()) {
+            $base = $sub->trial_ends_at && $sub->trial_ends_at->isFuture() ? $sub->trial_ends_at : now();
+            $sub->trial_ends_at = $base->copy()->addDays($days);
+            if ($sub->status === Subscription::STATUS_CANCELED && ! $sub->asaas_subscription_id) {
+                $sub->status = Subscription::STATUS_TRIALING;
+                $sub->canceled_at = null;
+            }
+        } else {
+            $base = $sub->current_period_ends_at && $sub->current_period_ends_at->isFuture() ? $sub->current_period_ends_at : now();
+            $sub->current_period_ends_at = $base->copy()->addDays($days);
+            if ($sub->status === Subscription::STATUS_PAST_DUE) {
+                $sub->status = Subscription::STATUS_ACTIVE;
+                $sub->past_due_since = null;
+            }
+        }
+
+        $sub->save();
+
+        return $sub;
+    }
+
+    /**
+     * Painel universal: troca o plano. Com assinatura no gateway, o valor da
+     * mensalidade muda lá também (inclusive cobranças em aberto).
+     */
+    public function adminChangePlan(Subscription $sub, Plan $plan): Subscription
+    {
+        $this->assertWorkersFit($sub->barbershop_id, $plan);
+
+        if ($sub->asaas_subscription_id) {
+            $this->asaas->updateSubscription($sub->asaas_subscription_id, [
+                'value' => $plan->price(),
+                'description' => $this->description($plan),
+                'updatePendingPayments' => true,
+            ]);
+        }
+
+        $sub->update(['plan_id' => $plan->id]);
+
+        return $sub;
     }
 
     /** Cancela a renovação. O acesso continua até o fim do período já pago (ou do trial). */

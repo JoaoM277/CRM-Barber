@@ -26,6 +26,14 @@ class IdentifyTenantForUser
 
         $this->tenant->set($user->barbershop_id);
 
+        // conta suspensa pela administração da plataforma (o suporte ainda entra)
+        if (! $this->tenant->barbershop()?->active && ! $user->isSupportSession()) {
+            return response()->json([
+                'code' => 'account_suspended',
+                'message' => 'Esta conta está suspensa. Fale com o suporte.',
+            ], 403);
+        }
+
         return $next($request);
     }
 }

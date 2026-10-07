@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PlatformSettings;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
@@ -73,7 +74,7 @@ class Subscription extends Model
     /** Até quando o acesso total vale, considerando o status atual. */
     public function accessEndsAt(): ?Carbon
     {
-        $grace = (int) config('billing.grace_days');
+        $grace = PlatformSettings::graceDays();
 
         return match ($this->status) {
             self::STATUS_TRIALING => $this->trial_ends_at,

@@ -17,6 +17,9 @@ use App\Http\Controllers\PayoutController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AsaasWebhookController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\Platform\PlatformBarbershopController;
+use App\Http\Controllers\Platform\PlatformMetricsController;
+use App\Http\Controllers\Platform\PlatformSettingsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -65,7 +68,7 @@ Route::middleware('service.token')->group(function () {
 |--------------------------------------------------------------------------
 */
 // 'subscription': painel em modo leitura quando a assinatura não dá mais acesso total
-Route::middleware(['auth:sanctum', 'tenant.user', 'subscription'])->group(function () {
+Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restrict'])->group(function () {
     Route::get('/me', [AuthController::class, 'me'])->name('users.me');
     Route::post('/logout', [AuthController::class, 'logout'])->name('users.logout');
     Route::put('/me/senha', [AuthController::class, 'updatePassword'])->name('users.update-password');
@@ -158,4 +161,29 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription'])->group(functi
         // Auditoria (quem fez o quê no painel)
         Route::get('/auditoria', [AuditLogController::class, 'index'])->name('auditoria.index');
     });
+});
+
+/*
+|--------------------------------------------------------------------------
+| PAINEL UNIVERSAL (dono da plataforma — role super_admin)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth:sanctum', 'super_admin'])->prefix('plataforma')->name('plataforma.')->group(function () {
+    Route::get('/me', [PlatformSettingsController::class, 'me'])->name('me');
+    Route::get('/metricas', PlatformMetricsController::class)->name('metricas');
+
+    Route::get('/barbearias', [PlatformBarbershopController::class, 'index'])->name('barbearias.index');
+    Route::get('/barbearias/{id}', [PlatformBarbershopController::class, 'show'])->whereNumber('id')->name('barbearias.show');
+    Route::post('/barbearias/{id}/dias', [PlatformBarbershopController::class, 'grantDays'])->whereNumber('id')->name('barbearias.dias');
+    Route::put('/barbearias/{id}/plano', [PlatformBarbershopController::class, 'changePlan'])->whereNumber('id')->name('barbearias.plano');
+    Route::post('/barbearias/{id}/suspender', [PlatformBarbershopController::class, 'suspend'])->whereNumber('id')->name('barbearias.suspender');
+    Route::post('/barbearias/{id}/reativar', [PlatformBarbershopController::class, 'reactivate'])->whereNumber('id')->name('barbearias.reativar');
+    Route::post('/barbearias/{id}/acessar', [PlatformBarbershopController::class, 'impersonate'])->whereNumber('id')->middleware('throttle:20,1')->name('barbearias.acessar');
+
+    Route::get('/configuracoes', [PlatformSettingsController::class, 'show'])->name('configuracoes.show');
+    Route::put('/configuracoes', [PlatformSettingsController::class, 'update'])->name('configuracoes.update');
+    Route::put('/planos/{plan}', [PlatformSettingsController::class, 'updatePlan'])->name('planos.update');
+
+    Route::get('/cobranca/eventos', [PlatformSettingsController::class, 'billingEvents'])->name('cobranca.eventos');
+    Route::post('/cobranca/eventos/{event}/reprocessar', [PlatformSettingsController::class, 'reprocessEvent'])->name('cobranca.reprocessar');
 });

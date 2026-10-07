@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Support\Audit;
+use App\Support\PlatformSettings;
 use App\Support\TenantProvisioner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -32,6 +33,13 @@ class AuthController extends Controller
      */
     public function register(Request $request, TenantProvisioner $provisioner)
     {
+        if (! PlatformSettings::get('signup_open')) {
+            return response()->json([
+                'code' => 'signup_closed',
+                'message' => 'Novos cadastros estão temporariamente fechados.',
+            ], 403);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
@@ -75,7 +83,9 @@ class AuthController extends Controller
         }
         
         //3 - Criação de um novo token para a sessão da API
-        $token = $user->createToken('auth-token')->plainTextToken;
+        // admin da plataforma vê todas as barbearias: sessão curta
+        $expiresAt = $user->isSuperAdmin() ? now()->addHours(12) : null;
+        $token = $user->createToken('auth-token', ['*'], $expiresAt)->plainTextToken;
 
         return response()->json([
             'access_token'=> $token,
@@ -90,7 +100,10 @@ class AuthController extends Controller
         $sub = Subscription::with('plan')->where('barbershop_id', $user->barbershop_id)->first();
 
         // mesmos campos de sempre + a situação da assinatura (aviso de trial/atraso no painel)
-        return response()->json($user->toArray() + ['assinatura' => $sub?->toPanelArray()]);
+        return response()->json($user->toArray() + [
+            'assinatura' => $sub?->toPanelArray(),
+            'suporte' => $user->isSupportSession(),
+        ]);
     }
 
     public function Logout(Request $request)

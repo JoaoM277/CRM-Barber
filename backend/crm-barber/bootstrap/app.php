@@ -21,6 +21,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'subscription' => \App\Http\Middleware\EnsureSubscriptionAllowsWrites::class,
             'feature' => \App\Http\Middleware\RequirePlanFeature::class,
             'booking.open' => \App\Http\Middleware\EnsureBookingAvailable::class,
+            'support.restrict' => \App\Http\Middleware\RestrictSupportSession::class,
+            'super_admin' => \App\Http\Middleware\SuperAdminMiddleware::class,
         ]);
 
         // O tenant precisa ser resolvido ANTES do route-model binding, senão

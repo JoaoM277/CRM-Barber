@@ -13,6 +13,20 @@ use Illuminate\Support\Facades\Auth;
  */
 class Audit
 {
+    /** Ação da administração da plataforma sobre uma barbearia (aparece no histórico dela). */
+    public static function logFor(int $barbershopId, string $action, ?Model $subject = null, ?string $description = null): void
+    {
+        AuditLog::withoutGlobalScope('tenant')->create([
+            'barbershop_id' => $barbershopId,
+            'user_id' => Auth::id(),
+            'action' => $action,
+            'subject_type' => $subject ? $subject::class : null,
+            'subject_id' => $subject?->getKey(),
+            'description' => $description,
+            'created_at' => now(),
+        ]);
+    }
+
     public static function log(string $action, ?Model $subject = null, ?string $description = null): void
     {
         $tenant = app(TenantContext::class);
