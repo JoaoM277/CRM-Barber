@@ -106,21 +106,27 @@ sudo systemctl enable --now crm-queue-staging crm-scheduler-staging crm-node-sta
 
 ## 3. Fluxo de deploy
 
-```bash
-# staging
-cd /var/www/crm-barber-staging
-APP_DIR=$PWD SERVICE_SUFFIX=-staging HEALTH_URL=https://staging-api.SEUDOMINIO.com/up \
-  ./deploy/deploy.sh
+Produção (padrões do script = layout atual do CloudPanel: API em
+`/home/api/htdocs/api.crm-barber.local`, front em `/home/app/htdocs/app.usevellis.tech`):
 
-# testou no staging? produção:
-cd /var/www/crm-barber
-HEALTH_URL=https://api.SEUDOMINIO.com/up ./deploy/deploy.sh
+```bash
+sudo bash /home/api/htdocs/api.crm-barber.local/deploy/deploy.sh          # API + front
+sudo bash /home/api/htdocs/api.crm-barber.local/deploy/deploy.sh front    # só o front
+```
+
+Staging (quando existir), sobrescrevendo pastas/usuários:
+```bash
+API_DIR=... API_USER=... FRONT_DIR=... FRONT_USER=... SERVICE_SUFFIX=-staging   HEALTH_URL=https://staging-api.SEUDOMINIO.com/up sudo -E bash deploy/deploy.sh
 ```
 
 O `deploy.sh` (detalhes no cabeçalho do script) recusa rodar com arquivos
 editados à mão, faz backup antes de migrations pendentes, coloca a API em
 manutenção só durante o `migrate`, recarrega caches e reinicia fila/scheduler/Node.
 O commit anterior é impresso no início para rollback.
+
+> **Config em cache:** o deploy roda `artisan optimize`, que coloca o `.env` em
+> cache. Depois de editar o `.env` da API, rode
+> `sudo -u api php8.5 artisan config:cache` (ou um deploy) para valer.
 
 ---
 

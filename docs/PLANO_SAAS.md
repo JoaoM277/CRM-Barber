@@ -104,7 +104,7 @@ Estimativa grosseira para "vendável" (Fases 0–4): ~10-12 semanas.
 
 ## Decisões em aberto
 
-1. Gateway: Asaas? (ou outro com conta já existente)
+1. ~~Gateway~~ → **Asaas** (decidido em 07/10/2026)
 2. Front: migrar para React + Vite + shadcn, ou manter vanilla e só redesenhar?
 3. Planos e preço (sugestão: Básico / Pro / Premium, escalando por nº de profissionais) — pesquisar Trinks, AppBarber, Booksy, BestBarbers, Avec
 4. Nome da marca e domínio da landing page
