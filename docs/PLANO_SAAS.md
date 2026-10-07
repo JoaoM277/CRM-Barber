@@ -26,7 +26,8 @@ auditoria, backup MySQL, 38 testes.
 - [ ] `backup-refactor-claude` vira a `main`; branches abandonadas arquivadas
 - [x] Remover skills do Prisma (`.agents`, `.claude`, `.windsurf`, `skills-lock.json`) do `messages-service`
 - [x] CI no GitHub Actions (testes Laravel + Pint + checagem do Node)
-- [x] Script de deploy (`deploy/deploy.sh`) — fim do deploy manual
+- [x] Script de deploy (`deploy/deploy.sh`) — fim do deploy manual (1º deploy em prod: 07/10/2026)
+- [x] Produção consolidada: 1 front (app.* cliente / barber.* painel, mesma pasta), 1 API, 1 banco, 1 Evolution; clones/sites órfãos removidos
 - [x] Runbook de staging (`deploy/STAGING.md`)
 - [ ] Staging de pé na VPS (subdomínio + banco próprio)
 - [x] Backup off-site opcional via rclone (`scripts/backup-mysql.sh`)
