@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreWorkerRequest;
 use App\Models\Worker;
 use App\Support\Audit;
+use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -31,9 +32,18 @@ class WorkerController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreWorkerRequest $request)
+    public function store(StoreWorkerRequest $request, TenantContext $tenant)
     {
         $data = $request->validated();
+
+        // limite de profissionais do plano (restaurar um excluído também conta)
+        $limit = $tenant->barbershop()?->subscription?->workerLimit();
+        if ($limit !== null && Worker::count() >= $limit) {
+            return response()->json([
+                'code' => 'plan_limit',
+                'message' => "Seu plano permite até {$limit} profissionais. Faça upgrade em \"Assinatura\" para cadastrar mais.",
+            ], 403);
+        }
 
         // Se existir um profissional excluído com o mesmo telefone, restaura
         // em vez de tentar inserir (o índice único não distingue soft-deleted).

@@ -15,6 +15,8 @@ use App\Http\Controllers\AvisoController;
 use App\Http\Controllers\FaturamentoController;
 use App\Http\Controllers\PayoutController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\AsaasWebhookController;
+use App\Http\Controllers\BillingController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,6 +26,12 @@ use Illuminate\Support\Facades\Route;
 */
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1')->name('users.login');
 Route::post('/cadastrar', [AuthController::class, 'register'])->middleware('throttle:6,1')->name('users.register');
+
+// Planos à venda (landing page / tela de assinatura)
+Route::get('/planos', [BillingController::class, 'plans'])->name('planos.index');
+
+// Webhook do Asaas (autenticado pelo header asaas-access-token, ver AsaasWebhookController)
+Route::post('/webhooks/asaas', AsaasWebhookController::class)->middleware('throttle:120,1')->name('webhooks.asaas');
 
 /*
 |--------------------------------------------------------------------------
@@ -35,7 +43,7 @@ Route::middleware('tenant')->group(function () {
     Route::prefix('b/{barbershop}')->group(function () {
         Route::get('/servicos', [ServiceController::class, 'index'])->name('servicos.index');
         Route::get('/profissionais', [WorkerController::class, 'index'])->name('profissionais.index');
-        Route::post('/agendamentos', [ScheduleController::class, 'store'])->middleware('throttle:15,1')->name('agendamentos.store');
+        Route::post('/agendamentos', [ScheduleController::class, 'store'])->middleware(['throttle:15,1', 'booking.open'])->name('agendamentos.store');
         Route::get('/disponibilidade', [ScheduleController::class, 'disponibilidade'])->name('agendamentos.disponibilidade');
         Route::get('/avisos/ativo', [AvisoController::class, 'ativo'])->name('avisos.ativo');
         Route::get('/barbearia', [BarbershopController::class, 'publicIdentity'])->name('barbearia.identidade');
@@ -56,7 +64,8 @@ Route::middleware('service.token')->group(function () {
 | Rotas AUTENTICADAS (painel administrativo)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth:sanctum', 'tenant.user'])->group(function () {
+// 'subscription': painel em modo leitura quando a assinatura não dá mais acesso total
+Route::middleware(['auth:sanctum', 'tenant.user', 'subscription'])->group(function () {
     Route::get('/me', [AuthController::class, 'me'])->name('users.me');
     Route::post('/logout', [AuthController::class, 'logout'])->name('users.logout');
     Route::put('/me/senha', [AuthController::class, 'updatePassword'])->name('users.update-password');
@@ -120,6 +129,11 @@ Route::middleware(['auth:sanctum', 'tenant.user'])->group(function () {
     |----------------------------------------------------------------------
     */
     Route::middleware('admin')->group(function () {
+        // Assinatura do SaaS (sempre liberadas, mesmo em modo leitura)
+        Route::get('/assinatura', [BillingController::class, 'show'])->name('assinatura.show');
+        Route::post('/assinatura', [BillingController::class, 'subscribe'])->middleware('throttle:10,1')->name('assinatura.subscribe');
+        Route::delete('/assinatura', [BillingController::class, 'cancel'])->name('assinatura.cancel');
+
         Route::get('/usuarios', [UserController::class, 'index'])->name('usuarios.index');
         Route::post('/usuarios', [UserController::class, 'store'])->name('usuarios.store');
         Route::get('/usuarios/{usuario}', [UserController::class, 'show'])->name('usuarios.show');
@@ -130,13 +144,13 @@ Route::middleware(['auth:sanctum', 'tenant.user'])->group(function () {
         Route::put('/avisos/{id}', [AvisoController::class, 'update'])->whereNumber('id')->name('avisos.update');
 
         // Faturamento + folha de comissões
-        Route::get('/faturamento', [FaturamentoController::class, 'index'])->name('faturamento.index');
-        Route::get('/payouts', [PayoutController::class, 'index'])->name('payouts.index');
-        Route::post('/payouts', [PayoutController::class, 'store'])->name('payouts.store');
+        Route::get('/faturamento', [FaturamentoController::class, 'index'])->middleware('feature:financeiro')->name('faturamento.index');
+        Route::get('/payouts', [PayoutController::class, 'index'])->middleware('feature:financeiro')->name('payouts.index');
+        Route::post('/payouts', [PayoutController::class, 'store'])->middleware('feature:financeiro')->name('payouts.store');
 
         // Instâncias WhatsApp (Evolution API)
         Route::get('/instances', [InstanceController::class, 'index'])->name('instances.index');
-        Route::post('/instances', [InstanceController::class, 'store'])->name('instances.store');
+        Route::post('/instances', [InstanceController::class, 'store'])->middleware('feature:whatsapp')->name('instances.store');
         Route::get('/instances/{instance}/qrcode', [InstanceController::class, 'qrcode'])->name('instances.qrcode');
         Route::get('/instances/{instance}/status', [InstanceController::class, 'status'])->name('instances.status');
         Route::delete('/instances/{instance}', [InstanceController::class, 'destroy'])->name('instances.destroy');

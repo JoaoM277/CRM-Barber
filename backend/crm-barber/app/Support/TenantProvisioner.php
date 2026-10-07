@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Barbershop;
 use App\Models\OperationTime;
 use App\Models\User;
+use App\Services\Billing\SubscriptionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -15,6 +16,8 @@ use Illuminate\Support\Str;
  */
 class TenantProvisioner
 {
+    public function __construct(protected SubscriptionService $billing) {}
+
     /**
      * @param  array{name:string,email:string,password:string,barbershop_name:string,barbershop_phone?:?string,barbershop_whatsapp?:?string}  $data
      * @return array{0: User, 1: Barbershop}
@@ -38,6 +41,9 @@ class TenantProvisioner
             ]);
 
             $this->seedDefaultOperationTimes($barbershop->id);
+
+            // toda barbearia nova nasce em trial (ver config/billing.php)
+            $this->billing->startTrial($barbershop);
 
             return [$user, $barbershop];
         });

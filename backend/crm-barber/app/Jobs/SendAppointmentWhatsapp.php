@@ -3,7 +3,9 @@
 namespace App\Jobs;
 
 use App\Models\Instance;
+use App\Models\Plan;
 use App\Models\Schedule;
+use App\Models\Subscription;
 use App\Support\Phone;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -29,6 +31,12 @@ class SendAppointmentWhatsapp implements ShouldQueue
         $schedule = Schedule::with(['client', 'worker', 'service', 'services'])->find($this->scheduleId);
 
         if (! $schedule || ! $schedule->client) {
+            return;
+        }
+
+        // WhatsApp automático é recurso de plano (sem assinatura registrada = legado, envia)
+        $sub = Subscription::with('plan')->where('barbershop_id', $schedule->barbershop_id)->first();
+        if ($sub && ! $sub->hasFeature(Plan::FEATURE_WHATSAPP)) {
             return;
         }
 

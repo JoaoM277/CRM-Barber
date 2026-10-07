@@ -49,6 +49,11 @@ class Barbershop extends Model
         return $this->hasMany(User::class);
     }
 
+    public function subscription()
+    {
+        return $this->hasOne(Subscription::class);
+    }
+
     public function services()
     {
         return $this->hasMany(Service::class);

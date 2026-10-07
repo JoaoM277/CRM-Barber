@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Subscription;
 use App\Models\User;
 use App\Support\Audit;
 use App\Support\TenantProvisioner;
@@ -85,7 +86,11 @@ class AuthController extends Controller
 
     public function Me(Request $request)
     {
-        return response()->json($request->user());
+        $user = $request->user();
+        $sub = Subscription::with('plan')->where('barbershop_id', $user->barbershop_id)->first();
+
+        // mesmos campos de sempre + a situação da assinatura (aviso de trial/atraso no painel)
+        return response()->json($user->toArray() + ['assinatura' => $sub?->toPanelArray()]);
     }
 
     public function Logout(Request $request)

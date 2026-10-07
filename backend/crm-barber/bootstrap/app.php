@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'service.token' => \App\Http\Middleware\ServiceTokenMiddleware::class,
             'tenant' => \App\Http\Middleware\IdentifyTenant::class,
             'tenant.user' => \App\Http\Middleware\IdentifyTenantForUser::class,
+            'subscription' => \App\Http\Middleware\EnsureSubscriptionAllowsWrites::class,
+            'feature' => \App\Http\Middleware\RequirePlanFeature::class,
+            'booking.open' => \App\Http\Middleware\EnsureBookingAvailable::class,
         ]);
 
         // O tenant precisa ser resolvido ANTES do route-model binding, senão
