@@ -3,3 +3,8 @@
 #Ignora arquivos de testes
 tests/
 /src/generated/prisma
+#Skills de agentes de IA instaladas localmente (não fazem parte do serviço)
+.agents/
+.claude/
+.windsurf/
+skills-lock.json

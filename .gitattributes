@@ -1,0 +1,2 @@
+# scripts rodam na VPS (Linux): sempre LF, mesmo com autocrlf no Windows
+*.sh text eol=lf

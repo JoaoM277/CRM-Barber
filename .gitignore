@@ -14,3 +14,6 @@ vendor/
 
 # Runbook local de operação da VPS (caminhos/detalhes internos, não vai pro repo)
 ATUALIZAR_VPS.md
+
+# Config do front por servidor (API_BASE_URL etc.) — ver front-end/js/env.example.js
+front-end/js/env.js

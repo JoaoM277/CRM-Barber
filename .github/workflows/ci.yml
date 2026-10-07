@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main, backup-refactor-claude]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Laravel (testes + Pint)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/crm-barber
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3, bcmath, intl
+          coverage: none
+
+      - name: Cache do Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: composer-${{ hashFiles('backend/crm-barber/composer.lock') }}
+
+      - run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Preparar .env
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Testes (sqlite em memória, via phpunit.xml)
+        run: php artisan test
+
+      # Ainda não bloqueia o merge: o código atual nunca passou pelo Pint.
+      # Depois de rodar `vendor/bin/pint` uma vez no projeto, remova o continue-on-error.
+      - name: Estilo (Pint)
+        continue-on-error: true
+        run: vendor/bin/pint --test
+
+  messages-service:
+    name: messages-service (Node)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: messages-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: messages-service/package-lock.json
+
+      - run: npm ci
+
+      - name: Checagem de sintaxe
+        run: find src -name '*.js' -print0 | xargs -0 -n1 node --check

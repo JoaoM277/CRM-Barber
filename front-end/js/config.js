@@ -1,10 +1,12 @@
 // ==========================================================================
 //  Configuração do front-end
 //  Em dev/LAN a URL da API é deduzida do host atual (localhost, IP da rede...).
-//  Em produção, fixe a URL pública da API aqui:
-//    window.API_BASE_URL = "https://api.suabarbearia.com/api";
+//  Em produção/staging, NÃO edite este arquivo: crie js/env.js no servidor
+//  (copie js/env.example.js). Ele fica fora do git, então o deploy não conflita.
 // ==========================================================================
-window.API_BASE_URL = `${location.protocol}//${location.hostname}:8000/api`;
+window.API_BASE_URL =
+    window.CRM_ENV?.API_BASE_URL ||
+    `${location.protocol}//${location.hostname}:8000/api`;
 
 // --------------------------------------------------------------------------
 //  Multi-tenant: qual barbearia esta página de agendamento representa.
@@ -25,5 +27,6 @@ window.API_BASE_URL = `${location.protocol}//${location.hostname}:8000/api`;
             ? labels[0]
             : null;
 
-    window.BARBERSHOP_SLUG = (fromQuery || fromSubdomain || "alpha-barber").trim();
+    const fallback = window.CRM_ENV?.DEFAULT_BARBERSHOP_SLUG || "alpha-barber";
+    window.BARBERSHOP_SLUG = (fromQuery || fromSubdomain || fallback).trim();
 })();
