@@ -122,11 +122,12 @@ if [ "$TARGET" != "front" ]; then
   read -r PREV NEW <<<"$CLONE_OUT"
   BACKEND_DIR="$API_DIR/backend/crm-barber"
   NODE_DIR="$API_DIR/messages-service"
-  art() { (cd "$BACKEND_DIR" && as "$API_USER" "$PHP_BIN" artisan "$@"); }
+  # env -C: troca de pasta já como o dono (o usuário do deploy não entra em /home/<site>)
+  art() { as "$API_USER" env -C "$BACKEND_DIR" "$PHP_BIN" artisan "$@"; }
 
   log "composer install"
-  (cd "$BACKEND_DIR" && as "$API_USER" "$PHP_BIN" "$(command -v composer)" install \
-      --no-dev --optimize-autoloader --no-interaction --no-progress)
+  as "$API_USER" env -C "$BACKEND_DIR" "$PHP_BIN" "$(command -v composer)" install \
+      --no-dev --optimize-autoloader --no-interaction --no-progress
 
   MIGRATE_STATUS="$(art migrate:status)"   # falha aqui se o banco estiver fora
   if grep -qw "Pending" <<<"$MIGRATE_STATUS"; then
@@ -160,7 +161,7 @@ if [ "$TARGET" != "front" ]; then
   if ! sudo test -d "$NODE_DIR/node_modules" || \
      ! as "$API_USER" git -C "$API_DIR" diff --quiet "$PREV" "$NEW" -- messages-service/package-lock.json; then
     log "npm ci (messages-service)"
-    (cd "$NODE_DIR" && as "$API_USER" npm ci --omit=dev --no-audit --no-fund)
+    as "$API_USER" env -C "$NODE_DIR" npm ci --omit=dev --no-audit --no-fund
   fi
 
   log "Reiniciando serviços"
