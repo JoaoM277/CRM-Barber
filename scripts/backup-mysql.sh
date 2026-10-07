@@ -42,6 +42,7 @@ MYSQL_PWD="$DB_PASSWORD" mysqldump \
   --port="$DB_PORT" \
   --user="$DB_USERNAME" \
   --single-transaction \
+  --no-tablespaces \
   --routines \
   --triggers \
   "$DB_DATABASE" \
