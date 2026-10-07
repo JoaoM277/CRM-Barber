@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Plataforma | Administração</title>
+    <link rel="stylesheet" href="css/admin.css?v=20261008a">
+    <link rel="stylesheet" href="css/plataforma.css?v=20261008a">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+
+    <div class="admin-wrapper">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-logo">PL</div>
+                <div class="brand-text">
+                    <h2>Plataforma</h2>
+                    <p>Administração</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <button class="menu-item active" data-tab="visao">
+                    <span class="menu-icon">📈</span> Visão geral
+                </button>
+                <button class="menu-item" data-tab="barbearias">
+                    <span class="menu-icon">💈</span> Barbearias
+                </button>
+                <button class="menu-item" data-tab="config">
+                    <span class="menu-icon">⚙️</span> Configurações
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn-logout" id="btn-sair">🚪 Sair</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="admin-header">
+                <div class="header-left">
+                    <button class="btn-menu" id="btn-abrir-menu" aria-label="Abrir menu" title="Menu">☰</button>
+                    <div class="header-title">
+                        <h1>Administração da plataforma</h1>
+                        <p>Assinaturas, desempenho e suporte às barbearias</p>
+                    </div>
+                </div>
+                <div class="admin-profile">
+                    <span id="pl-usuario"></span>
+                </div>
+            </header>
+
+            <section class="content-body">
+
+                <!-- ============================== VISÃO GERAL ============================== -->
+                <div class="tab-panel active" id="panel-visao">
+                    <div class="pl-hero">
+                        <div>
+                            <div class="pl-label">Receita recorrente mensal (MRR)</div>
+                            <div class="pl-hero-valor" id="m-mrr">—</div>
+                            <div class="pl-hero-sub" id="m-mrr-sub"></div>
+                        </div>
+                    </div>
+
+                    <div class="pl-kpis" id="pl-kpis"></div>
+
+                    <div class="pl-grid-2">
+                        <section class="pl-card">
+                            <header class="pl-card-header">
+                                <div>
+                                    <h3>Novos cadastros</h3>
+                                    <p class="pl-muted">Barbearias criadas por dia, últimos 30 dias</p>
+                                </div>
+                                <span class="pl-card-total" id="cad-total"></span>
+                            </header>
+                            <div class="pl-chart" id="chart-cadastros" role="img" aria-label="Gráfico de colunas de novos cadastros por dia"></div>
+                            <details class="pl-tabela-dados">
+                                <summary>Ver como tabela</summary>
+                                <table class="admin-table"><thead><tr><th>Dia</th><th>Cadastros</th></tr></thead><tbody id="cad-tabela"></tbody></table>
+                            </details>
+                        </section>
+
+                        <section class="pl-card">
+                            <header class="pl-card-header">
+                                <div>
+                                    <h3>Situação das contas</h3>
+                                    <p class="pl-muted">Clique para ver as barbearias</p>
+                                </div>
+                            </header>
+                            <ul class="pl-situacoes" id="pl-situacoes"></ul>
+
+                            <h3 class="pl-subtitulo">Pagantes por plano</h3>
+                            <ul class="pl-barras" id="pl-por-plano"></ul>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- ============================== BARBEARIAS ============================== -->
+                <div class="tab-panel" id="panel-barbearias">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Barbearias</h2>
+                            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Assinaturas, uso e acesso de suporte.</p>
+                        </div>
+                    </div>
+
+                    <div class="pl-filtros">
+                        <input type="search" id="f-busca" class="admin-input" placeholder="Buscar por nome, link ou e-mail do dono">
+                        <select id="f-situacao" class="admin-input">
+                            <option value="">Todas as situações</option>
+                            <option value="em_teste">Em teste</option>
+                            <option value="pagantes">Pagantes</option>
+                            <option value="em_atraso">Em atraso</option>
+                            <option value="modo_leitura">Modo leitura</option>
+                            <option value="canceladas">Canceladas</option>
+                            <option value="suspensas">Suspensas</option>
+                        </select>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Barbearia</th><th>Plano</th><th>Situação</th><th>Acesso até</th>
+                                    <th>Profissionais</th><th>Agend. 30d</th><th>Último acesso</th><th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="barbearias-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="pl-paginacao" id="barbearias-paginacao"></div>
+                </div>
+
+                <!-- ============================== CONFIGURAÇÕES ============================== -->
+                <div class="tab-panel" id="panel-config">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Configurações</h2>
+                            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Regras da assinatura, planos e integração de cobrança.</p>
+                        </div>
+                    </div>
+
+                    <section class="pl-card">
+                        <h3>Regras da assinatura</h3>
+                        <form id="form-config" class="pl-form">
+                            <div class="input-row">
+                                <div class="input-group">
+                                    <label for="c-trial">Dias de teste grátis</label>
+                                    <input type="number" id="c-trial" class="admin-input" min="0" max="90">
+                                </div>
+                                <div class="input-group">
+                                    <label for="c-carencia">Dias de carência após vencimento</label>
+                                    <input type="number" id="c-carencia" class="admin-input" min="0" max="30">
+                                </div>
+                                <div class="input-group">
+                                    <label for="c-plano-trial">Plano durante o teste</label>
+                                    <select id="c-plano-trial" class="admin-input"></select>
+                                </div>
+                            </div>
+                            <label class="pl-check"><input type="checkbox" id="c-cadastro"> Aceitar novos cadastros de barbearias</label>
+                            <div><button type="submit" class="btn-primary">Salvar regras</button></div>
+                        </form>
+                    </section>
+
+                    <section class="pl-card">
+                        <h3>Planos</h3>
+                        <p class="pl-muted">Preço novo vale para assinaturas novas; quem já assina segue com o valor contratado até trocar de plano.</p>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead><tr><th>Plano</th><th>Preço (R$)</th><th>Máx. profissionais</th><th>WhatsApp</th><th>Financeiro</th><th>À venda</th><th></th></tr></thead>
+                                <tbody id="planos-body"></tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="pl-card">
+                        <h3>Integração de cobrança (Asaas)</h3>
+                        <div id="gateway-status" class="pl-gateway"></div>
+                        <h3 class="pl-subtitulo">Últimos webhooks recebidos</h3>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead><tr><th>Recebido</th><th>Evento</th><th>Situação</th><th></th></tr></thead>
+                                <tbody id="eventos-body"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ============================== DETALHE DA BARBEARIA ============================== -->
+    <div class="modal-overlay" id="modal-barbearia">
+        <div class="modal-content pl-modal-largo">
+            <div class="modal-header">
+                <h3 id="d-nome">Barbearia</h3>
+                <button class="btn-close" type="button" data-fechar>✖</button>
+            </div>
+            <div id="d-corpo" class="pl-detalhe"></div>
+        </div>
+    </div>
+
+    <div id="admin-toast" class="toast-escondido">
+        <span id="admin-toast-texto"></span>
+    </div>
+
+    <script src="js/env.js"></script>
+    <script src="js/config.js?v=20261007a"></script>
+    <script src="js/plataforma.js?v=20261008a"></script>
+</body>
+</html>

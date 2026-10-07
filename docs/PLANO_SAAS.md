@@ -57,7 +57,7 @@ webhooks, sandbox, emissão de NFS-e, subcontas para split na Fase 5).
 - [ ] E-mail transacional (Resend ou SES): verificação de e-mail, **esqueci minha senha**, boas-vindas
 - [ ] Wizard pós-cadastro: dados/logo → serviços (templates) → profissionais → horários → WhatsApp → "seu link está pronto"
 - [ ] Subdomínio por barbearia (DNS wildcard + certificado wildcard)
-- [ ] Painel super-admin: barbearias, status de assinatura, MRR, churn, trials, impersonate, bloquear/desbloquear
+- [x] Painel universal (`plataforma.html`): MRR, receita, conversão do trial, churn, cadastros/dia, situação das contas; barbearias com busca/filtro, conceder dias, trocar plano, suspender/reativar, acesso de suporte (2h, auditado); regras da assinatura, planos e webhooks do Asaas
 - [ ] Termos de Uso + Política de Privacidade (LGPD), aceite no cadastro
 
 ## Fase 3 — Layout profissional (~3-4 semanas, paralelo à Fase 2)

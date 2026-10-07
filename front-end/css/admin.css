@@ -928,3 +928,29 @@ textarea.admin-input:focus {
     font-size: 13px;
 }
 .btn-cancelar-assinatura:hover { color: var(--danger); }
+
+/* faixa do acesso de suporte (painel universal) */
+.suporte-faixa {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 16px;
+    padding: 8px 16px;
+    background: #1d3a5f;
+    color: #dbe9ff;
+    font-size: 13px;
+    text-align: center;
+}
+.suporte-faixa button {
+    background: none;
+    border: 1px solid currentColor;
+    color: inherit;
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-size: 12px;
+}

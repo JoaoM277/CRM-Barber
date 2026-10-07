@@ -246,3 +246,32 @@ document.getElementById("btn-cancelar-assinatura")?.addEventListener("click", ()
 });
 
 renderAssinatura();
+
+// --------------------------------------------------------------------------
+// Faixa de "modo suporte" (sessão aberta pelo painel universal)
+// --------------------------------------------------------------------------
+(async function () {
+  try {
+    const res = await fetch(`${API_BASE_URL}/me`, { headers: authHeaders() });
+    if (!res.ok) return;
+    const me = await res.json();
+    if (!me.suporte) return;
+
+    const faixa = document.createElement("div");
+    faixa.className = "suporte-faixa";
+    faixa.innerHTML = '<span>🛟 Modo suporte: você está no painel desta barbearia como administrador da plataforma. Senha, assinatura e usuários ficam bloqueados.</span><button type="button">Encerrar acesso</button>';
+    faixa.querySelector("button").onclick = async () => {
+      try {
+        await fetch(`${API_BASE_URL}/logout`, { method: "POST", headers: authHeaders() });
+      } finally {
+        localStorage.removeItem("admin_token");
+        window.close();
+        window.location.href = "login.html";
+      }
+    };
+    document.body.prepend(faixa);
+    document.body.classList.add("com-suporte");
+  } catch (e) {
+    /* sem faixa se /me falhar — o resto do painel segue normal */
+  }
+})();

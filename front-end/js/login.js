@@ -29,11 +29,15 @@ if (formLogin) {
             const data = await response.json();
 
             if (response.ok && data.access_token) {
-                // Salva o token de acesso no navegador
+                if (data.user && data.user.role === "super_admin") {
+                    // administração da plataforma: sessão separada da do painel da barbearia
+                    localStorage.setItem("platform_token", data.access_token);
+                    window.location.href = "plataforma.html";
+                    return;
+                }
+
                 localStorage.setItem("admin_token", data.access_token);
-                
-                // Redireciona para o painel de administração que já construímos
-                window.location.href = "admin.html"; // Ajuste o nome da sua página admin se for diferente
+                window.location.href = "admin.html";
             } else {
                 feedback.innerText = data.message || "E-mail ou senha inválidos.";
                 feedback.classList.add("erro");
