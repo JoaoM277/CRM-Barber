@@ -47,6 +47,13 @@ class AuthEmailsTest extends TestCase
         Notification::assertSentTo($user, WelcomeNotification::class);
     }
 
+    public function test_config_publica_mostra_dias_de_teste_e_cadastro(): void
+    {
+        $this->getJson('/api/publico/config')
+            ->assertOk()
+            ->assertJson(['dias_teste' => 14, 'cadastro_aberto' => true]);
+    }
+
     // ------------------------------------------------------------ esqueci minha senha
 
     public function test_esqueci_senha_manda_link_e_nao_revela_se_a_conta_existe(): void

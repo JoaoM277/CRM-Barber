@@ -34,6 +34,7 @@ Route::post('/senha/redefinir', [AuthController::class, 'resetPassword'])->middl
 
 // Planos à venda (landing page / tela de assinatura)
 Route::get('/planos', [BillingController::class, 'plans'])->name('planos.index');
+Route::get('/publico/config', [BillingController::class, 'publicConfig'])->name('publico.config');
 
 // Webhook do Asaas (autenticado pelo header asaas-access-token, ver AsaasWebhookController)
 Route::post('/webhooks/asaas', AsaasWebhookController::class)->middleware('throttle:120,1')->name('webhooks.asaas');

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar conta | Vellis</title>
+    <meta name="description" content="Crie a conta da sua barbearia na Vellis: agenda online, WhatsApp automático e financeiro. Teste grátis, sem cartão.">
+    <link rel="stylesheet" href="css/auth.css?v=20261009a">
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="login-header">
+            <div class="marca">Vellis</div>
+            <h1>Crie sua conta grátis</h1>
+            <p id="cad-sub">Teste todos os recursos por 14 dias. Sem cartão de crédito.</p>
+        </div>
+
+        <form id="form-cadastro" novalidate>
+            <div class="input-group">
+                <label for="cad-nome">Seu nome</label>
+                <input type="text" id="cad-nome" required autocomplete="name" maxlength="255">
+            </div>
+            <div class="input-group">
+                <label for="cad-barbearia">Nome da barbearia</label>
+                <input type="text" id="cad-barbearia" required maxlength="255" placeholder="Ex.: Barbearia do João">
+            </div>
+            <div class="input-group">
+                <label for="cad-whatsapp">WhatsApp da barbearia</label>
+                <input type="tel" id="cad-whatsapp" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="(11) 99999-9999">
+            </div>
+            <div class="input-group">
+                <label for="cad-email">E-mail</label>
+                <input type="email" id="cad-email" required autocomplete="email" maxlength="255">
+            </div>
+            <div class="input-group">
+                <label for="cad-senha">Senha</label>
+                <input type="password" id="cad-senha" required autocomplete="new-password" minlength="6">
+                <div class="input-ajuda">Mínimo de 6 caracteres.</div>
+            </div>
+
+            <label class="check">
+                <input type="checkbox" id="cad-termos" required>
+                <span>Li e aceito os <a href="termos.html" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span>
+            </label>
+
+            <button type="submit" class="btn-login" id="btn-cadastrar">Criar minha conta</button>
+        </form>
+
+        <div id="auth-feedback" class="login-toast" role="alert"></div>
+
+        <div class="login-links centro">
+            <span style="color: var(--text-muted)">Já tem conta?</span> <a href="login.html">Entrar</a>
+        </div>
+    </div>
+
+    <script src="js/env.js"></script>
+    <script src="js/config.js?v=20261007a"></script>
+    <script src="js/auth.js?v=20261009a"></script>
+</body>
+</html>

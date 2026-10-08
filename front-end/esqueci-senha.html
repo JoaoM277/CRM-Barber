@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esqueci minha senha | Vellis</title>
+    <link rel="stylesheet" href="css/auth.css?v=20261009a">
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="login-header">
+            <div class="marca">Vellis</div>
+            <h1>Esqueci minha senha</h1>
+            <p>Informe o e-mail da sua conta e enviaremos um link para criar uma nova senha.</p>
+        </div>
+
+        <form id="form-esqueci">
+            <div class="input-group">
+                <label for="esq-email">E-mail</label>
+                <input type="email" id="esq-email" required autocomplete="email">
+            </div>
+            <button type="submit" class="btn-login" id="btn-esqueci">Enviar link</button>
+        </form>
+
+        <div id="auth-feedback" class="login-toast" role="alert"></div>
+
+        <div class="login-links centro">
+            <a href="login.html">Voltar para o login</a>
+        </div>
+    </div>
+
+    <script src="js/env.js"></script>
+    <script src="js/config.js?v=20261007a"></script>
+    <script src="js/auth.js?v=20261009a"></script>
+</body>
+</html>

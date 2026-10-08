@@ -7,6 +7,7 @@ use App\Models\Subscription;
 use App\Services\Asaas\AsaasException;
 use App\Services\Billing\SubscriptionService;
 use App\Support\Audit;
+use App\Support\PlatformSettings;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,6 +22,15 @@ class BillingController extends Controller
     public function plans(): JsonResponse
     {
         return response()->json(Plan::active()->get()->map->toPublicArray()->values());
+    }
+
+    /** GET /publico/config — o que a landing e o cadastro precisam saber. */
+    public function publicConfig(): JsonResponse
+    {
+        return response()->json([
+            'dias_teste' => PlatformSettings::trialDays(),
+            'cadastro_aberto' => (bool) PlatformSettings::get('signup_open'),
+        ]);
     }
 
     /** GET /assinatura — situação atual, planos e faturas da barbearia logada. */
