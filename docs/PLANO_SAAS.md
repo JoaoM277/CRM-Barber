@@ -76,11 +76,12 @@ Recomendação: painel em **React + Vite + Tailwind + shadcn/ui** consumindo a A
 
 ## Fase 4 — Otimização e robustez (~1-2 semanas)
 
-- [ ] Redis para cache e fila
-- [ ] Cache das rotas públicas, revisão de N+1, Lighthouse > 90 na página pública
-- [ ] Upload de imagens (logo, foto do profissional) com resize + storage/CDN
-- [ ] LGPD do cliente final: exportar/apagar dados
-- [ ] WhatsApp: rate limit de envio, avisos de risco de ban; estudar Meta Cloud API como opção premium
+- [ ] Redis para cache e fila — adiado de propósito: com fila/cache no MySQL a carga atual é baixa; reavaliar perto de ~100 barbearias ativas ou se a fila atrasar
+- [x] Página pública medida no Lighthouse (celular): desempenho 98, acessibilidade 100, boas práticas 96, SEO 100 — cache de rotas públicas desnecessário por ora
+- [x] Upload de logo e fotos (re-codificadas em WebP, recortadas, sem EXIF) — CDN quando o volume justificar
+- [x] LGPD do cliente final: baixar dados e apagar dados pessoais (anonimização) pela ficha do cliente
+- [x] WhatsApp: limite de 20 mensagens/min por barbearia (excesso é adiado, não perdido) + aviso de risco na tela de conexão
+- [ ] Estudar Meta Cloud API (WhatsApp oficial) como opção do plano Premium
 
 ## Fase 5 — Novas funcionalidades (contínuo, por valor de venda)
 

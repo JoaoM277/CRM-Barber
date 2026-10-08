@@ -14,13 +14,24 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Throwable;
 
 class SendAppointmentWhatsapp implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 3;
+    /**
+     * Ritmo máximo de mensagens por barbearia (protege o número contra bloqueio
+     * do WhatsApp por rajada). Acima disso o job volta para a fila e sai depois.
+     */
+    public const POR_MINUTO = 20;
+
+    // adiamentos pelo limite de ritmo contam como tentativa no Laravel; erros
+    // de verdade (falha no envio) continuam limitados a 3 por $maxExceptions
+    public int $tries = 25;
+
+    public int $maxExceptions = 3;
 
     public int $backoff = 30;
 
@@ -39,6 +50,14 @@ class SendAppointmentWhatsapp implements ShouldQueue
         if ($sub && ! $sub->hasFeature(Plan::FEATURE_WHATSAPP)) {
             return;
         }
+
+        $ritmo = 'whatsapp-envios:'.$schedule->barbershop_id;
+        if (RateLimiter::tooManyAttempts($ritmo, self::POR_MINUTO)) {
+            $this->release(RateLimiter::availableIn($ritmo) + random_int(1, 15));
+
+            return;
+        }
+        RateLimiter::hit($ritmo, 60);
 
         $phone = Phone::normalizeBr((string) $schedule->client->phone);
 
