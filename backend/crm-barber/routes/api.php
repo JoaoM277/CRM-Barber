@@ -22,6 +22,7 @@ use App\Http\Controllers\ImagemController;
 use App\Http\Controllers\EvolutionWebhookController;
 use App\Http\Controllers\MeuHorarioController;
 use App\Http\Controllers\ReativacaoController;
+use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\Platform\PlatformBarbershopController;
 use App\Http\Controllers\Platform\PlatformMetricsController;
 use App\Http\Controllers\Platform\PlatformSettingsController;
@@ -192,6 +193,7 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
 
         // Faturamento + folha de comissões
         Route::get('/faturamento', [FaturamentoController::class, 'index'])->middleware('feature:financeiro')->name('faturamento.index');
+        Route::get('/relatorios', [RelatorioController::class, 'index'])->middleware('feature:financeiro')->name('relatorios.index');
         Route::get('/payouts', [PayoutController::class, 'index'])->middleware('feature:financeiro')->name('payouts.index');
         Route::post('/payouts', [PayoutController::class, 'store'])->middleware('feature:financeiro')->name('payouts.store');
 

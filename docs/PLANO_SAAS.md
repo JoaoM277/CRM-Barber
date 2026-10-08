@@ -91,7 +91,7 @@ Recomendação: painel em **React + Vite + Tailwind + shadcn/ui** consumindo a A
 | 2 | ✅ Cliente cancela/remarca pelo link (antecedência configurável) — no ar em 08/10/2026 | Menos trabalho pro dono |
 | 3 | ⏸️ Sinal/pagamento antecipado via Pix (subconta Asaas) — adiado em 08/10/2026: rever conforme a escala (clientes iniciais podem estranhar) | Mata o no-show; possível receita (take rate) |
 | 4 | Clube de assinatura (cliente paga mensal) | Muito forte em barbearia hoje |
-| 5 | Reativação de clientes sumidos (X dias sem visita → WhatsApp) | Receita visível pro dono |
+| 5 | ✅ Reativação de clientes sumidos (X dias sem visita → WhatsApp; desligada por padrão, SAIR, 30/dia) — no ar em 08/10/2026 | Receita visível pro dono |
 | 6 | Relatórios (ticket médio, taxa de retorno, ocupação) | Justifica plano Pro |
 | 7 | Comanda / produtos / estoque | Captura venda de balcão |
 | 8 | Fidelidade/cashback, lista de espera, avaliação pós-atendimento | Diferenciais |

@@ -11,6 +11,7 @@ import {
   Scissors,
   Settings,
   Sun,
+  TrendingUp,
   Users,
   UserRound,
 } from "lucide-react"
@@ -43,6 +44,7 @@ export const NAVEGACAO: Item[] = [
   { to: "/servicos", titulo: "Serviços", icone: Scissors },
   { to: "/profissionais", titulo: "Profissionais", icone: UserRound },
   { to: "/financeiro", titulo: "Financeiro", icone: ChartColumn, soAdmin: true },
+  { to: "/relatorios", titulo: "Relatórios", icone: TrendingUp, soAdmin: true },
   { to: "/whatsapp", titulo: "WhatsApp", icone: MessageCircle, soAdmin: true },
   { to: "/configuracoes", titulo: "Configurações", icone: Settings, soAdmin: true },
   { to: "/assinatura", titulo: "Assinatura", icone: CreditCard, soAdmin: true },
