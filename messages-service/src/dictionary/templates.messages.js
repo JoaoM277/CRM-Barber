@@ -53,7 +53,11 @@ messageList.CANCELAMENTO = (name, a) =>
 messageList.REMARCADO = (name, a) =>
   `Pronto, ${name}! Seu horário${naBarbearia(a)} foi remarcado para ${diaMes(a?.date)} às ${a?.time}${a?.barber ? ` com ${a.barber}` : ""}. ✅${linkAlterar(a)}`;
 
-messageList.RESPOSTA_CONFIRMADO =(name, a) =>
+// Cliente sumido há X dias: convite para voltar (a barbearia liga no painel)
+messageList.REATIVACAO = (name, a) =>
+  `Oi, ${name}! Faz um tempinho que você não aparece${naBarbearia(a)}. 💈 Que tal deixar o visual em dia?${a?.link ? `\n\nEscolha seu horário: ${a.link}` : ""}\n\nSe não quiser mais receber esses convites, responda *SAIR*.`;
+
+messageList.RESPOSTA_CONFIRMADO = (name, a) =>
   `Confirmado, ${name}! ✅ Te esperamos dia ${diaMes(a?.date)} às ${a?.time}.`;
 
 messageList.RESPOSTA_CANCELADO = (name, a) =>

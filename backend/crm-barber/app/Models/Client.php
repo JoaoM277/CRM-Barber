@@ -23,6 +23,11 @@ class Client extends Model
         'observation'
     ];
 
+    protected $casts = [
+        'reativacao_enviada_em' => 'datetime',
+        'reativacao_bloqueada_em' => 'datetime',
+    ];
+
     /** Telefone sempre gravado normalizado (só dígitos, DDI 55). */
     protected function phone(): Attribute
     {

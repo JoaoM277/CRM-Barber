@@ -89,7 +89,7 @@ Recomendação: painel em **React + Vite + Tailwind + shadcn/ui** consumindo a A
 |---|---|---|
 | 1 | ✅ Lembrete automático (24h/2h antes) com confirmação por resposta — no ar em 08/10/2026 | Reduz no-show |
 | 2 | ✅ Cliente cancela/remarca pelo link (antecedência configurável) — no ar em 08/10/2026 | Menos trabalho pro dono |
-| 3 | Sinal/pagamento antecipado via Pix (subconta Asaas) | Mata o no-show; possível receita (take rate) |
+| 3 | ⏸️ Sinal/pagamento antecipado via Pix (subconta Asaas) — adiado em 08/10/2026: rever conforme a escala (clientes iniciais podem estranhar) | Mata o no-show; possível receita (take rate) |
 | 4 | Clube de assinatura (cliente paga mensal) | Muito forte em barbearia hoje |
 | 5 | Reativação de clientes sumidos (X dias sem visita → WhatsApp) | Receita visível pro dono |
 | 6 | Relatórios (ticket médio, taxa de retorno, ocupação) | Justifica plano Pro |

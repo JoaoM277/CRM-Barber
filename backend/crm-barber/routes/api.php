@@ -21,6 +21,7 @@ use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ImagemController;
 use App\Http\Controllers\EvolutionWebhookController;
 use App\Http\Controllers\MeuHorarioController;
+use App\Http\Controllers\ReativacaoController;
 use App\Http\Controllers\Platform\PlatformBarbershopController;
 use App\Http\Controllers\Platform\PlatformMetricsController;
 use App\Http\Controllers\Platform\PlatformSettingsController;
@@ -163,6 +164,10 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
 
         // Lembretes automáticos no WhatsApp (liga/desliga)
         Route::put('/whatsapp/lembretes', [InstanceController::class, 'lembretes'])->name('whatsapp.lembretes');
+
+        // Reativação de clientes sumidos (convite automático no WhatsApp)
+        Route::get('/whatsapp/reativacao', [ReativacaoController::class, 'show'])->name('whatsapp.reativacao');
+        Route::put('/whatsapp/reativacao', [ReativacaoController::class, 'update'])->name('whatsapp.reativacao.update');
 
         // Cliente cancela/remarca pelo link (liga/desliga e antecedência mínima)
         Route::put('/barbearia/alteracao-pelo-cliente', [BarbershopController::class, 'alteracaoPeloCliente'])->name('barbearia.alteracao-cliente');

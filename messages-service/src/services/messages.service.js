@@ -42,7 +42,7 @@ const messageService = async (mensageData) => {
   // 3. Travas de segurança Anti-spam e Anti-horario-indevido
   // --------------------------------------------------------------------------
   const horaAtual = new Date().getHours();
-  if (trigger.startsWith("LEMBRETE") && (horaAtual >= 22 || horaAtual < 7)) {
+  if ((trigger.startsWith("LEMBRETE") || trigger === "REATIVACAO") && (horaAtual >= 22 || horaAtual < 7)) {
     console.warn(
       `[BLOQUEADO] Envio de LEMBRETE retido pra enviar spam do horario comercial`,
     );

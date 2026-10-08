@@ -26,6 +26,9 @@ class EvolutionWebhookController extends Controller
 
     private const CANCELA = ['2', 'nao', 'n', 'cancelar', 'cancela', 'cancelo', 'cancelado', 'desmarcar', 'nao vou'];
 
+    /** Não quer mais receber os convites de reativação. */
+    private const SAIR = ['sair', 'parar', 'pare', 'stop', 'descadastrar', 'nao quero mais'];
+
     public function __invoke(Request $request, string $token): JsonResponse
     {
         $esperado = (string) config('services.evolution.webhook_token');
@@ -56,6 +59,13 @@ class EvolutionWebhookController extends Controller
             ->first();
         if (! $cliente) {
             return $this->ok('ignorado');
+        }
+
+        if ($acao === 'sair') {
+            $cliente->forceFill(['reativacao_bloqueada_em' => now()])->save();
+            Audit::logFor($instancia->barbershop_id, 'cliente.reativacao_bloqueada', $cliente, 'Cliente pediu para não receber convites de reativação');
+
+            return $this->ok('sair');
         }
 
         // o próximo horário dele que recebeu lembrete e ainda está em aberto
@@ -103,6 +113,9 @@ class EvolutionWebhookController extends Controller
         }
         if (in_array($t, self::CANCELA, true)) {
             return 'cancelar';
+        }
+        if (in_array($t, self::SAIR, true)) {
+            return 'sair';
         }
 
         return null;

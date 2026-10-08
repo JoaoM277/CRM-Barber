@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
 import { Confirmar } from "@/components/confirmar"
@@ -94,6 +95,65 @@ function Conectar({ instancia, qrInicial, onFechar }: { instancia: Instancia | n
         {conectado && <Button onClick={onFechar}>Concluir</Button>}
       </DialogContent>
     </Dialog>
+  )
+}
+
+type EstadoReativacao = { ativo: boolean; dias: number; por_dia: number; enviados_30d: number; voltaram_30d: number; sumidos_agora: number }
+const DIAS_SUMIDO = [30, 45, 60, 90, 120]
+
+/** Convite automático para quem sumiu há X dias (desligado por padrão). */
+function Reativacao() {
+  const qc = useQueryClient()
+  const { data } = useQuery({ queryKey: ["reativacao"], queryFn: () => api<EstadoReativacao>("/whatsapp/reativacao"), retry: false })
+  const salvar = useMutation({
+    mutationFn: (body: { ativo?: boolean; dias?: number }) => api<EstadoReativacao & { message: string }>("/whatsapp/reativacao", { method: "PUT", body }),
+    onSuccess: (r) => {
+      qc.setQueryData(["reativacao"], r)
+      toast.success(r.message)
+    },
+    onError: (e) => toast.error(e.message),
+  })
+
+  if (!data) return null
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <div>
+          <CardTitle>Reativação de clientes sumidos</CardTitle>
+          <CardDescription>
+            Quem está há {data.dias} dias sem aparecer recebe um convite para voltar, com o seu link de agendamento. Sai uma vez por
+            sumiço, de manhã, no máximo {data.por_dia} por dia. O cliente pode responder <strong>SAIR</strong> para não receber mais.
+          </CardDescription>
+        </div>
+        <Switch checked={data.ativo} disabled={salvar.isPending} onCheckedChange={(v) => salvar.mutate({ ativo: v })} aria-label="Reativação de clientes sumidos" />
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Label htmlFor="dias-sumido">Considerar sumido depois de</Label>
+          <Select value={String(data.dias)} onValueChange={(v) => salvar.mutate({ dias: Number(v) })} disabled={salvar.isPending}>
+            <SelectTrigger id="dias-sumido" className="w-32"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {[...new Set([...DIAS_SUMIDO, data.dias])].sort((a, b) => a - b).map((d) => (
+                <SelectItem key={d} value={String(d)}>{d} dias</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <dl className="grid grid-cols-3 gap-3 text-center">
+          {[
+            { rotulo: "Sumidos agora", valor: data.sumidos_agora },
+            { rotulo: "Convidados (30 dias)", valor: data.enviados_30d },
+            { rotulo: "Voltaram (30 dias)", valor: data.voltaram_30d },
+          ].map((x) => (
+            <div key={x.rotulo} className="flex flex-col-reverse rounded-lg border p-3">
+              <dt className="text-xs text-muted-foreground">{x.rotulo}</dt>
+              <dd className="text-2xl font-semibold tabular-nums">{x.valor}</dd>
+            </div>
+          ))}
+        </dl>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -221,6 +281,8 @@ export default function WhatsApp() {
           </CardContent>
         )}
       </Card>
+
+      <Reativacao />
 
       {isLoading ? (
         <Skeleton className="h-32 w-full rounded-xl" />
