@@ -8,13 +8,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Switch } from "@/components/ui/switch"
 import { Confirmar } from "@/components/confirmar"
 import { useBarbearia, useRecurso } from "@/hooks/use-sessao"
 import { api } from "@/lib/api"
 import { dataBR, fone } from "@/lib/format"
 
 type Instancia = { id: number; name: string; status: "conectado" | "conectando" | "desconectado" | "erro"; phone_number: string | null; last_connected_at: string | null }
-type Lista = { data: Instancia[]; conectadas: number; alerta_sem_whatsapp: boolean }
+type Lista = { data: Instancia[]; conectadas: number; alerta_sem_whatsapp: boolean; lembretes_whatsapp: boolean }
 
 const STATUS: Record<Instancia["status"], { texto: string; classe: string }> = {
   conectado: { texto: "Conectado", classe: "border-success/50 bg-success/10 text-success" },
@@ -113,6 +114,14 @@ export default function WhatsApp() {
     },
     onError: (e) => toast.error(e.message),
   })
+  const lembretes = useMutation({
+    mutationFn: (ativo: boolean) => api<{ message: string }>("/whatsapp/lembretes", { method: "PUT", body: { ativo } }),
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["instancias"] })
+      toast.success(r.message)
+    },
+    onError: (e) => toast.error(e.message),
+  })
   const apagar = useMutation({
     mutationFn: (i: Instancia) => api(`/instances/${i.id}`, { method: "DELETE" }),
     onSuccess: () => {
@@ -154,6 +163,24 @@ export default function WhatsApp() {
             <Smartphone aria-hidden /> {instancias.length ? "Conectar outro número" : "Conectar WhatsApp"}
           </Button>
         </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div>
+            <CardTitle>Lembretes automáticos</CardTitle>
+            <CardDescription>
+              O cliente recebe um lembrete 24h antes e outro 2h antes do horário (só entre 8h e 21h). Se ainda não confirmou,
+              pode responder <strong>1</strong> para confirmar ou <strong>2</strong> para cancelar — a agenda atualiza sozinha.
+            </CardDescription>
+          </div>
+          <Switch
+            checked={data?.lembretes_whatsapp ?? true}
+            disabled={!data || lembretes.isPending}
+            onCheckedChange={(v) => lembretes.mutate(v)}
+            aria-label="Lembretes automáticos"
+          />
+        </CardHeader>
       </Card>
 
       {isLoading ? (
