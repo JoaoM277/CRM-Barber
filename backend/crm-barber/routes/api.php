@@ -23,6 +23,7 @@ use App\Http\Controllers\EvolutionWebhookController;
 use App\Http\Controllers\MeuHorarioController;
 use App\Http\Controllers\ReativacaoController;
 use App\Http\Controllers\RelatorioController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\Platform\PlatformBarbershopController;
 use App\Http\Controllers\Platform\PlatformMetricsController;
 use App\Http\Controllers\Platform\PlatformSettingsController;
@@ -135,6 +136,10 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
     Route::put('/agendamentos/{schedule}', [ScheduleController::class, 'update'])->name('agendamentos.update');
     Route::delete('/agendamentos/{schedule}', [ScheduleController::class, 'destroy'])->name('agendamentos.delete');
 
+    // Produtos vendidos no atendimento (qualquer usuário da barbearia; recurso do plano Pro)
+    Route::get('/produtos', [ProductController::class, 'index'])->middleware('feature:financeiro')->name('produtos.index');
+    Route::put('/agendamentos/{schedule}/produtos', [ProductController::class, 'vender'])->middleware('feature:financeiro')->name('agendamentos.produtos');
+
     // Barbershop
     Route::get('/barbearias', [BarbershopController::class, 'index'])->name('barbearias.index');
     Route::post('/barbearias', [BarbershopController::class, 'store'])->name('barbearias.store');
@@ -193,6 +198,15 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
 
         // Faturamento + folha de comissões
         Route::get('/faturamento', [FaturamentoController::class, 'index'])->middleware('feature:financeiro')->name('faturamento.index');
+        // Produtos: cadastro e estoque
+        Route::middleware('feature:financeiro')->group(function () {
+            Route::post('/produtos', [ProductController::class, 'store'])->name('produtos.store');
+            Route::put('/produtos/{product}', [ProductController::class, 'update'])->name('produtos.update');
+            Route::delete('/produtos/{product}', [ProductController::class, 'destroy'])->name('produtos.delete');
+            Route::post('/produtos/{product}/estoque', [ProductController::class, 'estoque'])->name('produtos.estoque');
+            Route::get('/produtos/{product}/movimentos', [ProductController::class, 'movimentos'])->name('produtos.movimentos');
+        });
+
         Route::get('/relatorios', [RelatorioController::class, 'index'])->middleware('feature:financeiro')->name('relatorios.index');
         Route::get('/payouts', [PayoutController::class, 'index'])->middleware('feature:financeiro')->name('payouts.index');
         Route::post('/payouts', [PayoutController::class, 'store'])->middleware('feature:financeiro')->name('payouts.store');

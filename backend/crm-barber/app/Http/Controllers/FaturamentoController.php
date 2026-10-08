@@ -36,6 +36,7 @@ class FaturamentoController extends Controller
                 'service:id,name,price',
                 'services:id,name,price',
                 'worker:id,name,payment_type,commission_percent,fixed_salary',
+                'products',
             ])
             ->where('status', Schedule::STATUS_CONCLUIDO)
             ->whereBetween('date', [$inicio->toDateString(), $fim->toDateString()])
@@ -51,6 +52,12 @@ class FaturamentoController extends Controller
             return $s->worker ? $s->worker->commissionOn($valorDe($s)) : 0.0;
         };
 
+        // produtos vendidos no atendimento (valor e comissão congelados no pivô)
+        $produtosDe = fn (Schedule $s) => $s->totalProdutos();
+        $comissaoProdutosDe = fn (Schedule $s) => (float) $s->products->sum(fn ($p) => (float) $p->pivot->commission_value);
+        $totalDe = fn (Schedule $s) => $valorDe($s) + $produtosDe($s);
+        $comissaoTotalDe = fn (Schedule $s) => $comissaoDe($s) + $comissaoProdutosDe($s);
+
         $nomesDe = function (Schedule $s) {
             $nomes = $s->servicosResolvidos()->pluck('name')->filter()->values();
 
@@ -63,14 +70,16 @@ class FaturamentoController extends Controller
             'cliente' => optional($s->client)->name,
             'servico' => $nomesDe($s),
             'profissional' => optional($s->worker)->name,
-            'valor' => round($valorDe($s), 2),
-            'comissao' => round($comissaoDe($s), 2),
+            'valor' => round($totalDe($s), 2),
+            'valor_servicos' => round($valorDe($s), 2),
+            'valor_produtos' => round($produtosDe($s), 2),
+            'comissao' => round($comissaoTotalDe($s), 2),
         ])->values();
 
-        $porProfissional = $schedules->groupBy('worker_id')->map(function ($grp) use ($valorDe, $comissaoDe) {
+        $porProfissional = $schedules->groupBy('worker_id')->map(function ($grp) use ($totalDe, $produtosDe, $comissaoTotalDe) {
             $w = $grp->first()->worker;
-            $bruto = $grp->sum($valorDe);
-            $comissao = $grp->sum($comissaoDe);
+            $bruto = $grp->sum($totalDe);
+            $comissao = $grp->sum($comissaoTotalDe);
             $fixo = ($w && $w->hasFixedSalary()) ? (float) $w->fixed_salary : 0.0;
 
             return [
@@ -80,6 +89,7 @@ class FaturamentoController extends Controller
                 'commission_percent' => $w ? (float) $w->commission_percent : 0,
                 'atendimentos' => $grp->count(),
                 'bruto' => round($bruto, 2),
+                'produtos' => round($grp->sum($produtosDe), 2),
                 'comissao' => round($comissao, 2),
                 'fixo' => round($fixo, 2),
                 'total_a_pagar' => round($comissao + $fixo, 2),
@@ -108,6 +118,18 @@ class FaturamentoController extends Controller
             'total' => round($r['total'], 2),
         ])->values();
 
+        $porProduto = collect();
+        foreach ($schedules as $s) {
+            foreach ($s->products as $p) {
+                $atual = $porProduto->get($p->id, ['produto' => $p->name, 'quantidade' => 0, 'total' => 0.0]);
+                $atual['quantidade'] += (int) $p->pivot->quantity;
+                $atual['total'] += (float) $p->pivot->price * (int) $p->pivot->quantity;
+                $porProduto->put($p->id, $atual);
+            }
+        }
+        $porProduto = $porProduto->map(fn ($r) => ['produto' => $r['produto'], 'quantidade' => $r['quantidade'], 'total' => round($r['total'], 2)])
+            ->sortByDesc('total')->values();
+
         $faturamentoTotal = round($itens->sum('valor'), 2);
         $totalComissoes = round($porProfissional->sum('comissao'), 2);
         $totalFixo = round($porProfissional->sum('fixo'), 2);
@@ -123,23 +145,37 @@ class FaturamentoController extends Controller
                 'fim' => $fim->toDateString(),
                 'atendimentos' => $itens->count(),
                 'faturamento_total' => $faturamentoTotal,
+                'faturamento_servicos' => round($itens->sum('valor_servicos'), 2),
+                'faturamento_produtos' => round($itens->sum('valor_produtos'), 2),
                 'total_comissoes' => $totalComissoes,
                 'total_fixo' => $totalFixo,
                 'lucro_liquido' => round($faturamentoTotal - $totalComissoes - $totalFixo, 2),
             ],
             'por_profissional' => $porProfissional,
             'por_servico' => $porServico,
+            'por_produto' => $porProduto,
             'itens' => $itens,
         ]);
     }
 
     private function totalEntre(Carbon $inicio, Carbon $fim): float
     {
-        return (float) Schedule::query()
+        $periodo = [$inicio->toDateString(), $fim->toDateString()];
+
+        $servicos = (float) Schedule::query()
             ->where('status', Schedule::STATUS_CONCLUIDO)
-            ->whereBetween('date', [$inicio->toDateString(), $fim->toDateString()])
+            ->whereBetween('date', $periodo)
             ->leftJoin('services', 'services.id', '=', 'schedules.service_id')
             ->selectRaw('COALESCE(SUM(COALESCE(schedules.price, services.price)), 0) as total')
             ->value('total');
+
+        $produtos = (float) Schedule::query()
+            ->where('status', Schedule::STATUS_CONCLUIDO)
+            ->whereBetween('date', $periodo)
+            ->join('schedule_product', 'schedule_product.schedule_id', '=', 'schedules.id')
+            ->selectRaw('COALESCE(SUM(schedule_product.price * schedule_product.quantity), 0) as total')
+            ->value('total');
+
+        return round($servicos + $produtos, 2);
     }
 }

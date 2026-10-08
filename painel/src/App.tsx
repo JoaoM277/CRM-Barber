@@ -5,6 +5,7 @@ import AssinaturaPage from "@/pages/assinatura"
 import Clientes from "@/pages/clientes"
 import Configuracoes from "@/pages/configuracoes"
 import Financeiro from "@/pages/financeiro"
+import Produtos from "@/pages/produtos"
 import Profissionais from "@/pages/profissionais"
 import Relatorios from "@/pages/relatorios"
 import Servicos from "@/pages/servicos"
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="profissionais" element={<Profissionais />} />
           <Route path="financeiro" element={<SoAdmin><Financeiro /></SoAdmin>} />
           <Route path="relatorios" element={<SoAdmin><Relatorios /></SoAdmin>} />
+          <Route path="produtos" element={<SoAdmin><Produtos /></SoAdmin>} />
           <Route path="whatsapp" element={<SoAdmin><WhatsApp /></SoAdmin>} />
           <Route path="configuracoes" element={<SoAdmin><Configuracoes /></SoAdmin>} />
           <Route path="assinatura" element={<SoAdmin><AssinaturaPage /></SoAdmin>} />

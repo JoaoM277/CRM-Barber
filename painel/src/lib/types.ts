@@ -77,6 +77,23 @@ export type Agendamento = {
   worker: { id: number; name: string } | null
   servicos: { id: number; nome: string; preco: number }[]
   servicos_nomes: string
+  produtos?: ItemProduto[]
+  total_produtos?: number
+}
+
+export type ItemProduto = { id: number; nome: string; quantidade: number; preco: number; total: number }
+
+export type Produto = {
+  id: number
+  name: string
+  description: string | null
+  price: string | number
+  cost: string | number | null
+  stock: number
+  stock_min: number | null
+  commission_percent: string | number
+  active: boolean
+  estoque_baixo: boolean
 }
 
 export type Paginado<T> = {

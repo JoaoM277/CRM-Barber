@@ -16,9 +16,10 @@ import { api } from "@/lib/api"
 import { dataBR, moeda, somarDias } from "@/lib/format"
 
 type Fat = {
-  periodo: { inicio: string; fim: string; atendimentos: number; faturamento_total: number; total_comissoes: number; total_fixo: number; lucro_liquido: number }
+  periodo: { inicio: string; fim: string; atendimentos: number; faturamento_total: number; faturamento_servicos: number; faturamento_produtos: number; total_comissoes: number; total_fixo: number; lucro_liquido: number }
   por_profissional: { worker_id: number; profissional: string; atendimentos: number; bruto: number; comissao: number; fixo: number; total_a_pagar: number }[]
   por_servico: { servico: string; quantidade: number; total: number }[]
+  por_produto: { produto: string; quantidade: number; total: number }[]
   itens: { id: number; data: string; valor: number }[]
 }
 type Repasse = { id: number; worker?: { name: string }; periodo_inicio: string; periodo_fim: string; valor_pago: number | string; pago_em: string; atendimentos: number }
@@ -80,7 +81,7 @@ export default function Financeiro() {
   if (!temRecurso) return <SemRecurso />
 
   const p = data?.periodo
-  const maxServico = Math.max(1, ...(data?.por_servico ?? []).map((s) => s.total))
+  const maxServico = Math.max(1, ...(data?.por_servico ?? []).map((s) => s.total), ...(data?.por_produto ?? []).map((s) => s.total))
 
   return (
     <div>
@@ -91,7 +92,7 @@ export default function Financeiro() {
       ) : (
         <>
           <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Indicador rotulo="Faturamento" valor={moeda(p.faturamento_total)} nota={`${p.atendimentos} atendimento(s)`} />
+            <Indicador rotulo="Faturamento" valor={moeda(p.faturamento_total)} nota={`${p.atendimentos} atendimento(s)${p.faturamento_produtos ? ` · ${moeda(p.faturamento_produtos)} em produtos` : ""}`} />
             <Indicador rotulo="Ticket médio" valor={moeda(p.atendimentos ? p.faturamento_total / p.atendimentos : 0)} />
             <Indicador rotulo="Comissões e fixos" valor={moeda(p.total_comissoes + p.total_fixo)} />
             <Indicador rotulo="Fica para a barbearia" valor={moeda(p.lucro_liquido)} nota="Faturamento menos pagamentos" />
@@ -133,6 +134,26 @@ export default function Financeiro() {
                     ))}
                   </ul>
                 )}
+                {data.por_produto?.length > 0 && (
+                  <>
+                    <p className="mt-6 mb-3 text-sm font-medium">Produtos · {moeda(p.faturamento_produtos)}</p>
+                    <ul className="grid gap-3">
+                      {data.por_produto.map((s) => (
+                        <li key={s.produto} className="grid gap-1 text-sm">
+                          <div className="flex justify-between gap-2">
+                            <span className="truncate">{s.produto}</span>
+                            <span className="tabular text-muted-foreground">
+                              {s.quantidade} un. · <span className="text-foreground">{moeda(s.total)}</span>
+                            </span>
+                          </div>
+                          <div className="h-2 overflow-hidden rounded-full bg-muted">
+                            <div className="h-full rounded-r-full bg-chart-2" style={{ width: `${(s.total / maxServico) * 100}%` }} />
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -140,7 +161,7 @@ export default function Financeiro() {
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>A pagar por profissional</CardTitle>
-              <CardDescription>Comissão sobre os atendimentos concluídos no período, mais o fixo.</CardDescription>
+              <CardDescription>Comissão sobre os atendimentos e produtos vendidos no período (só concluídos), mais o fixo.</CardDescription>
             </CardHeader>
             <CardContent className="px-0">
               <Table>

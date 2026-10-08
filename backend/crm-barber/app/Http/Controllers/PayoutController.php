@@ -44,7 +44,7 @@ class PayoutController extends Controller
         $fim = Carbon::parse($data['fim'])->endOfDay();
 
         $schedules = Schedule::query()
-            ->with('service:id,price')
+            ->with(['service:id,price', 'products'])
             ->where('worker_id', $worker->id)
             ->where('status', Schedule::STATUS_CONCLUIDO)
             ->whereBetween('date', [$inicio->toDateString(), $fim->toDateString()])
@@ -55,10 +55,12 @@ class PayoutController extends Controller
 
         foreach ($schedules as $s) {
             $valor = (float) ($s->price ?? optional($s->service)->price ?? 0);
-            $bruto += $valor;
+            $bruto += $valor + $s->totalProdutos();
             $comissao += $s->commission_value !== null
                 ? (float) $s->commission_value
                 : $worker->commissionOn($valor);
+            // comissão dos produtos vendidos no atendimento
+            $comissao += (float) $s->products->sum(fn ($p) => (float) $p->pivot->commission_value);
         }
 
         $fixo = $worker->hasFixedSalary() ? (float) $worker->fixed_salary : 0.0;

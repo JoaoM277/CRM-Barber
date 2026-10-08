@@ -11,6 +11,7 @@ use App\Models\Worker;
 use App\Http\Requests\StoreScheduleRequest;
 use App\Http\Controllers\Traits\ApiResponse;
 use App\Http\Controllers\Traits\ValidaAgenda;
+use App\Support\ComandaProdutos;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +31,7 @@ class ScheduleController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Schedule::with(['client', 'worker', 'service', 'services'])->orderBy('date')->orderBy('start_time');
+        $query = Schedule::with(['client', 'worker', 'service', 'services', 'products'])->orderBy('date')->orderBy('start_time');
 
         if ($request->filled('data')) {
             try {
@@ -94,6 +95,9 @@ class ScheduleController extends Controller
                     'preco' => (float) ($sv->pivot?->price ?? $sv->price ?? 0),
                 ])->values(),
                 'servicos_nomes' => $servicos->pluck('name')->implode(', '),
+                // produtos vendidos no atendimento
+                'produtos' => ProductController::resumo($s),
+                'total_produtos' => $s->totalProdutos(),
                 // compat: serviço "primário"
                 'Servico' => $s->service ? ['id' => $s->service->id, 'nome' => $s->service->name] : null,
                 'Barbeiro' => $s->worker ? ['id' => $s->worker->id, 'nome' => $s->worker->name] : null,
@@ -334,6 +338,7 @@ class ScheduleController extends Controller
 
             // cancelado pela barbearia: avisa o cliente (opção dos lembretes)
             if ($update['status'] === Schedule::STATUS_CANCELADO) {
+                ComandaProdutos::devolverTudo($schedule);
                 $this->avisarCancelamento($schedule);
             }
         }
@@ -366,6 +371,7 @@ class ScheduleController extends Controller
     {
         \App\Support\Audit::log('agendamento.removido', $schedule, "Agendamento #{$schedule->id} removido");
 
+        ComandaProdutos::devolverTudo($schedule);
         $schedule->delete();
 
         return response()->json(['message' => 'Agendamento removido com sucesso!'], 200);

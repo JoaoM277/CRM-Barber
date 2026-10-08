@@ -1,6 +1,15 @@
 import { useQuery } from "@tanstack/react-query"
 import { api } from "@/lib/api"
-import type { Expediente, Profissional, Servico } from "@/lib/types"
+import type { Expediente, Produto, Profissional, Servico } from "@/lib/types"
+
+/** Produtos (todos ou só os à venda). Só busca se o plano tem o recurso. */
+export const useProdutos = (soAtivos = false, habilitado = true) =>
+  useQuery({
+    queryKey: ["produtos", soAtivos],
+    queryFn: () => api<Produto[]>(`/produtos${soAtivos ? "?ativos=1" : ""}`),
+    staleTime: 60_000,
+    enabled: habilitado,
+  })
 
 export const useProfissionais = () =>
   useQuery({ queryKey: ["profissionais"], queryFn: () => api<Profissional[]>("/profissionais"), staleTime: 60_000 })

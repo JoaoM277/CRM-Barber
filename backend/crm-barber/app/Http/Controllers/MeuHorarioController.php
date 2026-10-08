@@ -6,6 +6,7 @@ use App\Http\Controllers\Traits\ValidaAgenda;
 use App\Jobs\SendAppointmentWhatsapp;
 use App\Models\Schedule;
 use App\Support\Audit;
+use App\Support\ComandaProdutos;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,6 +39,7 @@ class MeuHorarioController extends Controller
         $this->exigirAlteravel($s);
 
         $s->update(['status' => Schedule::STATUS_CANCELADO, 'resposta_cliente_em' => now()]);
+        ComandaProdutos::devolverTudo($s);
         Audit::logFor($s->barbershop_id, 'agendamento.cancelado_cliente', $s, 'Cliente cancelou pelo link');
 
         return response()->json(['message' => 'Horário cancelado.', 'horario' => $this->resumo($s->fresh())]);

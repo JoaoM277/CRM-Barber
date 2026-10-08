@@ -138,6 +138,25 @@ class Schedule extends Model
     }
 
     /**
+     * Produtos vendidos no atendimento (preço unitário e comissão congelados no pivô).
+     */
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'schedule_product')
+            ->withPivot(['quantity', 'price', 'commission_value'])
+            ->withTimestamps()
+            ->withTrashed();
+    }
+
+    /** Total vendido em produtos neste atendimento. */
+    public function totalProdutos(): float
+    {
+        $itens = $this->relationLoaded('products') ? $this->products : $this->products()->get();
+
+        return round($itens->sum(fn ($p) => (float) $p->pivot->price * (int) $p->pivot->quantity), 2);
+    }
+
+    /**
      * Coleção de serviços do agendamento com fallback para o service_id antigo
      * (registros criados antes do multi-serviço).
      */
