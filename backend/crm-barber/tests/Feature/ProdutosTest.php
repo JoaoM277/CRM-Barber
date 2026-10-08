@@ -43,15 +43,15 @@ class ProdutosTest extends TestCase
 
     private function produto(array $over = []): Product
     {
-        return Product::factory()->create(['barbershop_id' => $this->bs->id, 'price' => 35, 'stock' => 10, 'commission_percent' => 10] + $over);
+        return Product::factory()->create(array_merge(['barbershop_id' => $this->bs->id, 'price' => 35, 'stock' => 10, 'commission_percent' => 10], $over));
     }
 
     private function atendimento(array $over = []): Schedule
     {
-        return Schedule::factory()->create([
+        return Schedule::factory()->create(array_merge([
             'barbershop_id' => $this->bs->id, 'worker_id' => $this->worker->id,
             'date' => '2026-10-08', 'price' => 50, 'commission_value' => 20, 'status' => Schedule::STATUS_PENDENTE,
-        ] + $over);
+        ], $over));
     }
 
     private function vender(Schedule $s, array $itens)
@@ -82,12 +82,12 @@ class ProdutosTest extends TestCase
         $p = $this->produto();
         $s = $this->atendimento();
 
-        $this->vender($s, [$p->id => 2])->assertOk()->assertJsonPath('produtos.0.total', 70.0);
+        $this->vender($s, [$p->id => 2])->assertOk()->assertJsonPath('produtos.0.total', 70);
         $this->assertSame(8, $p->fresh()->stock);
 
         // preço muda depois da venda: o item já vendido mantém o preço
         $p->update(['price' => 50]);
-        $this->vender($s, [$p->id => 1])->assertOk()->assertJsonPath('produtos.0.preco', 35.0);
+        $this->vender($s, [$p->id => 1])->assertOk()->assertJsonPath('produtos.0.preco', 35);
         $this->assertSame(9, $p->fresh()->stock);
 
         $this->vender($s, [])->assertOk()->assertJsonCount(0, 'produtos');
@@ -127,11 +127,11 @@ class ProdutosTest extends TestCase
         $s->update(['status' => Schedule::STATUS_CONCLUIDO]);
 
         $r = $this->getJson('/api/faturamento?inicio=2026-10-01&fim=2026-10-31')->assertOk()
-            ->assertJsonPath('periodo.faturamento_servicos', 50.0)
-            ->assertJsonPath('periodo.faturamento_produtos', 70.0)
-            ->assertJsonPath('periodo.faturamento_total', 120.0)
+            ->assertJsonPath('periodo.faturamento_servicos', 50)
+            ->assertJsonPath('periodo.faturamento_produtos', 70)
+            ->assertJsonPath('periodo.faturamento_total', 120)
             ->assertJsonPath('por_produto.0.quantidade', 2)
-            ->assertJsonPath('por_profissional.0.produtos', 70.0);
+            ->assertJsonPath('por_profissional.0.produtos', 70);
         $this->assertEquals(27, $r->json('por_profissional.0.comissao'));
         $this->assertEquals(120, $r->json('dia'));
 
