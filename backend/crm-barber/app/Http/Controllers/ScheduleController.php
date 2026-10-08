@@ -42,6 +42,26 @@ class ScheduleController extends Controller
             }
         }
 
+        // período (visão de semana do painel): ?inicio=YYYY-MM-DD&fim=YYYY-MM-DD, até 31 dias
+        if ($request->filled('inicio') && $request->filled('fim')) {
+            try {
+                $ini = Carbon::parse($request->query('inicio'))->startOfDay();
+                $fim = Carbon::parse($request->query('fim'))->startOfDay();
+                if ($fim->lt($ini)) {
+                    [$ini, $fim] = [$fim, $ini];
+                }
+                if ($ini->diffInDays($fim) > 31) {
+                    $fim = $ini->copy()->addDays(31);
+                }
+                $query->whereBetween('date', [$ini->toDateString(), $fim->toDateString()]);
+            } catch (\Throwable $e) {
+                // filtro inválido é ignorado
+            }
+        }
+        if ($request->filled('profissional')) {
+            $query->where('worker_id', (int) $request->query('profissional'));
+        }
+
         // Sem filtro de data a lista cresce sem limite com o tempo; pagina com
         // um teto generoso (o painel de um dia normalmente nem chega perto).
         $perPage = min(max((int) $request->query('per_page', 200), 1), 500);
@@ -131,13 +151,17 @@ class ScheduleController extends Controller
 
         // Anti-abuso: no máximo 5 agendamentos por telefone por hora (além do
         // throttle:15,1 por IP da rota) — evita spam de envio de WhatsApp.
+        // (o painel, autenticado, não tem esse limite: o dono marca vários pelo telefone)
+        $doPainel = (bool) $request->user();
         $rateLimitKey = 'agendamento-telefone:'.$phone;
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+        if (! $doPainel && RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
             throw ValidationException::withMessages([
                 'clienteTelefone' => ['Muitas tentativas de agendamento com esse telefone. Tente novamente mais tarde.'],
             ]);
         }
-        RateLimiter::hit($rateLimitKey, 3600);
+        if (! $doPainel) {
+            RateLimiter::hit($rateLimitKey, 3600);
+        }
 
         // withTrashed: se o cliente tinha sido excluído, restaura em vez de
         // tentar inserir (o índice único [barbershop_id, phone] não distingue
@@ -180,7 +204,7 @@ class ScheduleController extends Controller
         // Expediente não corre risco de corrida (não depende de outras linhas).
         $this->assertDentroDoExpediente($dateStr, $startStr, $endStr);
 
-        $schedule = DB::transaction(function () use ($client, $data, $servicosOrdenados, $worker, $precoTotal, $comissaoTotal, $start, $end, $dateStr, $startStr, $endStr) {
+        $schedule = DB::transaction(function () use ($client, $data, $servicosOrdenados, $worker, $precoTotal, $comissaoTotal, $start, $end, $dateStr, $startStr, $endStr, $doPainel) {
             // Trava as linhas do profissional naquele dia até o fim da transação:
             // dois POSTs simultâneos pro mesmo slot serializam aqui, e o 2º vê o 1º.
             Schedule::where('worker_id', $data['barbeiroId'])
@@ -199,7 +223,8 @@ class ScheduleController extends Controller
                 'date' => Carbon::parse($data['dataAgendamento'])->format('Y-m-d'),
                 'start_time' => $start->format('H:i:s'),
                 'end_time' => $end->format('H:i:s'),
-                'status' => Schedule::STATUS_PENDENTE,
+                // marcado pelo próprio dono no painel = já confirmado
+                'status' => $doPainel ? Schedule::STATUS_CONFIRMADO : Schedule::STATUS_PENDENTE,
                 'observation' => $data['observacoes'] ?? null,
             ]);
 
@@ -275,9 +300,13 @@ class ScheduleController extends Controller
             'observacoes' => 'sometimes|nullable|string|max:1000',
             'dataAgendamento' => 'sometimes|date',
             'horario' => ['sometimes', 'regex:/^\d{2}:\d{2}$/'],
+            'barbeiroId' => ['sometimes', 'integer', Rule::exists('workers', 'id')->where('barbershop_id', $schedule->barbershop_id)->whereNull('deleted_at')],
         ]);
 
         $update = [];
+        if ($request->filled('barbeiroId') && (int) $data['barbeiroId'] !== (int) $schedule->worker_id) {
+            $update['worker_id'] = (int) $data['barbeiroId'];
+        }
 
         if ($request->has('status')) {
             $update['status'] = $data['status'];
@@ -300,8 +329,8 @@ class ScheduleController extends Controller
             $update['start_time'] = $data['horario'].':00';
         }
 
-        // Se remarcou data/horário, revalida a trava de conflito
-        if (isset($update['date']) || isset($update['start_time'])) {
+        // Se remarcou data/horário/profissional, revalida a trava de conflito
+        if (isset($update['date']) || isset($update['start_time']) || isset($update['worker_id'])) {
             $novaData = $update['date'] ?? (string) $schedule->date;
             $novoInicio = $update['start_time'] ?? (string) $schedule->start_time;
             $novoFim = Carbon::parse($novoInicio)
@@ -309,7 +338,7 @@ class ScheduleController extends Controller
                 ->format('H:i:s');
             $update['end_time'] = $novoFim;
             $this->assertDentroDoExpediente($novaData, $novoInicio, $novoFim);
-            $this->assertHorarioLivre($schedule->worker_id, $novaData, $novoInicio, $novoFim, $schedule->id);
+            $this->assertHorarioLivre($update['worker_id'] ?? $schedule->worker_id, $novaData, $novoInicio, $novoFim, $schedule->id);
         }
 
         $statusAnterior = $schedule->status;

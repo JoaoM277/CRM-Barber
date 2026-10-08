@@ -113,6 +113,8 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
 
     // Schedule
     Route::get('/agendamentos', [ScheduleController::class, 'index'])->name('agendamentos.index');
+    // marcar pelo painel (o dono atendendo por telefone/balcão); já nasce confirmado
+    Route::post('/agendamentos', [ScheduleController::class, 'store'])->name('agendamentos.store.painel');
     Route::get('/agendamentos/{schedule}', [ScheduleController::class, 'show'])->name('agendamentos.show');
     Route::put('/agendamentos/{schedule}', [ScheduleController::class, 'update'])->name('agendamentos.update');
     Route::delete('/agendamentos/{schedule}', [ScheduleController::class, 'destroy'])->name('agendamentos.delete');
