@@ -140,6 +140,27 @@ class BarbershopController extends Controller
     }
 
     /**
+     * PUT /barbearia/alteracao-pelo-cliente {alterar_pelo_link?, antecedencia_alteracao_horas?}
+     * O cliente pode cancelar/remarcar pelo link? Até quantas horas antes?
+     */
+    public function alteracaoPeloCliente(Request $request)
+    {
+        $data = $request->validate([
+            'alterar_pelo_link' => 'sometimes|boolean',
+            'antecedencia_alteracao_horas' => 'sometimes|integer|min:0|max:72',
+        ]);
+
+        $bs = $this->tenant->barbershop();
+        abort_unless($bs, 404);
+        $bs->update($data);
+
+        return response()->json([
+            'message' => 'Preferências salvas.',
+            'alteracao' => $bs->only(['alterar_pelo_link', 'antecedencia_alteracao_horas']),
+        ]);
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(Barbershop $barbershop)

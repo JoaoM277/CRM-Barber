@@ -42,6 +42,8 @@ export type Barbearia = {
   accent_color: string | null
   secondary_color: string | null
   logo_url: string | null
+  alterar_pelo_link?: boolean
+  antecedencia_alteracao_horas?: number
 }
 
 export type PassoOnboarding = {

@@ -1,24 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { CalendarPlus, Check, ChevronLeft, Clock, Loader2, MapPin, Scissors, Sparkles, UserRound, X } from "lucide-react"
+import { CalendarCog, CalendarPlus, Check, ChevronLeft, Clock, Loader2, Scissors, Sparkles, UserRound, X } from "lucide-react"
 import clsx from "clsx"
 import { api, ErroApi, slugDaPagina, type Aviso, type Identidade, type Profissional, type Servico } from "./lib/api"
-import { deISO, horariosLivres, isoLocal, minutos, type Expediente, type Horario, type Ocupado } from "./lib/horarios"
+import { horariosLivres, isoLocal, type Expediente, type Horario, type Ocupado } from "./lib/horarios"
+import { baixarIcs, Cabecalho, dataLonga, moeda, Rodape, SeletorHorario, useMarca } from "./ui"
 
-const moeda = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
 const QUALQUER = "qualquer" as const
 const DIAS_A_FRENTE = 14
-const LANDING = "https://usevellis.tech/?utm_source=pagina-agendamento"
 
 /* --------------------------------------------------------------- utilidades */
-
-/** Texto escuro ou claro sobre a cor da marca, pelo contraste. */
-function corSobre(hex: string) {
-  const h = hex.replace("#", "")
-  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h
-  const [r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
-  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
-  return lum > 0.4 ? "#15201d" : "#ffffff"
-}
 
 function mascaraTelefone(v: string) {
   const d = v.replace(/\D/g, "").slice(0, 11)
@@ -37,46 +27,7 @@ const lembrar = {
   },
 }
 
-/** Arquivo .ics para "adicionar à agenda" (funciona no iPhone e no Android). */
-function baixarIcs(titulo: string, data: string, hora: string, duracao: number, local: string) {
-  const ini = deISO(data)
-  ini.setHours(Math.floor(minutos(hora) / 60), minutos(hora) % 60)
-  const fim = new Date(ini.getTime() + duracao * 60_000)
-  const f = (d: Date) => `${isoLocal(d).replace(/-/g, "")}T${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")}00`
-  const ics = [
-    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Vellis//Agendamento//PT", "BEGIN:VEVENT",
-    `UID:${Date.now()}@usevellis.tech`, `DTSTART:${f(ini)}`, `DTEND:${f(fim)}`,
-    `SUMMARY:${titulo}`, `LOCATION:${local}`, "BEGIN:VALARM", "TRIGGER:-PT1H", "ACTION:DISPLAY", `DESCRIPTION:${titulo}`, "END:VALARM",
-    "END:VEVENT", "END:VCALENDAR",
-  ].join("\r\n")
-  const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }))
-  const a = Object.assign(document.createElement("a"), { href: url, download: "agendamento.ics" })
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
-}
-
 /* --------------------------------------------------------------- peças */
-
-function Cabecalho({ id }: { id: Identidade }) {
-  return (
-    <header className="px-5 pt-8 pb-6 text-center">
-      {id.logo_url ? (
-        <img src={id.logo_url} alt="" className="mx-auto mb-3 size-16 rounded-2xl object-cover" />
-      ) : (
-        <div className="mx-auto mb-3 grid size-16 place-items-center rounded-2xl bg-marca text-2xl font-bold text-sobre-marca" aria-hidden>
-          {id.name.slice(0, 1).toUpperCase()}
-        </div>
-      )}
-      <h1 className="text-2xl font-bold tracking-tight">{id.name}</h1>
-      {id.subtitle && id.subtitle !== "BARBEARIA" && <p className="mt-0.5 text-suave">{id.subtitle}</p>}
-      {id.city && (
-        <p className="mt-1 inline-flex items-center gap-1 text-sm text-suave">
-          <MapPin className="size-3.5" aria-hidden /> {id.city}{id.state ? ` · ${id.state}` : ""}
-        </p>
-      )}
-    </header>
-  )
-}
 
 const ETAPAS = ["Serviço", "Profissional", "Horário", "Seus dados"]
 
@@ -140,6 +91,7 @@ export default function App() {
   const [enviando, setEnviando] = useState(false)
   const [erroEnvio, setErroEnvio] = useState<string | null>(null)
   const [concluido, setConcluido] = useState(false)
+  const [linkCliente, setLinkCliente] = useState<string | null>(null)
 
   const carregar = useCallback(async () => {
     if (!slug) {
@@ -162,17 +114,7 @@ export default function App() {
 
   useEffect(() => { carregar() }, [carregar])
 
-  // veste a marca da barbearia
-  useEffect(() => {
-    if (!dados) return
-    const cor = /^#[0-9a-f]{3,6}$/i.test(dados.id.accent_color) ? dados.id.accent_color : "#c89b3c"
-    document.documentElement.style.setProperty("--marca", cor)
-    document.documentElement.style.setProperty("--sobre-marca", corSobre(cor))
-    document.title = `Agendar horário · ${dados.id.name}`
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", cor)
-    // ícone da aba = logo da barbearia, quando houver
-    if (dados.id.logo_url) document.querySelector('link[rel="icon"]')?.setAttribute("href", dados.id.logo_url)
-  }, [dados])
+  useMarca(dados?.id, "Agendar horário")
 
   const escolhidos = useMemo(() => dados?.servicos.filter((s) => servicosSel.includes(s.id)) ?? [], [dados, servicosSel])
   const total = escolhidos.reduce((t, s) => t + Number(s.price), 0)
@@ -200,7 +142,7 @@ export default function App() {
     setEnviando(true)
     setErroEnvio(null)
     try {
-      await api(slug!, "/agendamentos", {
+      const r = await api<{ link_cliente?: string | null }>(slug!, "/agendamentos", {
         clienteNome: nome.trim(),
         clienteTelefone: telefone,
         barbeiroId: horario.profissionalId,
@@ -211,6 +153,7 @@ export default function App() {
         website: armadilha,
       })
       lembrar.salvar(nome.trim(), telefone)
+      setLinkCliente(r.link_cliente ?? null)
       setConcluido(true)
       window.scrollTo({ top: 0 })
     } catch (e) {
@@ -257,8 +200,6 @@ export default function App() {
     )
   }
 
-  const dataLonga = (iso: string) => deISO(iso).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })
-
   if (concluido && horario && data) {
     return (
       <main className="mx-auto max-w-lg px-5 pb-16">
@@ -289,6 +230,11 @@ export default function App() {
           >
             Marcar outro horário
           </button>
+          {linkCliente && (
+            <a href={linkCliente} className="mt-4 inline-flex items-center justify-center gap-1.5 text-sm font-medium text-suave underline-offset-2 hover:underline">
+              <CalendarCog className="size-4" aria-hidden /> Precisa cancelar ou remarcar? Guarde este link.
+            </a>
+          )}
         </section>
         <Rodape />
       </main>
@@ -377,66 +323,14 @@ export default function App() {
       {etapa === 2 && (
         <section>
           <h2 className="mb-4 text-xl font-bold">Quando?</h2>
-          <div className="-mx-5 mb-5 flex snap-x gap-2 overflow-x-auto px-5 pb-1" role="listbox" aria-label="Dia">
-            {dias.map((d) => {
-              const vagas = livresPorDia[d]?.length ?? 0
-              const dt = deISO(d)
-              const sel = d === data
-              return (
-                <button
-                  key={d}
-                  type="button"
-                  role="option"
-                  aria-selected={sel}
-                  disabled={!vagas}
-                  onClick={() => { setData(d); setHorario(null) }}
-                  className={clsx(
-                    "flex w-16 shrink-0 snap-start flex-col items-center rounded-2xl border py-2.5 transition",
-                    sel ? "border-marca bg-marca text-sobre-marca" : "border-linha bg-cartao",
-                    !vagas && "opacity-35",
-                  )}
-                  aria-label={`${dataLonga(d)}${vagas ? `, ${vagas} horários` : ", sem horários"}`}
-                >
-                  <span className="text-[11px] uppercase">{d === dias[0] ? "Hoje" : dt.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}</span>
-                  <span className="text-xl font-bold leading-tight">{dt.getDate()}</span>
-                  <span className="text-[11px]">{dt.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "")}</span>
-                </button>
-              )
-            })}
-          </div>
-
-          {data && (livresPorDia[data]?.length ? (
-            (["Manhã", "Tarde", "Noite"] as const).map((periodo) => {
-              const lista = livresPorDia[data].filter((h) => {
-                const m = minutos(h.hora)
-                return periodo === "Manhã" ? m < 720 : periodo === "Tarde" ? m >= 720 && m < 1080 : m >= 1080
-              })
-              if (!lista.length) return null
-              return (
-                <div key={periodo} className="mb-5">
-                  <h3 className="mb-2 text-sm font-semibold text-suave">{periodo}</h3>
-                  <div className="grid grid-cols-4 gap-2">
-                    {lista.map((h) => {
-                      const sel = horario?.hora === h.hora
-                      return (
-                        <button
-                          key={h.hora}
-                          type="button"
-                          onClick={() => setHorario(h)}
-                          aria-pressed={sel}
-                          className={clsx("rounded-xl border py-2.5 font-semibold tabular transition", sel ? "border-marca bg-marca text-sobre-marca" : "border-linha bg-cartao")}
-                        >
-                          {h.hora}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )
-            })
-          ) : (
-            <p className="rounded-2xl border border-dashed border-linha p-6 text-center text-suave">Nenhum horário livre neste dia. Escolha outro dia acima.</p>
-          ))}
+          <SeletorHorario
+            dias={dias}
+            livresPorDia={livresPorDia}
+            data={data}
+            horario={horario}
+            onData={(d) => { setData(d); setHorario(null) }}
+            onHorario={setHorario}
+          />
           {!dias.some((d) => livresPorDia[d]?.length) && (
             <p className="rounded-2xl border border-dashed border-linha p-6 text-center text-suave">
               Sem horários livres nos próximos {DIAS_A_FRENTE} dias{prof !== QUALQUER ? " com este profissional. Tente “Sem preferência”." : "."}
@@ -511,14 +405,5 @@ export default function App() {
         </div>
       )}
     </main>
-  )
-}
-
-function Rodape() {
-  return (
-    <footer className="mt-10 text-center text-xs text-suave">
-      Agenda online por{" "}
-      <a href={LANDING} target="_blank" rel="noopener" className="font-semibold underline-offset-2 hover:underline">Vellis</a>
-    </footer>
   )
 }

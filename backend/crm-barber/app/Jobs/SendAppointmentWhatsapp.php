@@ -49,6 +49,12 @@ class SendAppointmentWhatsapp implements ShouldQueue
     /** Aviso ao cliente de que a barbearia cancelou o horário. */
     public const CANCELAMENTO = 'CANCELAMENTO';
 
+    /** Confirmação do novo horário quando o cliente remarca pelo link. */
+    public const REMARCADO = 'REMARCADO';
+
+    /** Mensagens que levam o link "meu horário" (cancelar/remarcar). */
+    private const COM_LINK_DO_CLIENTE = [self::AGENDAMENTO, self::REMARCADO, self::LEMBRETE_24H];
+
     public function __construct(public int $scheduleId, public string $trigger = self::AGENDAMENTO) {}
 
     public function handle(): void
@@ -105,6 +111,10 @@ class SendAppointmentWhatsapp implements ShouldQueue
             // link para agendar de novo (aviso de cancelamento)
             'link' => $schedule->barbershop
                 ? rtrim(config('app.frontend_url'), '/').'/?b='.$schedule->barbershop->slug
+                : null,
+            // link para o próprio cliente cancelar/remarcar, se ainda pode
+            'manage_link' => in_array($this->trigger, self::COM_LINK_DO_CLIENTE, true) && $schedule->bloqueioAlteracaoCliente() === null
+                ? $schedule->linkCliente()
                 : null,
         ];
 

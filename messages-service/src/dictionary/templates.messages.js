@@ -17,9 +17,12 @@ const servicesClause = (services) => {
   return ` para ${plural} ${lista}`;
 };
 
+// "Precisa cancelar ou remarcar? <link>" — só quando o CRM manda o link do cliente
+const linkAlterar = (a) => (a?.manageLink ? `\n\nPrecisa cancelar ou remarcar? ${a.manageLink}` : "");
+
 const messageList = {
   AGENDAMENTO: (name, appointment) =>
-    `Olá, ${name}! Seu agendamento${servicesClause(appointment?.services)} foi confirmado para o dia ${appointment?.date || "marcado"} às ${appointment?.time || "marcado"}${appointment?.barber ? ` com ${appointment.barber}` : ""}. Te esperamos! 💈`,
+    `Olá, ${name}! Seu agendamento${servicesClause(appointment?.services)} foi confirmado para o dia ${diaMes(appointment?.date) || "marcado"} às ${appointment?.time || "marcado"}${appointment?.barber ? ` com ${appointment.barber}` : ""}. Te esperamos! 💈${linkAlterar(appointment)}`,
 
   LEMBRETE: (name, appointment) =>
     `Ei, ${name}, passando para lembrar do seu horário hoje às ${appointment?.time}${appointment?.services && formatServices(appointment.services) ? ` (${formatServices(appointment.services)})` : ""}! ⏰`,
@@ -37,7 +40,7 @@ const pedirResposta = (a) => {
 
 // Lembretes automáticos (enviados pelo CRM 24h e 2h antes) e respostas ao cliente
 messageList.LEMBRETE_24H = (name, a) =>
-  `Olá, ${name}! Passando para lembrar: amanhã (${diaMes(a?.date)}) às ${a?.time} você tem horário${naBarbearia(a)}${a?.barber ? ` com ${a.barber}` : ""}${formatServices(a?.services) ? ` — ${formatServices(a.services)}` : ""}. 💈${pedirResposta(a)}`;
+  `Olá, ${name}! Passando para lembrar: amanhã (${diaMes(a?.date)}) às ${a?.time} você tem horário${naBarbearia(a)}${a?.barber ? ` com ${a.barber}` : ""}${formatServices(a?.services) ? ` — ${formatServices(a.services)}` : ""}. 💈${pedirResposta(a)}${linkAlterar(a)}`;
 
 messageList.LEMBRETE_2H = (name, a) =>
   `${name}, seu horário${naBarbearia(a)} é hoje às ${a?.time}${a?.barber ? ` com ${a.barber}` : ""}. Até já! ⏰${pedirResposta(a)}`;
@@ -46,7 +49,11 @@ messageList.LEMBRETE_2H = (name, a) =>
 messageList.CANCELAMENTO = (name, a) =>
   `Olá, ${name}. Seu horário${naBarbearia(a)} do dia ${diaMes(a?.date)} às ${a?.time}${formatServices(a?.services) ? ` (${formatServices(a.services)})` : ""} foi cancelado.${a?.link ? `\n\nPara marcar um novo horário: ${a.link}` : " Para marcar um novo horário, fale com a barbearia."}`;
 
-messageList.RESPOSTA_CONFIRMADO = (name, a) =>
+// O cliente remarcou pelo link: confirma o novo horário
+messageList.REMARCADO = (name, a) =>
+  `Pronto, ${name}! Seu horário${naBarbearia(a)} foi remarcado para ${diaMes(a?.date)} às ${a?.time}${a?.barber ? ` com ${a.barber}` : ""}. ✅${linkAlterar(a)}`;
+
+messageList.RESPOSTA_CONFIRMADO =(name, a) =>
   `Confirmado, ${name}! ✅ Te esperamos dia ${diaMes(a?.date)} às ${a?.time}.`;
 
 messageList.RESPOSTA_CANCELADO = (name, a) =>

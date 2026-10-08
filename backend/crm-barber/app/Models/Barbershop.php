@@ -39,6 +39,8 @@ class Barbershop extends Model
         'lembretes_whatsapp',
         'aviso_cancelamento_whatsapp',
         'cancelar_pelo_lembrete',
+        'alterar_pelo_link',
+        'antecedencia_alteracao_horas',
     ];
 
     /** URL pública do logo (o banco guarda só o caminho no disco "public"). */
@@ -62,6 +64,8 @@ class Barbershop extends Model
         'lembretes_whatsapp' => 'boolean',
         'aviso_cancelamento_whatsapp' => 'boolean',
         'cancelar_pelo_lembrete' => 'boolean',
+        'alterar_pelo_link' => 'boolean',
+        'antecedencia_alteracao_horas' => 'integer',
     ];
 
     public function users()

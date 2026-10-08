@@ -246,6 +246,56 @@ function AbaHorarios() {
   )
 }
 
+/* ------------------------------------------------- cliente cancela/remarca pelo link */
+const ANTECEDENCIAS = [0, 1, 2, 3, 6, 12, 24, 48]
+
+function AlteracaoPeloCliente() {
+  const qc = useQueryClient()
+  const { data: b } = useBarbearia()
+  const salvar = useMutation({
+    mutationFn: (body: { alterar_pelo_link?: boolean; antecedencia_alteracao_horas?: number }) =>
+      api<{ message: string }>("/barbearia/alteracao-pelo-cliente", { method: "PUT", body }),
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["barbearia"] })
+      toast.success(r.message)
+    },
+    onError: (e) => toast.error(e.message),
+  })
+
+  if (!b) return null
+  const ligado = b.alterar_pelo_link ?? true
+  const horas = b.antecedencia_alteracao_horas ?? 2
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <div>
+          <CardTitle>Cliente cancela ou remarca pelo link</CardTitle>
+          <CardDescription>
+            A confirmação e o lembrete do WhatsApp levam um link do horário do cliente. Por ele, o cliente cancela ou escolhe outro
+            horário livre, e a agenda atualiza sozinha.
+          </CardDescription>
+        </div>
+        <Switch checked={ligado} disabled={salvar.isPending} onCheckedChange={(v) => salvar.mutate({ alterar_pelo_link: v })} aria-label="Cliente cancela ou remarca pelo link" />
+      </CardHeader>
+      {ligado && (
+        <CardContent className="flex flex-wrap items-center gap-3">
+          <Label htmlFor="antecedencia">Permitir até</Label>
+          <Select value={String(horas)} onValueChange={(v) => salvar.mutate({ antecedencia_alteracao_horas: Number(v) })} disabled={salvar.isPending}>
+            <SelectTrigger id="antecedencia" className="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {ANTECEDENCIAS.map((h) => (
+                <SelectItem key={h} value={String(h)}>{h === 0 ? "a hora do horário" : `${h}h antes`}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span className="text-sm text-muted-foreground">Depois disso, o cliente precisa falar com a barbearia.</span>
+        </CardContent>
+      )}
+    </Card>
+  )
+}
+
 /* ------------------------------------------------------------------ aviso */
 function AbaAviso() {
   const qc = useQueryClient()
@@ -464,7 +514,7 @@ export default function Configuracoes() {
         <TabsTrigger value="senha">Minha senha</TabsTrigger>
       </TabsList>
       <TabsContent value="barbearia"><AbaBarbearia /></TabsContent>
-      <TabsContent value="horarios"><AbaHorarios /></TabsContent>
+      <TabsContent value="horarios" className="grid gap-6"><AbaHorarios /><AlteracaoPeloCliente /></TabsContent>
       <TabsContent value="aviso"><AbaAviso /></TabsContent>
       <TabsContent value="equipe"><AbaEquipe /></TabsContent>
       <TabsContent value="senha"><AbaSenha /></TabsContent>

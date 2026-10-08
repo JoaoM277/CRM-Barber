@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 class Schedule extends Model
 {
@@ -48,6 +50,57 @@ class Schedule extends Model
         'lembrete_2h_em',
         'resposta_cliente_em',
     ];
+
+    /** Chave do link "meu horário": só vai para o cliente (WhatsApp / tela de sucesso). */
+    protected $hidden = ['token_cliente'];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Schedule $s) {
+            $s->token_cliente ??= Str::random(40);
+        });
+    }
+
+    /** Link em que o cliente vê, cancela ou remarca o horário (sem login). */
+    public function linkCliente(): ?string
+    {
+        $slug = $this->barbershop?->slug;
+        if (! $slug || ! $this->token_cliente) {
+            return null;
+        }
+
+        return rtrim((string) config('app.frontend_url'), '/').'/?b='.$slug.'&h='.$this->token_cliente;
+    }
+
+    public function inicio(): Carbon
+    {
+        return Carbon::parse(substr((string) $this->date, 0, 10).' '.substr((string) $this->start_time, 0, 5));
+    }
+
+    /**
+     * Motivo pelo qual o cliente NÃO pode mais cancelar/remarcar pelo link
+     * (null = pode). Regras: a barbearia permite, o horário está em aberto e
+     * ainda falta pelo menos a antecedência configurada.
+     */
+    public function bloqueioAlteracaoCliente(): ?string
+    {
+        $bs = $this->barbershop;
+        if ($this->status === self::STATUS_CANCELADO) {
+            return 'Este horário foi cancelado.';
+        }
+        if ($this->status === self::STATUS_CONCLUIDO || $this->inicio()->isPast()) {
+            return 'Este horário já passou.';
+        }
+        if (! $bs || ! $bs->alterar_pelo_link) {
+            return 'Para cancelar ou remarcar, fale direto com a barbearia.';
+        }
+        $horas = (int) $bs->antecedencia_alteracao_horas;
+        if ($horas > 0 && now()->addHours($horas)->greaterThan($this->inicio())) {
+            return "Faltam menos de {$horas}h para o horário. Para cancelar ou remarcar agora, fale direto com a barbearia.";
+        }
+
+        return null;
+    }
 
     protected $casts = [
         'price' => 'decimal:2',

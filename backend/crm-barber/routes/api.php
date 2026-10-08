@@ -20,6 +20,7 @@ use App\Http\Controllers\BillingController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ImagemController;
 use App\Http\Controllers\EvolutionWebhookController;
+use App\Http\Controllers\MeuHorarioController;
 use App\Http\Controllers\Platform\PlatformBarbershopController;
 use App\Http\Controllers\Platform\PlatformMetricsController;
 use App\Http\Controllers\Platform\PlatformSettingsController;
@@ -58,6 +59,13 @@ Route::middleware('tenant')->group(function () {
         Route::get('/disponibilidade', [ScheduleController::class, 'disponibilidade'])->name('agendamentos.disponibilidade');
         Route::get('/avisos/ativo', [AvisoController::class, 'ativo'])->name('avisos.ativo');
         Route::get('/barbearia', [BarbershopController::class, 'publicIdentity'])->name('barbearia.identidade');
+
+        // "Meu horário": o cliente vê, cancela ou remarca pelo link secreto
+        Route::middleware('throttle:30,1')->group(function () {
+            Route::get('/meu-horario/{token}', [MeuHorarioController::class, 'show'])->name('meu-horario.show');
+            Route::post('/meu-horario/{token}/cancelar', [MeuHorarioController::class, 'cancelar'])->name('meu-horario.cancelar');
+            Route::post('/meu-horario/{token}/remarcar', [MeuHorarioController::class, 'remarcar'])->middleware('booking.open')->name('meu-horario.remarcar');
+        });
     });
 });
 
@@ -155,6 +163,9 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
 
         // Lembretes automáticos no WhatsApp (liga/desliga)
         Route::put('/whatsapp/lembretes', [InstanceController::class, 'lembretes'])->name('whatsapp.lembretes');
+
+        // Cliente cancela/remarca pelo link (liga/desliga e antecedência mínima)
+        Route::put('/barbearia/alteracao-pelo-cliente', [BarbershopController::class, 'alteracaoPeloCliente'])->name('barbearia.alteracao-cliente');
 
         // Logo da barbearia (aparece na página de agendamento)
         Route::post('/barbearia/logo', [ImagemController::class, 'logo'])->middleware('throttle:20,1')->name('barbearia.logo');

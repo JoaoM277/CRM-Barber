@@ -55,4 +55,18 @@ export async function api<T>(slug: string, caminho: string, corpo?: unknown): Pr
 export type Identidade = { name: string; subtitle: string | null; logo_url: string | null; city: string | null; state: string | null; accent_color: string; secondary_color: string }
 export type Servico = { id: number; name: string; description: string | null; duration_time: number | null; price: string | number; active: boolean }
 export type Profissional = { id: number; name: string; photo: string | null; speciality: string | null; active: boolean }
-export type Aviso = { exibir: boolean; dados: { titulo: string; mensagem: string } | null }
+export type MeuHorario = {
+  status: "pendente" | "confirmado" | "concluido" | "cancelado"
+  date: string
+  start_time: string
+  end_time: string
+  duracao: number
+  cliente: string | null
+  profissional: { id: number; name: string; photo: string | null } | null
+  servicos: string[]
+  valor: number
+  pode_alterar: boolean
+  motivo: string | null
+  antecedencia_horas: number
+}
+export type Aviso ={ exibir: boolean; dados: { titulo: string; mensagem: string } | null }
