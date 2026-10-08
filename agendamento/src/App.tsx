@@ -170,6 +170,8 @@ export default function App() {
     document.documentElement.style.setProperty("--sobre-marca", corSobre(cor))
     document.title = `Agendar horário · ${dados.id.name}`
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", cor)
+    // ícone da aba = logo da barbearia, quando houver
+    if (dados.id.logo_url) document.querySelector('link[rel="icon"]')?.setAttribute("href", dados.id.logo_url)
   }, [dados])
 
   const escolhidos = useMemo(() => dados?.servicos.filter((s) => servicosSel.includes(s.id)) ?? [], [dados, servicosSel])

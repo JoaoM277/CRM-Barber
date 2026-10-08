@@ -7,7 +7,19 @@
     <title>Agendar horário</title>
     <meta name="description" content="Escolha o serviço, o profissional e o horário. Leva menos de um minuto." />
     <!-- configuração por servidor (URL da API e barbearia padrão); em dev pode não existir -->
+    <link rel="icon" href="/agendar/favicon.svg" type="image/svg+xml" />
     <script src="/js/env.js"></script>
+    <script>
+      // abre a conexão com a API enquanto o JavaScript da página ainda baixa
+      try {
+        var api = window.CRM_ENV && window.CRM_ENV.API_BASE_URL
+        if (api) {
+          var l = document.createElement("link")
+          l.rel = "preconnect"; l.href = new URL(api).origin; l.crossOrigin = ""
+          document.head.appendChild(l)
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
