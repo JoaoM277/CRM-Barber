@@ -94,7 +94,7 @@ Recomendação: painel em **React + Vite + Tailwind + shadcn/ui** consumindo a A
 | 5 | ✅ Reativação de clientes sumidos (X dias sem visita → WhatsApp; desligada por padrão, SAIR, 30/dia) — no ar em 08/10/2026 | Receita visível pro dono |
 | 6 | ✅ Relatórios (retorno, clientes novos, ocupação por profissional/dia, cancelamentos; ticket médio já no financeiro) — no ar em 08/10/2026 | Justifica plano Pro |
 | 7 | ✅ Produtos no atendimento, estoque e comissão (comanda com forma de pagamento/caixa fica para depois) — no ar em 08/10/2026 | Captura venda de balcão |
-| 8 | Fidelidade/cashback, lista de espera, avaliação pós-atendimento | Diferenciais |
+| 8 | ✅ Avaliação pós-atendimento (nota + Google), fidelidade (cartão de selos) e lista de espera — no ar em 08/10/2026 (cashback fica para depois) | Diferenciais |
 | 9 | Multi-unidade | Plano Premium |
 
 ## Fase 6 — Lançamento
