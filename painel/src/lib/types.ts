@@ -79,7 +79,11 @@ export type Agendamento = {
   servicos_nomes: string
   produtos?: ItemProduto[]
   total_produtos?: number
+  fidelidade?: Fidelidade | null
+  client_id?: number | null
 }
+
+export type Fidelidade = { selos: number; meta: number; premio: string | null; premio_disponivel: boolean }
 
 export type ItemProduto = { id: number; nome: string; quantidade: number; preco: number; total: number }
 

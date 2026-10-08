@@ -17,7 +17,7 @@ import { EnviarImagem } from "@/components/enviar-imagem"
 import { useExpediente } from "@/hooks/use-cadastros"
 import { useBarbearia, useMe } from "@/hooks/use-sessao"
 import { api, ApiError } from "@/lib/api"
-import { linkAgendamento } from "@/lib/format"
+import { dataBR, linkAgendamento } from "@/lib/format"
 import type { Expediente } from "@/lib/types"
 
 const erroDe = (e: unknown) => (e instanceof ApiError && e.errors ? Object.fromEntries(Object.entries(e.errors).map(([k, v]) => [k, v[0]])) : {})
@@ -296,6 +296,73 @@ function AlteracaoPeloCliente() {
   )
 }
 
+/* ------------------------------------------------------------------ fidelidade */
+type EstadoFidelidade = { ativa: boolean; meta: number; premio: string | null; desde: string | null; premios_disponiveis: number }
+
+function AbaFidelidade() {
+  const qc = useQueryClient()
+  const { data, isLoading } = useQuery({ queryKey: ["fidelidade"], queryFn: () => api<EstadoFidelidade>("/fidelidade") })
+  const [f, setF] = useState({ meta: "10", premio: "" })
+  useEffect(() => {
+    if (data) setF({ meta: String(data.meta), premio: data.premio ?? "" })
+  }, [data])
+
+  const salvar = useMutation({
+    mutationFn: (body: { ativa?: boolean; meta?: number; premio?: string | null }) => api<EstadoFidelidade & { message: string }>("/fidelidade", { method: "PUT", body }),
+    onSuccess: (r) => {
+      qc.setQueryData(["fidelidade"], r)
+      qc.invalidateQueries({ queryKey: ["clientes"] })
+      qc.invalidateQueries({ queryKey: ["agendamentos"] })
+      toast.success(r.message)
+    },
+    onError: (e) => toast.error(e.message),
+  })
+
+  if (isLoading || !data) return <Skeleton className="h-64 w-full rounded-xl" />
+  const mudou = Number(f.meta) !== data.meta || f.premio.trim() !== (data.premio ?? "")
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <div>
+          <CardTitle>Cartão fidelidade</CardTitle>
+          <CardDescription>
+            Cada atendimento <strong>concluído</strong> vale um selo. Ao juntar a meta, o cliente ganha o prêmio: recebe um aviso no
+            WhatsApp, vê o cartão no link do horário e o prêmio aparece na agenda para você entregar.
+          </CardDescription>
+        </div>
+        <Switch
+          checked={data.ativa}
+          disabled={salvar.isPending}
+          onCheckedChange={(v) => salvar.mutate({ ativa: v, meta: Number(f.meta), premio: f.premio.trim() || null })}
+          aria-label="Cartão fidelidade"
+        />
+      </CardHeader>
+      <CardContent className="grid gap-4 sm:grid-cols-[10rem_1fr]">
+        <div className="grid gap-1.5">
+          <Label htmlFor="fid-meta">Selos para o prêmio</Label>
+          <Input id="fid-meta" type="number" min={2} max={50} value={f.meta} onChange={(e) => setF({ ...f, meta: e.target.value })} />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="fid-premio">Prêmio</Label>
+          <Input id="fid-premio" maxLength={120} value={f.premio} onChange={(e) => setF({ ...f, premio: e.target.value })} placeholder="Ex.: 1 corte grátis" />
+        </div>
+        {data.ativa && (
+          <p className="text-sm text-muted-foreground sm:col-span-2">
+            Contando desde {data.desde ? dataBR(data.desde) : "hoje"}.{" "}
+            {data.premios_disponiveis > 0 ? <strong className="text-foreground">{data.premios_disponiveis} cliente(s) com prêmio para receber.</strong> : "Nenhum prêmio pendente agora."}
+          </p>
+        )}
+      </CardContent>
+      <CardFooter>
+        <Button onClick={() => salvar.mutate({ meta: Number(f.meta), premio: f.premio.trim() || null })} disabled={!mudou || salvar.isPending}>
+          Salvar
+        </Button>
+      </CardFooter>
+    </Card>
+  )
+}
+
 /* ------------------------------------------------------------------ aviso */
 function AbaAviso() {
   const qc = useQueryClient()
@@ -502,19 +569,21 @@ function AbaSenha() {
 export default function Configuracoes() {
   const { hash } = useLocation()
   const navigate = useNavigate()
-  const aba = ["barbearia", "horarios", "aviso", "equipe", "senha"].includes(hash.slice(1)) ? hash.slice(1) : "barbearia"
+  const aba = ["barbearia", "horarios", "fidelidade", "aviso", "equipe", "senha"].includes(hash.slice(1)) ? hash.slice(1) : "barbearia"
 
   return (
     <Tabs value={aba} onValueChange={(v) => navigate(`#${v}`, { replace: true })}>
       <TabsList className="mb-6 flex-wrap">
         <TabsTrigger value="barbearia">Barbearia</TabsTrigger>
         <TabsTrigger value="horarios">Horários</TabsTrigger>
+        <TabsTrigger value="fidelidade">Fidelidade</TabsTrigger>
         <TabsTrigger value="aviso">Aviso</TabsTrigger>
         <TabsTrigger value="equipe">Equipe</TabsTrigger>
         <TabsTrigger value="senha">Minha senha</TabsTrigger>
       </TabsList>
       <TabsContent value="barbearia"><AbaBarbearia /></TabsContent>
       <TabsContent value="horarios" className="grid gap-6"><AbaHorarios /><AlteracaoPeloCliente /></TabsContent>
+      <TabsContent value="fidelidade"><AbaFidelidade /></TabsContent>
       <TabsContent value="aviso"><AbaAviso /></TabsContent>
       <TabsContent value="equipe"><AbaEquipe /></TabsContent>
       <TabsContent value="senha"><AbaSenha /></TabsContent>

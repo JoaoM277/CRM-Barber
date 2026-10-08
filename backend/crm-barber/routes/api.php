@@ -25,6 +25,7 @@ use App\Http\Controllers\ReativacaoController;
 use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AvaliacaoController;
+use App\Http\Controllers\FidelidadeController;
 use App\Http\Controllers\Platform\PlatformBarbershopController;
 use App\Http\Controllers\Platform\PlatformMetricsController;
 use App\Http\Controllers\Platform\PlatformSettingsController;
@@ -137,6 +138,10 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
     Route::put('/agendamentos/{schedule}', [ScheduleController::class, 'update'])->name('agendamentos.update');
     Route::delete('/agendamentos/{schedule}', [ScheduleController::class, 'destroy'])->name('agendamentos.delete');
 
+    // Fidelidade: ver a configuração e entregar o prêmio (qualquer usuário, no balcão)
+    Route::get('/fidelidade', [FidelidadeController::class, 'show'])->name('fidelidade.show');
+    Route::post('/clientes/{client}/fidelidade/resgatar', [FidelidadeController::class, 'resgatar'])->name('fidelidade.resgatar');
+
     // Produtos vendidos no atendimento (qualquer usuário da barbearia; recurso do plano Pro)
     Route::get('/produtos', [ProductController::class, 'index'])->middleware('feature:financeiro')->name('produtos.index');
     Route::put('/agendamentos/{schedule}/produtos', [ProductController::class, 'vender'])->middleware('feature:financeiro')->name('agendamentos.produtos');
@@ -179,6 +184,9 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
         // Avaliação pós-atendimento (pedido de nota + link do Google)
         Route::get('/whatsapp/avaliacao', [AvaliacaoController::class, 'show'])->name('whatsapp.avaliacao');
         Route::put('/whatsapp/avaliacao', [AvaliacaoController::class, 'update'])->name('whatsapp.avaliacao.update');
+
+        // Fidelidade (cartão de selos): meta e prêmio
+        Route::put('/fidelidade', [FidelidadeController::class, 'update'])->name('fidelidade.update');
 
         // Cliente cancela/remarca pelo link (liga/desliga e antecedência mínima)
         Route::put('/barbearia/alteracao-pelo-cliente', [BarbershopController::class, 'alteracaoPeloCliente'])->name('barbearia.alteracao-cliente');

@@ -49,6 +49,9 @@ class SendAppointmentWhatsapp implements ShouldQueue
 
     public const AVALIACAO_BAIXA = 'AVALIACAO_BAIXA';
 
+    /** Fidelidade: o cliente completou o cartão de selos. */
+    public const FIDELIDADE_PREMIO = 'FIDELIDADE_PREMIO';
+
     /** Mensagens que levam o link "meu horário" (cancelar/remarcar). */
     private const COM_LINK_DO_CLIENTE = [self::AGENDAMENTO, self::REMARCADO, self::LEMBRETE_24H];
 
@@ -89,6 +92,9 @@ class SendAppointmentWhatsapp implements ShouldQueue
             'link' => $schedule->barbershop
                 ? rtrim(config('app.frontend_url'), '/').'/?b='.$schedule->barbershop->slug
                 : null,
+            // fidelidade: meta e prêmio do cartão de selos
+            'meta' => $this->trigger === self::FIDELIDADE_PREMIO ? (int) $schedule->barbershop?->fidelidade_meta : null,
+            'premio' => $this->trigger === self::FIDELIDADE_PREMIO ? $schedule->barbershop?->fidelidade_premio : null,
             // avaliação no Google (agradecimento de nota alta)
             'review_link' => $this->trigger === self::AVALIACAO_ALTA ? ($schedule->barbershop?->google_review_url ?: null) : null,
             // link para o próprio cliente cancelar/remarcar, se ainda pode

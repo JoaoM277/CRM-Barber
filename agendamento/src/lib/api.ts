@@ -68,5 +68,6 @@ export type MeuHorario = {
   pode_alterar: boolean
   motivo: string | null
   antecedencia_horas: number
+  fidelidade: { selos: number; meta: number; premio: string | null; premio_disponivel: boolean } | null
 }
-export type Aviso ={ exibir: boolean; dados: { titulo: string; mensagem: string } | null }
+export type Aviso = { exibir: boolean; dados: { titulo: string; mensagem: string } | null }

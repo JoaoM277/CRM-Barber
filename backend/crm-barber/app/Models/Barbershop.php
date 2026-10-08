@@ -45,6 +45,10 @@ class Barbershop extends Model
         'reativacao_dias',
         'avaliacao_whatsapp',
         'google_review_url',
+        'fidelidade_ativa',
+        'fidelidade_meta',
+        'fidelidade_premio',
+        'fidelidade_desde',
     ];
 
     /** URL pública do logo (o banco guarda só o caminho no disco "public"). */
@@ -73,6 +77,9 @@ class Barbershop extends Model
         'reativacao_whatsapp' => 'boolean',
         'reativacao_dias' => 'integer',
         'avaliacao_whatsapp' => 'boolean',
+        'fidelidade_ativa' => 'boolean',
+        'fidelidade_meta' => 'integer',
+        'fidelidade_desde' => 'date',
     ];
 
     public function users()

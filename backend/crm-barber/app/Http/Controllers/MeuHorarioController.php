@@ -7,6 +7,7 @@ use App\Jobs\SendAppointmentWhatsapp;
 use App\Models\Schedule;
 use App\Support\Audit;
 use App\Support\ComandaProdutos;
+use App\Support\Fidelidade;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -135,6 +136,8 @@ class MeuHorarioController extends Controller
             'pode_alterar' => $motivo === null,
             'motivo' => $motivo,
             'antecedencia_horas' => (int) $s->barbershop?->antecedencia_alteracao_horas,
+            // cartão de selos do cliente (null com a fidelidade desligada)
+            'fidelidade' => $s->barbershop && $s->client_id ? Fidelidade::resumo($s->barbershop, $s->client_id) : null,
         ];
     }
 }

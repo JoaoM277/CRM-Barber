@@ -12,6 +12,8 @@ use App\Http\Requests\StoreScheduleRequest;
 use App\Http\Controllers\Traits\ApiResponse;
 use App\Http\Controllers\Traits\ValidaAgenda;
 use App\Support\ComandaProdutos;
+use App\Support\Fidelidade;
+use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
@@ -69,7 +71,11 @@ class ScheduleController extends Controller
         $perPage = min(max((int) $request->query('per_page', 200), 1), 500);
         $paginator = $query->paginate($perPage);
 
-        $schedules = collect($paginator->items())->map(function (Schedule $s) {
+        // fidelidade: quem já pode receber o prêmio aparece marcado na agenda
+        $bs = app(TenantContext::class)->barbershop();
+        $selos = Fidelidade::ativa($bs) ? Fidelidade::selos($bs, collect($paginator->items())->pluck('client_id')->unique()->filter()->values()->all()) : [];
+
+        $schedules = collect($paginator->items())->map(function (Schedule $s) use ($bs, $selos) {
             $servicos = $s->servicosResolvidos();
 
             return [
@@ -85,6 +91,7 @@ class ScheduleController extends Controller
                 'commission_value' => $s->commission_value,
                 'cliente_nome' => $s->client?->name,
                 'cliente_telefone' => $s->client?->phone,
+                'client_id' => $s->client_id,
                 'client' => $s->client,
                 'worker' => $s->worker,
                 'service' => $s->service,
@@ -98,6 +105,7 @@ class ScheduleController extends Controller
                 // produtos vendidos no atendimento
                 'produtos' => ProductController::resumo($s),
                 'total_produtos' => $s->totalProdutos(),
+                'fidelidade' => $selos && $s->client_id ? Fidelidade::resumo($bs, $s->client_id, $selos[$s->client_id] ?? 0) : null,
                 // compat: serviço "primário"
                 'Servico' => $s->service ? ['id' => $s->service->id, 'nome' => $s->service->name] : null,
                 'Barbeiro' => $s->worker ? ['id' => $s->worker->id, 'nome' => $s->worker->name] : null,
@@ -337,6 +345,11 @@ class ScheduleController extends Controller
             );
 
             // cancelado pela barbearia: avisa o cliente (opção dos lembretes)
+            // concluído: se este selo completou o cartão, o cliente fica sabendo do prêmio
+            if ($update['status'] === Schedule::STATUS_CONCLUIDO) {
+                $this->avisarPremioFidelidade($schedule);
+            }
+
             if ($update['status'] === Schedule::STATUS_CANCELADO) {
                 ComandaProdutos::devolverTudo($schedule);
                 $this->avisarCancelamento($schedule);
@@ -347,6 +360,23 @@ class ScheduleController extends Controller
             'message' => 'Agendamento atualizado com sucesso!',
             'schedule' => $schedule->fresh(),
         ], 200);
+    }
+
+    private function avisarPremioFidelidade(Schedule $schedule): void
+    {
+        $bs = $schedule->barbershop;
+        if (! Fidelidade::ativa($bs) || ! $schedule->client_id) {
+            return;
+        }
+        // só no selo que fecha a meta (não repete a cada atendimento depois dele)
+        if ((Fidelidade::selos($bs, [$schedule->client_id])[$schedule->client_id] ?? 0) !== (int) $bs->fidelidade_meta) {
+            return;
+        }
+        try {
+            Bus::dispatch(new SendAppointmentWhatsapp($schedule->id, SendAppointmentWhatsapp::FIDELIDADE_PREMIO));
+        } catch (\Throwable $e) {
+            Log::warning('Falha ao enfileirar aviso de prêmio da fidelidade: '.$e->getMessage());
+        }
     }
 
     /** Aviso de cancelamento no WhatsApp, se a barbearia ligou a opção e o horário ainda não passou. */

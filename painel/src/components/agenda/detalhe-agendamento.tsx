@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
+import { CartaoSelos } from "@/components/cartao-selos"
 import { StatusAgendamentoBadge } from "@/components/status-agendamento"
 import { useMudarStatus, useRemarcar } from "@/hooks/use-agenda"
 import { useProdutos, useProfissionais } from "@/hooks/use-cadastros"
@@ -153,6 +154,8 @@ export function DetalheAgendamento({ agendamento: a, onFechar }: { agendamento: 
               <dd className="font-mono">{a.cliente_telefone ?? "—"}</dd>
             </div>
           </dl>
+
+          {a.fidelidade && a.client_id && <CartaoSelos f={a.fidelidade} clienteId={a.client_id} agendamentoId={a.id} />}
 
           <div className="flex flex-wrap gap-2">
             {fone && (

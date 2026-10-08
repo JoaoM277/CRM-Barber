@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { CalendarPlus, Check, ChevronLeft, Loader2, Scissors, Sparkles, UserRound } from "lucide-react"
+import { CalendarPlus, Check, ChevronLeft, Gift, Loader2, Scissors, Sparkles, UserRound } from "lucide-react"
 import clsx from "clsx"
 import { api, ErroApi, slugDaPagina, type Identidade, type MeuHorario as Horario, type Profissional } from "./lib/api"
 import { deISO, horariosLivres, isoLocal, minutos, type Expediente, type Horario as Vaga, type Ocupado } from "./lib/horarios"
@@ -16,6 +16,29 @@ const STATUS: Record<Horario["status"], { texto: string; classe: string }> = {
 }
 
 type Base = { id: Identidade; horario: Horario; profissionais: Profissional[]; expediente: Expediente[]; ocupados: Ocupado[] }
+
+/** Cartão de selos do cliente (fidelidade da barbearia). */
+function CartaoFidelidade({ f }: { f: NonNullable<Horario["fidelidade"]> }) {
+  const cheios = Math.min(f.selos, f.meta)
+  return (
+    <section className="mt-4 rounded-3xl border border-linha bg-cartao p-5" aria-label="Cartão fidelidade">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="inline-flex items-center gap-2 font-bold"><Gift className="size-5 text-marca" aria-hidden /> Cartão fidelidade</h2>
+        <span className="text-sm tabular text-suave">{f.selos} de {f.meta}</span>
+      </div>
+      <div className="flex flex-wrap gap-1.5" role="img" aria-label={`${cheios} de ${f.meta} selos`}>
+        {Array.from({ length: f.meta }, (_, i) => (
+          <span key={i} className={clsx("size-5 rounded-full border-2", i < cheios ? "border-marca bg-marca" : "border-linha")} />
+        ))}
+      </div>
+      <p className="mt-3 text-sm text-suave">
+        {f.premio_disponivel
+          ? <strong className="text-texto">Você ganhou: {f.premio}! É só avisar na próxima visita.</strong>
+          : <>Faltam <strong className="text-texto">{f.meta - f.selos}</strong> atendimento(s) para ganhar: {f.premio}</>}
+      </p>
+    </section>
+  )
+}
 
 /** Página que o cliente abre pelo link do WhatsApp: ver, cancelar ou remarcar o horário. */
 export default function MeuHorario({ token }: { token: string }) {
@@ -254,6 +277,7 @@ export default function MeuHorario({ token }: { token: string }) {
           h.motivo && h.status !== "concluido" && <p className="mt-5 rounded-2xl bg-fundo p-4 text-sm text-suave">{h.motivo}</p>
         )}
       </section>
+      {h.fidelidade && <CartaoFidelidade f={h.fidelidade} />}
       <p className="mt-4 text-center text-sm">
         <a href={linkAgendar} className="font-medium text-suave underline-offset-2 hover:underline">Ver a agenda da barbearia</a>
       </p>

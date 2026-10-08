@@ -69,6 +69,10 @@ messageList.AVALIACAO_ALTA = (name, a) =>
 messageList.AVALIACAO_BAIXA = (name) =>
   `Obrigado pela sinceridade, ${name}. Se quiser, conte aqui o que aconteceu: a barbearia vai ler e melhorar.`;
 
+// Fidelidade: completou o cartão de selos
+messageList.FIDELIDADE_PREMIO = (name, a) =>
+  `Parabéns, ${name}! 🎉 Você completou ${a?.meta ? `${a.meta} atendimentos` : "o cartão fidelidade"}${naBarbearia(a)} e ganhou: *${a?.premio || "um prêmio"}*.\n\nÉ só avisar na próxima visita.${a?.link ? ` Marque seu horário: ${a.link}` : ""}`;
+
 messageList.RESPOSTA_CONFIRMADO = (name, a) =>
   `Confirmado, ${name}! ✅ Te esperamos dia ${diaMes(a?.date)} às ${a?.time}.`;
 

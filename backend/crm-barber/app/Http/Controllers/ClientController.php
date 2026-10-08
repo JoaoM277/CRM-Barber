@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LoyaltyRedemption;
+use App\Support\Fidelidade;
+use App\Support\TenantContext;
 use App\Http\Requests\StoreClientRequest;
 use App\Models\Client;
 use App\Models\Schedule;
@@ -39,7 +42,16 @@ class ClientController extends Controller
             });
         }
 
-        return response()->json($query->get(), 200);
+        $clientes = $query->get();
+
+        // fidelidade: selos de cada cliente (quando o programa está ligado)
+        $bs = app(TenantContext::class)->barbershop();
+        if (Fidelidade::ativa($bs)) {
+            $selos = Fidelidade::selos($bs, $clientes->pluck('id')->all());
+            $clientes->each(fn (Client $c) => $c->setAttribute('fidelidade', Fidelidade::resumo($bs, $c->id, $selos[$c->id] ?? 0)));
+        }
+
+        return response()->json($clientes, 200);
     }
     /**
      * Show the form for creating a new resource.
@@ -90,7 +102,11 @@ class ClientController extends Controller
                 'servicos' => $s->servicosResolvidos()->pluck('name')->implode(', '),
             ]);
 
-        return response()->json($client->toArray() + ['historico' => $historico], 200);
+        $bs = app(TenantContext::class)->barbershop();
+        $fidelidade = $bs ? Fidelidade::resumo($bs, $client->id) : null;
+        $resgates = $fidelidade ? LoyaltyRedemption::where('client_id', $client->id)->latest('id')->limit(10)->get(['id', 'premio', 'created_at']) : [];
+
+        return response()->json($client->toArray() + ['historico' => $historico, 'fidelidade' => $fidelidade, 'resgates' => $resgates], 200);
     }
     /**
      * Show the form for editing the specified resource.

@@ -14,12 +14,13 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import { CartaoSelos } from "@/components/cartao-selos"
 import { StatusAgendamentoBadge } from "@/components/status-agendamento"
 import { Confirmar } from "@/components/confirmar"
 import { useMe } from "@/hooks/use-sessao"
 import { api, ApiError, API_BASE_URL, getToken } from "@/lib/api"
 import { dataBR, fone, moeda } from "@/lib/format"
-import type { StatusAgendamento } from "@/lib/types"
+import type { Fidelidade, StatusAgendamento } from "@/lib/types"
 
 const DIAS_SUMIDO = 45
 
@@ -34,6 +35,7 @@ type Cliente = {
   ultima_visita: string | null
   total_gasto: string | number | null
   proximo_horario: string | null
+  fidelidade?: Fidelidade | null
 }
 
 type Ficha = Cliente & {
@@ -172,6 +174,7 @@ function FichaCliente({ id, onFechar, onEditar }: { id: number | null; onFechar:
               )}
               <Button size="sm" variant="outline" onClick={() => onEditar(data)}>Editar dados</Button>
             </div>
+            {data.fidelidade && <CartaoSelos f={data.fidelidade} clienteId={data.id} />}
             {data.observation && <p className="rounded-lg bg-muted p-3 text-sm">{data.observation}</p>}
             {data.birth_date && <p className="text-sm text-muted-foreground">Aniversário: {dataBR(data.birth_date).slice(0, 5)}</p>}
             <Separator />
@@ -301,7 +304,14 @@ export default function Clientes() {
                       <span className="font-medium">{c.name}</span>
                       <span className="block font-mono text-xs text-muted-foreground">{fone(c.phone)}</span>
                     </TableCell>
-                    <TableCell className="tabular">{c.visitas}</TableCell>
+                    <TableCell className="tabular">
+                      {c.visitas}
+                      {c.fidelidade && (
+                        <span className={`block text-xs ${c.fidelidade.premio_disponivel ? "font-medium text-primary" : "text-muted-foreground"}`}>
+                          {c.fidelidade.premio_disponivel ? "🎁 Prêmio liberado" : `${c.fidelidade.selos}/${c.fidelidade.meta} selos`}
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       {c.ultima_visita ? (
                         <>
