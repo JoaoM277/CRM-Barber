@@ -54,3 +54,12 @@ export const diaSemanaCurto = (iso: string) =>
 
 export const dataLonga = (iso: string) =>
   deISO(iso).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })
+
+/** Telefone salvo como 55DDDNÚMERO → (DD) 9XXXX-XXXX */
+export function fone(p: string | null | undefined) {
+  if (!p) return ""
+  const d = p.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "")
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
+  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
+  return p
+}
