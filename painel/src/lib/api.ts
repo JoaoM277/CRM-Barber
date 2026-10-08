@@ -4,7 +4,7 @@
 
 declare global {
   interface Window {
-    CRM_ENV?: { API_BASE_URL?: string }
+    CRM_ENV?: { API_BASE_URL?: string; BOOKING_URL?: string }
   }
 }
 

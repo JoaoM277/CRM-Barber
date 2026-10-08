@@ -5,6 +5,8 @@
 // ==========================================================================
 window.CRM_ENV = {
     API_BASE_URL: "https://api.SEUDOMINIO.com/api",
+    // domínio da página de agendamento do cliente (usado no link mostrado no painel)
+    BOOKING_URL: "https://app.SEUDOMINIO.com",
     // barbearia usada quando a URL não traz ?b=slug nem subdomínio
     DEFAULT_BARBERSHOP_SLUG: "alpha-barber",
 };

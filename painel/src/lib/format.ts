@@ -20,8 +20,14 @@ export function diasAte(iso: string | null | undefined) {
   return Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000)
 }
 
-/** Link público de agendamento da barbearia (o site do cliente fica no mesmo domínio). */
-export const linkAgendamento = (slug: string) => `${location.origin}/index.html?b=${encodeURIComponent(slug)}`
+/**
+ * Link público de agendamento da barbearia. O domínio do cliente vem da config
+ * do servidor (window.CRM_ENV.BOOKING_URL, em /js/env.js); sem ela, o próprio domínio.
+ */
+export const linkAgendamento = (slug: string) => {
+  const base = (window.CRM_ENV?.BOOKING_URL ?? location.origin).replace(/\/$/, "")
+  return `${base}/?b=${encodeURIComponent(slug)}`
+}
 
 /** "2026-10-08" → Date local (meia-noite, sem deslocar por fuso). */
 export function deISO(iso: string) {
