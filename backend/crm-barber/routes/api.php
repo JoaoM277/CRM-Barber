@@ -146,6 +146,10 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
     |----------------------------------------------------------------------
     */
     Route::middleware('admin')->group(function () {
+        // LGPD do cliente final: cópia dos dados e eliminação a pedido
+        Route::get('/clientes/{client}/dados', [ClientController::class, 'exportarDados'])->name('clientes.dados');
+        Route::post('/clientes/{client}/anonimizar', [ClientController::class, 'anonimizar'])->name('clientes.anonimizar');
+
         // Logo da barbearia (aparece na página de agendamento)
         Route::post('/barbearia/logo', [ImagemController::class, 'logo'])->middleware('throttle:20,1')->name('barbearia.logo');
         Route::delete('/barbearia/logo', [ImagemController::class, 'removerLogo'])->name('barbearia.logo.remover');

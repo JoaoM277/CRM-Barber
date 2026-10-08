@@ -15,7 +15,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { StatusAgendamentoBadge } from "@/components/status-agendamento"
-import { api, ApiError } from "@/lib/api"
+import { Confirmar } from "@/components/confirmar"
+import { useMe } from "@/hooks/use-sessao"
+import { api, ApiError, API_BASE_URL, getToken } from "@/lib/api"
 import { dataBR, fone, moeda } from "@/lib/format"
 import type { StatusAgendamento } from "@/lib/types"
 
@@ -120,7 +122,34 @@ function FormCliente({ cliente, aberto, onFechar }: { cliente: Cliente | null; a
 }
 
 function FichaCliente({ id, onFechar, onEditar }: { id: number | null; onFechar: () => void; onEditar: (c: Cliente) => void }) {
+  const qc = useQueryClient()
+  const { data: me } = useMe()
   const { data, isLoading } = useQuery({ queryKey: ["clientes", id], queryFn: () => api<Ficha>(`/clientes/${id}`), enabled: id !== null })
+  const [apagar, setApagar] = useState(false)
+
+  const anonimizar = useMutation({
+    mutationFn: () => api<{ message: string }>(`/clientes/${id}/anonimizar`, { method: "POST" }),
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["clientes"] })
+      toast.success(r.message)
+      onFechar()
+    },
+    onError: (e) => toast.error(e.message),
+  })
+
+  // LGPD: cópia dos dados para entregar ao cliente que pediu
+  const baixarDados = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/clientes/${id}/dados`, { headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` } })
+      if (!res.ok) throw new Error()
+      const url = URL.createObjectURL(await res.blob())
+      Object.assign(document.createElement("a"), { href: url, download: `dados-cliente-${id}.json` }).click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch {
+      toast.error("Não foi possível gerar o arquivo. Tente de novo.")
+    }
+  }
+
   if (id === null) return null
   const wa = data?.phone.replace(/\D/g, "")
 
@@ -169,8 +198,29 @@ function FichaCliente({ id, onFechar, onEditar }: { id: number | null; onFechar:
                 </ul>
               )}
             </div>
+            {me?.role === "admin" && (
+              <>
+                <Separator />
+                <div className="grid gap-2">
+                  <p className="font-medium">Privacidade (LGPD)</p>
+                  <p className="text-xs text-muted-foreground">Se o cliente pedir uma cópia dos dados dele ou que eles sejam apagados.</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" onClick={baixarDados}>Baixar dados do cliente</Button>
+                    <Button size="sm" variant="outline" className="text-destructive" onClick={() => setApagar(true)}>Apagar dados pessoais</Button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
+        <Confirmar
+          aberto={apagar}
+          titulo="Apagar os dados pessoais deste cliente?"
+          descricao="Nome, telefone, e-mail, aniversário e observações são apagados para sempre. Os atendimentos continuam no financeiro, sem identificação. Não dá para desfazer."
+          acao="Apagar dados pessoais"
+          onConfirmar={() => anonimizar.mutate()}
+          onFechar={() => setApagar(false)}
+        />
       </SheetContent>
     </Sheet>
   )

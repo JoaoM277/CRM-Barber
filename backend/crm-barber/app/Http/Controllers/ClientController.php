@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreClientRequest;
 use App\Models\Client;
 use App\Models\Schedule;
+use Illuminate\Support\Facades\DB;
 use App\Support\Audit;
 use App\Support\Phone;
 use Illuminate\Http\Request;
@@ -133,5 +134,69 @@ class ClientController extends Controller
             'message' => 'Client removed successfully!'
         ], 200);
 
+    }
+
+    /**
+     * LGPD — portabilidade/acesso: tudo o que a barbearia guarda sobre o
+     * cliente, em JSON, para entregar a ele quando pedir.
+     * GET /clientes/{client}/dados
+     */
+    public function exportarDados(Client $client)
+    {
+        $dados = [
+            'gerado_em' => now()->toIso8601String(),
+            'barbearia' => $client->barbershop?->name,
+            'cliente' => $client->only(['name', 'phone', 'email', 'birth_date', 'observation', 'created_at']),
+            'atendimentos' => $client->schedules()
+                ->with(['worker:id,name', 'services:id,name', 'service:id,name'])
+                ->orderBy('date')->get()
+                ->map(fn (Schedule $s) => [
+                    'data' => (string) $s->date,
+                    'horario' => substr((string) $s->start_time, 0, 5),
+                    'servicos' => $s->servicosResolvidos()->pluck('name')->implode(', '),
+                    'profissional' => $s->worker?->name,
+                    'valor' => $s->price,
+                    'situacao' => $s->status,
+                    'observacao' => $s->observation,
+                ]),
+            'mensagens' => \App\Models\Log::where('client_id', $client->id)->orderBy('created_at')
+                ->get(['action', 'description', 'created_at']),
+        ];
+
+        Audit::log('cliente.dados_exportados', $client, 'Dados do cliente exportados (LGPD)');
+
+        return response()->json($dados, 200, [
+            'Content-Disposition' => 'attachment; filename="dados-cliente-'.$client->id.'.json"',
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * LGPD — eliminação: apaga os dados pessoais do cliente a pedido dele.
+     * Os atendimentos continuam (faturamento, comissões e obrigação fiscal),
+     * mas sem nada que identifique a pessoa.
+     * POST /clientes/{client}/anonimizar
+     */
+    public function anonimizar(Client $client)
+    {
+        DB::transaction(function () use ($client) {
+            $client->schedules()->update(['observation' => null]);
+            \App\Models\Log::where('client_id', $client->id)->update(['description' => null, 'ip' => null]);
+            // direto no banco: o model normaliza telefone para dígitos e o marcador
+            // "anonimo-ID" (único por cliente) viraria um número que pode colidir
+            DB::table('clients')->where('id', $client->id)->update([
+                'name' => 'Cliente removido',
+                'phone' => 'anonimo-'.$client->id,
+                'email' => null,
+                'birth_date' => null,
+                'observation' => null,
+                'updated_at' => now(),
+            ]);
+            $client->delete();
+        });
+
+        // sem nome no registro: o próprio log não pode guardar o dado apagado
+        Audit::log('cliente.anonimizado', $client, 'Dados pessoais de um cliente apagados a pedido (LGPD)');
+
+        return response()->json(['message' => 'Dados pessoais apagados. O histórico de atendimentos ficou sem identificação.']);
     }
 }
