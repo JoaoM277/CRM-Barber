@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreClientRequest;
 use App\Models\Client;
+use App\Models\Schedule;
 use App\Support\Audit;
 use App\Support\Phone;
 use Illuminate\Http\Request;
@@ -14,13 +15,31 @@ class ClientController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $clients = Client::all();
+        // CRM: além do cadastro, o histórico de cada cliente (visitas concluídas,
+        // última visita, quanto já gastou e se tem horário marcado à frente)
+        $query = Client::query()
+            ->withCount(['schedules as visitas' => fn ($q) => $q->where('status', Schedule::STATUS_CONCLUIDO)])
+            ->withMax(['schedules as ultima_visita' => fn ($q) => $q->where('status', Schedule::STATUS_CONCLUIDO)], 'date')
+            ->withSum(['schedules as total_gasto' => fn ($q) => $q->where('status', Schedule::STATUS_CONCLUIDO)], 'price')
+            ->withMin(['schedules as proximo_horario' => fn ($q) => $q
+                ->whereIn('status', [Schedule::STATUS_PENDENTE, Schedule::STATUS_CONFIRMADO])
+                ->where('date', '>=', now()->toDateString())], 'date')
+            ->orderBy('name');
 
-        return response()->json($clients, 200);
+        if ($busca = trim((string) $request->query('busca'))) {
+            $digitos = preg_replace('/\D/', '', $busca);
+            $query->where(function ($q) use ($busca, $digitos) {
+                $q->where('name', 'like', "%{$busca}%");
+                if ($digitos !== '') {
+                    $q->orWhere('phone', 'like', "%{$digitos}%");
+                }
+            });
+        }
+
+        return response()->json($query->get(), 200);
     }
-
     /**
      * Show the form for creating a new resource.
      */
@@ -54,9 +73,24 @@ class ClientController extends Controller
      */
     public function show(Client $client)
     {
-        return response()->json($client, 200);
-    }
+        // ficha do cliente com o histórico de atendimentos (mais recentes primeiro)
+        $historico = $client->schedules()
+            ->with(['worker:id,name', 'services:id,name', 'service:id,name'])
+            ->orderByDesc('date')->orderByDesc('start_time')
+            ->limit(50)
+            ->get()
+            ->map(fn (Schedule $s) => [
+                'id' => $s->id,
+                'date' => (string) $s->date,
+                'start_time' => substr((string) $s->start_time, 0, 5),
+                'status' => $s->status,
+                'price' => $s->price,
+                'profissional' => $s->worker?->name,
+                'servicos' => $s->servicosResolvidos()->pluck('name')->implode(', '),
+            ]);
 
+        return response()->json($client->toArray() + ['historico' => $historico], 200);
+    }
     /**
      * Show the form for editing the specified resource.
      */
