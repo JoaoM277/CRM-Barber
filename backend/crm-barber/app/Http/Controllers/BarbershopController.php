@@ -101,7 +101,8 @@ class BarbershopController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => ['required', 'string', 'max:255', \Illuminate\Validation\Rule::unique('barbershops', 'slug')->ignore($barbershop->id)],
+            // o slug é o link de agendamento: só letras minúsculas, números e hífen
+            'slug' => ['required', 'string', 'max:60', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', \Illuminate\Validation\Rule::unique('barbershops', 'slug')->ignore($barbershop->id)],
 
             'phone' => 'nullable|string|max:20',
             'email' => ['nullable', 'email', \Illuminate\Validation\Rule::unique('barbershops', 'email')->ignore($barbershop->id)],
@@ -129,12 +130,10 @@ class BarbershopController extends Controller
 
             'timezone' => 'nullable|string|max:100',
 
-            'subscription_plan' => 'nullable|in:free,basic,premium',
-            'subscription_ends_at' => 'nullable|date',
 
-            'active' => 'nullable|boolean',
         ]);
 
+        // plano, validade e ativação são da administração da plataforma, não do dono
         $barbershop->update($validated);
 
         return response()->json($barbershop->fresh(), 200);
