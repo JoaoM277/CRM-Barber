@@ -8,6 +8,7 @@ use App\Models\Schedule;
 use App\Support\Audit;
 use App\Support\ComandaProdutos;
 use App\Support\Fidelidade;
+use App\Support\ListaEspera;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -41,6 +42,7 @@ class MeuHorarioController extends Controller
 
         $s->update(['status' => Schedule::STATUS_CANCELADO, 'resposta_cliente_em' => now()]);
         ComandaProdutos::devolverTudo($s);
+        ListaEspera::vagaAberta($s);
         Audit::logFor($s->barbershop_id, 'agendamento.cancelado_cliente', $s, 'Cliente cancelou pelo link');
 
         return response()->json(['message' => 'Horário cancelado.', 'horario' => $this->resumo($s->fresh())]);
@@ -73,6 +75,8 @@ class MeuHorarioController extends Controller
 
         $this->assertDentroDoExpediente($dateStr, $startStr, $endStr);
 
+        $horarioAntigo = $s->replicate();
+
         DB::transaction(function () use ($s, $workerId, $dateStr, $startStr, $endStr) {
             // mesma trava do agendamento novo: serializa disputas pelo slot
             Schedule::where('worker_id', $workerId)->whereDate('date', $dateStr)->lockForUpdate()->get();
@@ -89,6 +93,10 @@ class MeuHorarioController extends Controller
                 'resposta_cliente_em' => now(),
             ]);
         });
+
+        // o horário antigo vagou; e se ele estava na lista de espera do novo dia, sai dela
+        ListaEspera::vagaAberta($horarioAntigo);
+        ListaEspera::agendou($s->barbershop_id, $s->client_id, $dateStr);
 
         Audit::logFor($s->barbershop_id, 'agendamento.remarcado_cliente', $s, "Cliente remarcou pelo link para {$dateStr} {$data['horario']}");
 

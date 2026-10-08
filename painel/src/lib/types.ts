@@ -44,6 +44,7 @@ export type Barbearia = {
   logo_url: string | null
   alterar_pelo_link?: boolean
   antecedencia_alteracao_horas?: number
+  lista_espera_ativa?: boolean
 }
 
 export type PassoOnboarding = {

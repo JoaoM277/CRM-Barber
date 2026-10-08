@@ -66,6 +66,8 @@ class BarbershopController extends Controller
             'state' => $bs->state,
             'accent_color' => $bs->accent_color ?: $accentPadrao,
             'secondary_color' => $bs->secondary_color ?: ($bs->accent_color ?: $accentPadrao),
+            // a página mostra "me avise se abrir vaga" nos dias lotados
+            'lista_espera' => (bool) $bs->lista_espera_ativa,
         ]);
     }
 
@@ -148,6 +150,7 @@ class BarbershopController extends Controller
         $data = $request->validate([
             'alterar_pelo_link' => 'sometimes|boolean',
             'antecedencia_alteracao_horas' => 'sometimes|integer|min:0|max:72',
+            'lista_espera_ativa' => 'sometimes|boolean',
         ]);
 
         $bs = $this->tenant->barbershop();
@@ -156,7 +159,7 @@ class BarbershopController extends Controller
 
         return response()->json([
             'message' => 'Preferências salvas.',
-            'alteracao' => $bs->only(['alterar_pelo_link', 'antecedencia_alteracao_horas']),
+            'alteracao' => $bs->only(['alterar_pelo_link', 'antecedencia_alteracao_horas', 'lista_espera_ativa']),
         ]);
     }
 

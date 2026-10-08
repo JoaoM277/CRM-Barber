@@ -10,7 +10,7 @@ const messageCreateSchema = z.object({
     .min(11, "O numero deve ter no minimo 11 digitos")
     .max(20, "O numero deve ter no maximo 13 digitos"),
   name: z.string().min(1, "Nome invalido"),
-  trigger: z.enum(["AGENDAMENTO", "CANCELAMENTO", "LEMBRETE", "LEMBRETE_24H", "LEMBRETE_2H", "RESPOSTA_CONFIRMADO", "RESPOSTA_CANCELADO", "REMARCADO", "REATIVACAO", "AVALIACAO_PEDIDO", "AVALIACAO_ALTA", "AVALIACAO_BAIXA", "FIDELIDADE_PREMIO"], {
+  trigger: z.enum(["AGENDAMENTO", "CANCELAMENTO", "LEMBRETE", "LEMBRETE_24H", "LEMBRETE_2H", "RESPOSTA_CONFIRMADO", "RESPOSTA_CANCELADO", "REMARCADO", "REATIVACAO", "AVALIACAO_PEDIDO", "AVALIACAO_ALTA", "AVALIACAO_BAIXA", "FIDELIDADE_PREMIO", "LISTA_ESPERA"], {
     errorMap: () => ({ message: "Gatilho de evento Invalido" }),
   }),
   // nullish(): o Laravel pode mandar null nesses campos (ex.: barbeiro removido)

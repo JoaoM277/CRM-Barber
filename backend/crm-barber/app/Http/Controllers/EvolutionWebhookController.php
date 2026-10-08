@@ -120,6 +120,7 @@ class EvolutionWebhookController extends Controller
             }
             $agendamento->update(['status' => Schedule::STATUS_CANCELADO, 'resposta_cliente_em' => now()]);
             \App\Support\ComandaProdutos::devolverTudo($agendamento);
+            \App\Support\ListaEspera::vagaAberta($agendamento);
             Audit::logFor($instancia->barbershop_id, 'agendamento.cancelado_cliente', $agendamento, 'Cliente cancelou pelo WhatsApp');
             SendAppointmentWhatsapp::dispatch($agendamento->id, SendAppointmentWhatsapp::RESPOSTA_CANCELADO);
         }

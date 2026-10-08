@@ -26,6 +26,7 @@ use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AvaliacaoController;
 use App\Http\Controllers\FidelidadeController;
+use App\Http\Controllers\ListaEsperaController;
 use App\Http\Controllers\Platform\PlatformBarbershopController;
 use App\Http\Controllers\Platform\PlatformMetricsController;
 use App\Http\Controllers\Platform\PlatformSettingsController;
@@ -64,6 +65,9 @@ Route::middleware('tenant')->group(function () {
         Route::get('/disponibilidade', [ScheduleController::class, 'disponibilidade'])->name('agendamentos.disponibilidade');
         Route::get('/avisos/ativo', [AvisoController::class, 'ativo'])->name('avisos.ativo');
         Route::get('/barbearia', [BarbershopController::class, 'publicIdentity'])->name('barbearia.identidade');
+
+        // Lista de espera: "me avise se abrir vaga neste dia"
+        Route::post('/lista-espera', [ListaEsperaController::class, 'store'])->middleware('throttle:10,1')->name('lista-espera.store');
 
         // "Meu horário": o cliente vê, cancela ou remarca pelo link secreto
         Route::middleware('throttle:30,1')->group(function () {
@@ -137,6 +141,10 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
     Route::get('/agendamentos/{schedule}', [ScheduleController::class, 'show'])->name('agendamentos.show');
     Route::put('/agendamentos/{schedule}', [ScheduleController::class, 'update'])->name('agendamentos.update');
     Route::delete('/agendamentos/{schedule}', [ScheduleController::class, 'destroy'])->name('agendamentos.delete');
+
+    // Lista de espera do dia (agenda)
+    Route::get('/lista-espera', [ListaEsperaController::class, 'index'])->name('lista-espera.index');
+    Route::delete('/lista-espera/{entry}', [ListaEsperaController::class, 'destroy'])->name('lista-espera.delete');
 
     // Fidelidade: ver a configuração e entregar o prêmio (qualquer usuário, no balcão)
     Route::get('/fidelidade', [FidelidadeController::class, 'show'])->name('fidelidade.show');

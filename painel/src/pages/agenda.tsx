@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ListaEsperaDia } from "@/components/agenda/lista-espera"
 import { DetalheAgendamento } from "@/components/agenda/detalhe-agendamento"
 import { NovoAgendamento, type Preenchimento } from "@/components/agenda/novo-agendamento"
 import { useAgendamentos, useRemarcar } from "@/hooks/use-agenda"
@@ -324,6 +325,7 @@ export default function Agenda() {
               ))}
             </SelectContent>
           </Select>
+          {visao === "dia" && <ListaEsperaDia data={data} />}
           <Tabs value={visao} onValueChange={(v) => setVisao(v as "dia" | "semana")}>
             <TabsList>
               <TabsTrigger value="dia">Dia</TabsTrigger>

@@ -17,6 +17,7 @@ function useRecarregarAgenda() {
   const qc = useQueryClient()
   return () => {
     qc.invalidateQueries({ queryKey: ["agendamentos"] })
+    qc.invalidateQueries({ queryKey: ["lista-espera"] })
     qc.invalidateQueries({ queryKey: ["faturamento"] })
     qc.invalidateQueries({ queryKey: ["onboarding"] })
   }

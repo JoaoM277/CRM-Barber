@@ -13,6 +13,7 @@ use App\Http\Controllers\Traits\ApiResponse;
 use App\Http\Controllers\Traits\ValidaAgenda;
 use App\Support\ComandaProdutos;
 use App\Support\Fidelidade;
+use App\Support\ListaEspera;
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
@@ -263,6 +264,9 @@ class ScheduleController extends Controller
             Log::warning('Falha ao enfileirar confirmação de WhatsApp: '.$e->getMessage());
         }
 
+        // estava na lista de espera desse dia: conseguiu horário, sai da lista
+        ListaEspera::agendou($schedule->barbershop_id, $client->id, $dateStr);
+
         return response()->json([
             'message' => 'Agendamento feito com sucesso!',
             'schedule' => $schedule->load(['client', 'worker', 'service', 'services']),
@@ -353,6 +357,7 @@ class ScheduleController extends Controller
             if ($update['status'] === Schedule::STATUS_CANCELADO) {
                 ComandaProdutos::devolverTudo($schedule);
                 $this->avisarCancelamento($schedule);
+                ListaEspera::vagaAberta($schedule);
             }
         }
 
@@ -402,6 +407,9 @@ class ScheduleController extends Controller
         \App\Support\Audit::log('agendamento.removido', $schedule, "Agendamento #{$schedule->id} removido");
 
         ComandaProdutos::devolverTudo($schedule);
+        if (in_array($schedule->status, [Schedule::STATUS_PENDENTE, Schedule::STATUS_CONFIRMADO], true)) {
+            ListaEspera::vagaAberta($schedule);
+        }
         $schedule->delete();
 
         return response()->json(['message' => 'Agendamento removido com sucesso!'], 200);

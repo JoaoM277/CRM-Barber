@@ -73,6 +73,10 @@ messageList.AVALIACAO_BAIXA = (name) =>
 messageList.FIDELIDADE_PREMIO = (name, a) =>
   `Parabéns, ${name}! 🎉 Você completou ${a?.meta ? `${a.meta} atendimentos` : "o cartão fidelidade"}${naBarbearia(a)} e ganhou: *${a?.premio || "um prêmio"}*.\n\nÉ só avisar na próxima visita.${a?.link ? ` Marque seu horário: ${a.link}` : ""}`;
 
+// Lista de espera: abriu vaga no dia que o cliente queria
+messageList.LISTA_ESPERA = (name, a) =>
+  `${name}, abriu uma vaga${naBarbearia(a)} no dia ${diaMes(a?.date)}${a?.time ? ` às ${a.time}` : ""}! 💈 Quem marcar primeiro fica com o horário:${a?.link ? `\n\n${a.link}` : ""}`;
+
 messageList.RESPOSTA_CONFIRMADO = (name, a) =>
   `Confirmado, ${name}! ✅ Te esperamos dia ${diaMes(a?.date)} às ${a?.time}.`;
 

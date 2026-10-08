@@ -52,7 +52,7 @@ export async function api<T>(slug: string, caminho: string, corpo?: unknown): Pr
   return data as T
 }
 
-export type Identidade = { name: string; subtitle: string | null; logo_url: string | null; city: string | null; state: string | null; accent_color: string; secondary_color: string }
+export type Identidade = { name: string; subtitle: string | null; logo_url: string | null; city: string | null; state: string | null; accent_color: string; secondary_color: string; lista_espera?: boolean }
 export type Servico = { id: number; name: string; description: string | null; duration_time: number | null; price: string | number; active: boolean }
 export type Profissional = { id: number; name: string; photo: string | null; speciality: string | null; active: boolean }
 export type MeuHorario = {

@@ -81,13 +81,17 @@ export function Rodape() {
 }
 
 /** Fita de dias + grade de horários livres (manhã / tarde / noite). */
-export function SeletorHorario({ dias, livresPorDia, data, horario, onData, onHorario }: {
+export function SeletorHorario({ dias, livresPorDia, data, horario, onData, onHorario, lotadoClicavel, rodapeVazio }: {
   dias: string[]
   livresPorDia: Record<string, Horario[]>
   data: string | null
   horario: Horario | null
   onData: (d: string) => void
   onHorario: (h: Horario) => void
+  /** dia aberto mas sem vaga continua clicável (para entrar na lista de espera) */
+  lotadoClicavel?: (d: string) => boolean
+  /** conteúdo extra quando o dia escolhido não tem vaga */
+  rodapeVazio?: React.ReactNode
 }) {
   return (
     <>
@@ -102,7 +106,7 @@ export function SeletorHorario({ dias, livresPorDia, data, horario, onData, onHo
               type="button"
               role="option"
               aria-selected={sel}
-              disabled={!vagas}
+              disabled={!vagas && !lotadoClicavel?.(d)}
               onClick={() => onData(d)}
               className={clsx(
                 "flex w-16 shrink-0 snap-start flex-col items-center rounded-2xl border py-2.5 transition",
@@ -149,7 +153,10 @@ export function SeletorHorario({ dias, livresPorDia, data, horario, onData, onHo
           )
         })
       ) : (
-        <p className="rounded-2xl border border-dashed border-linha p-6 text-center text-suave">Nenhum horário livre neste dia. Escolha outro dia acima.</p>
+        <>
+          <p className="rounded-2xl border border-dashed border-linha p-6 text-center text-suave">Nenhum horário livre neste dia. Escolha outro dia acima.</p>
+          {rodapeVazio}
+        </>
       ))}
     </>
   )

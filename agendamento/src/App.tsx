@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { CalendarCog, CalendarPlus, Check, ChevronLeft, Clock, Loader2, Scissors, Sparkles, UserRound, X } from "lucide-react"
 import clsx from "clsx"
 import { api, ErroApi, slugDaPagina, type Aviso, type Identidade, type Profissional, type Servico } from "./lib/api"
-import { horariosLivres, isoLocal, type Expediente, type Horario, type Ocupado } from "./lib/horarios"
+import { deISO, horariosLivres, isoLocal, type Expediente, type Horario, type Ocupado } from "./lib/horarios"
 import { baixarIcs, Cabecalho, dataLonga, moeda, Rodape, SeletorHorario, useMarca } from "./ui"
 
 const QUALQUER = "qualquer" as const
@@ -61,6 +61,57 @@ function Escolha({ selecionado, onClick, children, rotulo }: { selecionado: bool
   )
 }
 
+/** "Me avise se abrir vaga": entra na lista de espera do dia lotado. */
+function ListaEsperaBox({ slug, data, barbeiroId, servicosIds, nomeInicial, telefoneInicial }: {
+  slug: string; data: string; barbeiroId: number | null; servicosIds: number[]; nomeInicial: string; telefoneInicial: string
+}) {
+  const [nome, setNome] = useState(nomeInicial)
+  const [telefone, setTelefone] = useState(telefoneInicial)
+  const [enviando, setEnviando] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
+  const [pronto, setPronto] = useState<string | null>(null)
+
+  useEffect(() => { setPronto(null); setErro(null) }, [data])
+
+  async function entrar(e: React.FormEvent) {
+    e.preventDefault()
+    setEnviando(true)
+    setErro(null)
+    try {
+      const r = await api<{ message: string }>(slug, "/lista-espera", {
+        clienteNome: nome.trim(), clienteTelefone: telefone, data, barbeiroId, servicosIds, website: "",
+      })
+      lembrar.salvar(nome.trim(), telefone)
+      setPronto(r.message)
+    } catch (err) {
+      setErro((err as Error).message)
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  if (pronto) {
+    return <p role="status" className="mt-3 rounded-2xl border border-marca/40 bg-marca/10 p-4 text-sm font-medium">{pronto}</p>
+  }
+
+  return (
+    <form onSubmit={entrar} className="mt-3 grid gap-3 rounded-2xl border border-linha bg-cartao p-4">
+      <div>
+        <p className="font-semibold">Quer esse dia mesmo?</p>
+        <p className="text-sm text-suave">Entre na lista de espera: se alguém desmarcar, você recebe um aviso no WhatsApp.</p>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Seu nome" autoComplete="name" required minLength={2} aria-label="Seu nome" className="rounded-xl border border-linha bg-cartao px-4 py-3 text-base outline-none focus:border-marca" />
+        <input value={telefone} onChange={(e) => setTelefone(mascaraTelefone(e.target.value))} type="tel" inputMode="tel" autoComplete="tel" placeholder="WhatsApp" required aria-label="WhatsApp" className="rounded-xl border border-linha bg-cartao px-4 py-3 text-base outline-none focus:border-marca" />
+      </div>
+      {erro && <p role="alert" className="text-sm text-erro">{erro}</p>}
+      <button type="submit" disabled={enviando || nome.trim().length < 2 || telefone.replace(/\D/g, "").length < 10} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-marca px-5 py-3 font-semibold text-sobre-marca disabled:opacity-40">
+        {enviando ? <Loader2 className="size-5 animate-spin" aria-label="Enviando" /> : "Me avise se abrir vaga"}
+      </button>
+    </form>
+  )
+}
+
 function Marcador({ ativo, redondo }: { ativo: boolean; redondo?: boolean }) {
   return (
     <span className={clsx("grid size-6 shrink-0 place-items-center border-2 transition", redondo ? "rounded-full" : "rounded-md", ativo ? "border-marca bg-marca text-sobre-marca" : "border-linha")} aria-hidden>
@@ -82,7 +133,8 @@ export default function App() {
   const [etapa, setEtapa] = useState(0)
   const [servicosSel, setServicosSel] = useState<number[]>([])
   const [prof, setProf] = useState<number | typeof QUALQUER | null>(null)
-  const [data, setData] = useState<string | null>(null)
+  // ?d=YYYY-MM-DD: veio do aviso da lista de espera ("abriu vaga no dia tal")
+  const [data, setData] = useState<string | null>(() => new URLSearchParams(location.search).get("d")?.match(/^\d{4}-\d{2}-\d{2}$/)?.[0] ?? null)
   const [horario, setHorario] = useState<Horario | null>(null)
   const [nome, setNome] = useState(() => lembrar.ler().nome ?? "")
   const [telefone, setTelefone] = useState(() => lembrar.ler().telefone ?? "")
@@ -127,11 +179,17 @@ export default function App() {
     return Object.fromEntries(dias.map((d) => [d, horariosLivres(d, duracao, candidatos, dados.expediente, dados.ocupados)]))
   }, [dados, duracao, candidatos, dias])
 
+  // dia aberto (pela grade de expediente), mesmo que lotado
+  const abertoNoDia = useCallback((d: string) => !!dados?.expediente.find((e) => e.day_of_week === deISO(d).getDay())?.active, [dados])
+  const listaEspera = !!dados?.id.lista_espera
+
   // ao entrar no passo de horário, pré-seleciona o primeiro dia com vaga
+  // (um dia lotado escolhido de propósito fica, para a lista de espera)
   useEffect(() => {
     if (etapa !== 2) return
-    if (!data || !livresPorDia[data]?.length) setData(dias.find((d) => livresPorDia[d]?.length) ?? dias[0])
-  }, [etapa, livresPorDia, dias, data])
+    const ficaNoDia = data && dias.includes(data) && (livresPorDia[data]?.length || (listaEspera && abertoNoDia(data)))
+    if (!ficaNoDia) setData(dias.find((d) => livresPorDia[d]?.length) ?? dias[0])
+  }, [etapa, livresPorDia, dias, data, listaEspera, abertoNoDia])
 
   const nomeProf = (id: number) => dados?.profissionais.find((p) => p.id === id)?.name ?? ""
 
@@ -330,6 +388,17 @@ export default function App() {
             horario={horario}
             onData={(d) => { setData(d); setHorario(null) }}
             onHorario={setHorario}
+            lotadoClicavel={listaEspera ? abertoNoDia : undefined}
+            rodapeVazio={listaEspera && data && abertoNoDia(data) ? (
+              <ListaEsperaBox
+                slug={slug!}
+                data={data}
+                barbeiroId={typeof prof === "number" ? prof : null}
+                servicosIds={servicosSel}
+                nomeInicial={nome}
+                telefoneInicial={telefone}
+              />
+            ) : null}
           />
           {!dias.some((d) => livresPorDia[d]?.length) && (
             <p className="rounded-2xl border border-dashed border-linha p-6 text-center text-suave">

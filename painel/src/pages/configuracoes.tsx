@@ -253,7 +253,7 @@ function AlteracaoPeloCliente() {
   const qc = useQueryClient()
   const { data: b } = useBarbearia()
   const salvar = useMutation({
-    mutationFn: (body: { alterar_pelo_link?: boolean; antecedencia_alteracao_horas?: number }) =>
+    mutationFn: (body: { alterar_pelo_link?: boolean; antecedencia_alteracao_horas?: number; lista_espera_ativa?: boolean }) =>
       api<{ message: string }>("/barbearia/alteracao-pelo-cliente", { method: "PUT", body }),
     onSuccess: (r) => {
       qc.invalidateQueries({ queryKey: ["barbearia"] })
@@ -267,6 +267,20 @@ function AlteracaoPeloCliente() {
   const horas = b.antecedencia_alteracao_horas ?? 2
 
   return (
+    <>
+    <Card>
+      <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <div>
+          <CardTitle>Lista de espera</CardTitle>
+          <CardDescription>
+            Nos dias lotados, a página de agendamento oferece "me avise se abrir vaga". Quando um horário do dia é cancelado, os 3
+            primeiros da lista recebem o aviso no WhatsApp (das 7h às 22h) e quem marcar primeiro fica com a vaga. A lista do dia
+            aparece na agenda.
+          </CardDescription>
+        </div>
+        <Switch checked={b.lista_espera_ativa ?? true} disabled={salvar.isPending} onCheckedChange={(v) => salvar.mutate({ lista_espera_ativa: v })} aria-label="Lista de espera" />
+      </CardHeader>
+    </Card>
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
@@ -293,6 +307,7 @@ function AlteracaoPeloCliente() {
         </CardContent>
       )}
     </Card>
+    </>
   )
 }
 
