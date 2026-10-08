@@ -71,7 +71,8 @@ Recomendação: painel em **React + Vite + Tailwind + shadcn/ui** consumindo a A
 - [x] Agenda em calendário (dia/semana por profissional) com arrastar para remarcar
 - [x] Empty states, skeletons, toasts, dark mode
 - [ ] Remover o admin.html antigo depois de algumas semanas sem uso
-- [ ] Página pública de agendamento refeita (leve, mobile-first, PWA)
+- [x] Página pública de agendamento refeita (`agendamento/`, React leve, mobile-first, cores da barbearia) — no ar no link oficial desde 08/10/2026
+- [ ] PWA (instalar na tela inicial) e remover a página antiga (`front-end/index.html` + `script.js`) depois de algumas semanas
 
 ## Fase 4 — Otimização e robustez (~1-2 semanas)
 
