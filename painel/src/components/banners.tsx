@@ -1,4 +1,4 @@
-import { Link } from "react-router"
+import { Link, useLocation } from "react-router"
 import { LifeBuoy, TriangleAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useMe } from "@/hooks/use-sessao"
@@ -31,6 +31,7 @@ export function FaixaSuporte() {
 /** Aviso de teste acabando, fatura em atraso, modo leitura ou assinatura cancelada. */
 export function AvisoAssinatura() {
   const { data: me } = useMe()
+  const { pathname } = useLocation()
   const a = me?.assinatura
   if (!a) return null
 
@@ -64,7 +65,7 @@ export function AvisoAssinatura() {
         <TriangleAlert className="size-4 shrink-0" aria-hidden />
         {texto}
       </span>
-      {me?.role === "admin" && (
+      {me?.role === "admin" && pathname !== "/assinatura" && (
         <Button asChild size="sm" variant="outline">
           <Link to="/assinatura">Ver assinatura</Link>
         </Button>
