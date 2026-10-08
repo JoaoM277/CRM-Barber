@@ -219,7 +219,7 @@ class BillingTest extends TestCase
             ->assertOk();
 
         $this->assertSame(2, $tentativas);
-        Http::assertSent(fn (HttpRequest $r) => str_ends_with($r->url(), '/customers') && $r['mobilePhone'] === '99988887777');
+        Http::assertSent(fn (HttpRequest $r) => str_ends_with($r->url(), '/customers') && ($r->data()['mobilePhone'] ?? null) === '99988887777');
         $this->assertSame('cus_2', Subscription::first()->asaas_customer_id);
     }
 
