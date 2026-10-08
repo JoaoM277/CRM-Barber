@@ -1,5 +1,4 @@
 const { z } = require("zod");
-const { required } = require("zod/mini");
 
 // --------------------------------------------------------------------------
 // 1. Corpo de Validação de dados vinjdos do CRM
@@ -11,7 +10,7 @@ const messageCreateSchema = z.object({
     .min(11, "O numero deve ter no minimo 11 digitos")
     .max(20, "O numero deve ter no maximo 13 digitos"),
   name: z.string().min(1, "Nome invalido"),
-  trigger: z.enum(["AGENDAMENTO", "CANCELAMENTO", "LEMBRETE"], {
+  trigger: z.enum(["AGENDAMENTO", "CANCELAMENTO", "LEMBRETE", "LEMBRETE_24H", "LEMBRETE_2H", "RESPOSTA_CONFIRMADO", "RESPOSTA_CANCELADO"], {
     errorMap: () => ({ message: "Gatilho de evento Invalido" }),
   }),
   // nullish(): o Laravel pode mandar null nesses campos (ex.: barbeiro removido)
@@ -20,6 +19,16 @@ const messageCreateSchema = z.object({
   barber: z.string().nullish(),
   services: z.array(z.string()).nullish(),
   instance: z.string().nullish(),
+  // cliente do CRM (o registro da mensagem fica no cliente certo)
+  client_id: z.number().int().positive().nullish(),
+  barbershop: z.string().nullish(),
+  // lembrete pede "1 confirma / 2 cancela" só se o cliente ainda não confirmou
+  ask_reply: z.boolean().nullish(),
+});
+
+const schemaWebhook = z.object({
+  name: z.string().trim().min(1),
+  url: z.string().url(),
 });
 
 const schemaEvolution = z.object({
@@ -33,8 +42,10 @@ const makeSchemaEvolution = (data) => {
   return schemaEvolution.safeParse(data);
 };
 
+const makeWebhookDTO = (data) => schemaWebhook.safeParse(data);
+
 const makeMessageDTO = (data) => {
   return messageCreateSchema.safeParse(data);
 };
 
-module.exports = { makeMessageDTO, makeSchemaEvolution };
+module.exports = { makeMessageDTO, makeSchemaEvolution, makeWebhookDTO };

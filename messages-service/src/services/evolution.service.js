@@ -227,7 +227,23 @@ const sendText = async (instanceName, number, text) => {
   }
 };
 
+// Respostas dos clientes (ex.: "1" para confirmar) chegam ao CRM por este webhook.
+const setWebhook = async (instanceName, url) => {
+  try {
+    const response = await evolution.post(`/webhook/set/${instanceName}`, {
+      webhook: { enabled: true, url, byEvents: false, base64: false, events: ["MESSAGES_UPSERT"] },
+    });
+    return makeResponse({ success: true, action: "webhook", instanceName, status: "ok", data: { id: response.data?.id ?? null } });
+  } catch (erro) {
+    return makeResponse({
+      success: false, action: "webhook", instanceName, status: "erro",
+      error: { code: erro.response?.status ?? "ERRO_WEBHOOK", message: erro.response?.data?.response?.message?.[0] ?? erro.message },
+    });
+  }
+};
+
 module.exports = {
+  setWebhook,
   evolution,
   createInstance,
   conectInstance,

@@ -19,6 +19,7 @@ use App\Http\Controllers\AsaasWebhookController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ImagemController;
+use App\Http\Controllers\EvolutionWebhookController;
 use App\Http\Controllers\Platform\PlatformBarbershopController;
 use App\Http\Controllers\Platform\PlatformMetricsController;
 use App\Http\Controllers\Platform\PlatformSettingsController;
@@ -39,6 +40,8 @@ Route::get('/planos', [BillingController::class, 'plans'])->name('planos.index')
 Route::get('/publico/config', [BillingController::class, 'publicConfig'])->name('publico.config');
 
 // Webhook do Asaas (autenticado pelo header asaas-access-token, ver AsaasWebhookController)
+// Respostas dos clientes no WhatsApp (lembretes): autenticado pelo token no caminho
+Route::post('/webhooks/evolution/{token}', EvolutionWebhookController::class)->middleware('throttle:300,1')->name('webhooks.evolution');
 Route::post('/webhooks/asaas', AsaasWebhookController::class)->middleware('throttle:120,1')->name('webhooks.asaas');
 
 /*
@@ -149,6 +152,9 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
         // LGPD do cliente final: cópia dos dados e eliminação a pedido
         Route::get('/clientes/{client}/dados', [ClientController::class, 'exportarDados'])->name('clientes.dados');
         Route::post('/clientes/{client}/anonimizar', [ClientController::class, 'anonimizar'])->name('clientes.anonimizar');
+
+        // Lembretes automáticos no WhatsApp (liga/desliga)
+        Route::put('/whatsapp/lembretes', [InstanceController::class, 'lembretes'])->name('whatsapp.lembretes');
 
         // Logo da barbearia (aparece na página de agendamento)
         Route::post('/barbearia/logo', [ImagemController::class, 'logo'])->middleware('throttle:20,1')->name('barbearia.logo');

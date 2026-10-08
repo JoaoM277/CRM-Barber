@@ -186,7 +186,17 @@ const deleteInstanceController = async (req, res) => {
   }
 };
 
+const webhookInstanceController = async (req, res) => {
+  const { makeWebhookDTO } = require("../dtos/message.dtos");
+  const { setWebhook } = require("../services/evolution.service");
+  const v = makeWebhookDTO(req.body);
+  if (!v.success) return res.status(400).json({ errors: v.error.flatten().fieldErrors });
+  const r = await setWebhook(v.data.name, v.data.url);
+  return res.status(r.success ? 200 : 502).json(r);
+};
+
 module.exports = {
+  webhookInstanceController,
   testControler,
   createnGetInstanceController,
   connectSecondInstanceController,

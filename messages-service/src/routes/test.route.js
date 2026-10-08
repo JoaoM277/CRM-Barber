@@ -22,5 +22,6 @@ routes.post("/connect", connectSecondInstanceController);
 routes.post("/verify", verifyInstanceController);
 routes.post("/desconnect", desconectInstanceController);
 routes.post("/delete", deleteInstanceController);
+routes.post("/webhook", require("../controllers/evolution.controller").webhookInstanceController);
 
 module.exports = routes;

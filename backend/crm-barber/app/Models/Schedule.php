@@ -44,11 +44,17 @@ class Schedule extends Model
         'end_time',
         'status',
         'observation',
+        'lembrete_24h_em',
+        'lembrete_2h_em',
+        'resposta_cliente_em',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'commission_value' => 'decimal:2',
+        'lembrete_24h_em' => 'datetime',
+        'lembrete_2h_em' => 'datetime',
+        'resposta_cliente_em' => 'datetime',
     ];
 
     // withTrashed(): histórico não pode sumir quando cliente/profissional/

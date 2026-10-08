@@ -36,6 +36,7 @@ class Barbershop extends Model
         'subscription_plan',
         'subscription_ends_at',
         'active',
+        'lembretes_whatsapp',
     ];
 
     /** URL pública do logo (o banco guarda só o caminho no disco "public"). */
@@ -56,6 +57,7 @@ class Barbershop extends Model
         'subscription_ends_at' => 'date',
         'active' => 'boolean',
         'onboarding' => 'array',
+        'lembretes_whatsapp' => 'boolean',
     ];
 
     public function users()

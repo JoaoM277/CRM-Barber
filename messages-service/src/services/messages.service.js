@@ -6,14 +6,16 @@ const logController = require("../controllers/message.log.controller");
 // --------------------------------------------------------------------------
 
 const messageService = async (mensageData) => {
-  const { phone, name, trigger, date, time, barber, services, ip, instance } =
+  const { phone, name, trigger, date, time, barber, services, ip, instance, client_id, barbershop, ask_reply } =
     mensageData;
+  // registro da mensagem vai para o cliente certo (antes ia sempre para o id 1)
+  const clienteId = client_id ?? null;
 
   // --------------------------------------------------------------------------
   // 2. Travas de segurança Anti-Gatilho-Invalido
   // --------------------------------------------------------------------------
   if (
-    ((trigger === "AGENDAMENTO" || trigger === "LEMBRETE") && !date) ||
+    ((trigger === "AGENDAMENTO" || trigger.startsWith("LEMBRETE")) && !date) ||
     !time
   ) {
     console.warn(
@@ -25,7 +27,7 @@ const messageService = async (mensageData) => {
     await logController.ControllerLogs({
       action: "WHATSAPP_MENSAGE_SENT",
       model: trigger,
-      client_id: 1,
+      client_id: clienteId,
       description:
         "Mensagem não enviada para: " + phone + " [MOTIVO: INVALID_TRIGGER]",
       ip: ip,
@@ -40,7 +42,7 @@ const messageService = async (mensageData) => {
   // 3. Travas de segurança Anti-spam e Anti-horario-indevido
   // --------------------------------------------------------------------------
   const horaAtual = new Date().getHours();
-  if (trigger === "LEMBRETE" && (horaAtual >= 22 || horaAtual < 7)) {
+  if (trigger.startsWith("LEMBRETE") && (horaAtual >= 22 || horaAtual < 7)) {
     console.warn(
       `[BLOQUEADO] Envio de LEMBRETE retido pra enviar spam do horario comercial`,
     );
@@ -48,7 +50,7 @@ const messageService = async (mensageData) => {
     await logController.ControllerLogs({
       action: "WHATSAPP_MENSAGE_SENT",
       model: trigger,
-      client_id: 1,
+      client_id: clienteId,
       description:
         "Mensagem não enviada para: " + phone + " [MOTIVO: SPAM_BLOQ]",
       ip: ip,
@@ -73,7 +75,7 @@ const messageService = async (mensageData) => {
     await logController.ControllerLogs({
       action: "WHATSAPP_MENSAGE_SENT",
       model: trigger,
-      client_id: 1,
+      client_id: clienteId,
       description:
         "Mensagem não enviada para: " + phone + " [MOTIVO: TEMPLATE_NOT_FOUND]",
       ip: ip,
@@ -87,7 +89,7 @@ const messageService = async (mensageData) => {
   // --------------------------------------------------------------------------
   // 5. Seleção de template baseado nas informações vindas do controller
   // --------------------------------------------------------------------------
-  const respost = templateSelect(name, { date, time, barber, services });
+  const respost = templateSelect(name, { date, time, barber, services, barbershop, askReply: ask_reply });
 
   // Envio exclusivamente pela Evolution API (instância conectada)
   if (!instance) {
@@ -95,7 +97,7 @@ const messageService = async (mensageData) => {
     await logController.ControllerLogs({
       action: "WHATSAPP_MENSAGE_SENT",
       model: trigger,
-      client_id: 1,
+      client_id: clienteId,
       description: "Mensagem não enviada para: " + phone + " [MOTIVO: SEM_INSTANCIA]",
       ip: ip,
     });
@@ -117,7 +119,7 @@ const messageService = async (mensageData) => {
     await logController.ControllerLogs({
       action: "WHATSAPP_MENSAGE_SENT",
       model: trigger,
-      client_id: 1,
+      client_id: clienteId,
       description:
         "Mensagem não enviada para: " + phone + " [MOTIVO: PROVIDER_REJECTED]",
       ip: ip,
@@ -129,7 +131,7 @@ const messageService = async (mensageData) => {
     await logController.ControllerLogs({
       action: "WHATSAPP_MENSAGE_SENT",
       model: trigger,
-      client_id: 1,
+      client_id: clienteId,
       description:
         "Mensagem  enviada para: " + phone + " [SUCESS]",
       ip: ip,

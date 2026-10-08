@@ -33,6 +33,7 @@ class InstanceController extends Controller
             // o painel usa isso pra mostrar um aviso quando o WhatsApp está fora do ar
             'alerta_sem_whatsapp' => $instances->isNotEmpty() && $conectadas === 0,
             'conectadas' => $conectadas,
+            'lembretes_whatsapp' => (bool) \App\Models\Barbershop::whereKey($request->user()->barbershop_id)->value('lembretes_whatsapp'),
         ]);
     }
 
@@ -66,6 +67,9 @@ class InstanceController extends Controller
 
             return response()->json(['message' => 'Falha ao criar a instância no provedor.', 'provider' => $body], 502);
         }
+
+        // respostas dos clientes aos lembretes ("1"/"2") passam a chegar ao CRM
+        \App\Support\WhatsappWebhook::configurar($instance);
 
         return response()->json([
             'message' => 'Instância criada. Escaneie o QR Code no WhatsApp.',
@@ -144,5 +148,17 @@ class InstanceController extends Controller
         if ($instance->barbershop_id !== $request->user()->barbershop_id) {
             abort(404);
         }
+    }
+
+    /** PUT /whatsapp/lembretes {ativo} — liga/desliga os lembretes de 24h e 2h antes. */
+    public function lembretes(Request $request): JsonResponse
+    {
+        $data = $request->validate(['ativo' => 'required|boolean']);
+        \App\Models\Barbershop::whereKey($request->user()->barbershop_id)->update(['lembretes_whatsapp' => $data['ativo']]);
+
+        return response()->json([
+            'message' => $data['ativo'] ? 'Lembretes automáticos ligados.' : 'Lembretes automáticos desligados.',
+            'ativo' => (bool) $data['ativo'],
+        ]);
     }
 }

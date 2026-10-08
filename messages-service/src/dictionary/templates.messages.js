@@ -28,4 +28,23 @@ const messageList = {
     `Ei, ${name}, passando para lembrar do seu horário hoje às ${appointment?.time}${appointment?.services && formatServices(appointment.services) ? ` (${formatServices(appointment.services)})` : ""}! ⏰`,
 };
 
+// "08/10" a partir de "2026-10-08"
+const diaMes = (iso) => (iso ? String(iso).slice(0, 10).split("-").reverse().slice(0, 2).join("/") : "");
+const naBarbearia = (a) => (a?.barbershop ? ` na ${a.barbershop}` : "");
+const pedirResposta = (a) =>
+  a?.askReply ? "\n\nResponda *1* para confirmar ou *2* para cancelar." : "";
+
+// Lembretes automáticos (enviados pelo CRM 24h e 2h antes) e respostas ao cliente
+messageList.LEMBRETE_24H = (name, a) =>
+  `Olá, ${name}! Passando para lembrar: amanhã (${diaMes(a?.date)}) às ${a?.time} você tem horário${naBarbearia(a)}${a?.barber ? ` com ${a.barber}` : ""}${formatServices(a?.services) ? ` — ${formatServices(a.services)}` : ""}. 💈${pedirResposta(a)}`;
+
+messageList.LEMBRETE_2H = (name, a) =>
+  `${name}, seu horário${naBarbearia(a)} é hoje às ${a?.time}${a?.barber ? ` com ${a.barber}` : ""}. Até já! ⏰${pedirResposta(a)}`;
+
+messageList.RESPOSTA_CONFIRMADO = (name, a) =>
+  `Confirmado, ${name}! ✅ Te esperamos dia ${diaMes(a?.date)} às ${a?.time}.`;
+
+messageList.RESPOSTA_CANCELADO = (name, a) =>
+  `Tudo certo, ${name}: seu horário do dia ${diaMes(a?.date)} às ${a?.time} foi cancelado. Quando quiser, é só agendar de novo pelo link da barbearia.`;
+
 module.exports = messageList;

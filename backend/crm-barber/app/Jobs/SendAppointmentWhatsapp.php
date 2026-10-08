@@ -35,11 +35,22 @@ class SendAppointmentWhatsapp implements ShouldQueue
 
     public int $backoff = 30;
 
-    public function __construct(public int $scheduleId) {}
+    /** Gatilhos que o serviço de mensagens conhece (textos em messages-service/src/dictionary). */
+    public const AGENDAMENTO = 'AGENDAMENTO';
+
+    public const LEMBRETE_24H = 'LEMBRETE_24H';
+
+    public const LEMBRETE_2H = 'LEMBRETE_2H';
+
+    public const RESPOSTA_CONFIRMADO = 'RESPOSTA_CONFIRMADO';
+
+    public const RESPOSTA_CANCELADO = 'RESPOSTA_CANCELADO';
+
+    public function __construct(public int $scheduleId, public string $trigger = self::AGENDAMENTO) {}
 
     public function handle(): void
     {
-        $schedule = Schedule::with(['client', 'worker', 'service', 'services'])->find($this->scheduleId);
+        $schedule = Schedule::with(['client', 'worker', 'service', 'services', 'barbershop'])->find($this->scheduleId);
 
         if (! $schedule || ! $schedule->client) {
             return;
@@ -76,11 +87,16 @@ class SendAppointmentWhatsapp implements ShouldQueue
         $payload = [
             'phone' => $phone,
             'name' => $schedule->client->name,
-            'trigger' => 'AGENDAMENTO',
+            'trigger' => $this->trigger,
             'date' => \Illuminate\Support\Carbon::parse($schedule->date)->format('Y-m-d'),
             'time' => substr((string) $schedule->start_time, 0, 5),
             'barber' => $schedule->worker?->name,
             'services' => $servicos,
+            // o registro da mensagem fica no cliente certo (LGPD: exportar/apagar)
+            'client_id' => $schedule->client_id,
+            'barbershop' => $schedule->barbershop?->name,
+            // lembrete pede "1 confirma / 2 cancela" só enquanto o cliente não confirmou
+            'ask_reply' => str_starts_with($this->trigger, 'LEMBRETE') && $schedule->status === Schedule::STATUS_PENDENTE,
         ];
 
         if ($instanceName) {

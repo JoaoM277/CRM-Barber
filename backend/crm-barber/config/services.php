@@ -40,4 +40,10 @@ return [
         'token' => env('MESSAGES_SERVICE_TOKEN'),
     ],
 
+    // respostas dos clientes no WhatsApp ("1" confirma / "2" cancela) chegam em
+    // {APP_URL}/api/webhooks/evolution/{token}
+    'evolution' => [
+        'webhook_token' => env('EVOLUTION_WEBHOOK_TOKEN'),
+    ],
+
 ];

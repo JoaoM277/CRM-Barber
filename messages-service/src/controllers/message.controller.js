@@ -8,7 +8,6 @@ const { makeMessageDTO } = require("../dtos/message.dtos");
 // --------------------------------------------------------------------------
 
 const messageController = async (req, res) => {
-  console.log(req.body);
   try {
     const parsed = makeMessageDTO(req.body);
 
@@ -18,7 +17,6 @@ const messageController = async (req, res) => {
 
     const ip = req.ip || req.socket?.remoteAddress || null;
     const newMessage = await messageService({ ...parsed.data, ip });
-    console.log(newMessage);
     return res.status(200).json(newMessage);
   } catch (error) {
     console.log(error);
