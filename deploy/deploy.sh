@@ -41,10 +41,20 @@
 # ==========================================================================
 set -euo pipefail
 
-# o git pull pode reescrever este arquivo no meio da execução — roda de uma cópia
+# Roda sempre a versão MAIS NOVA deste script (a do origin), a partir de uma
+# cópia: assim o git pull não reescreve o arquivo no meio da execução, e uma
+# mudança no próprio deploy.sh já vale no mesmo deploy (antes valia só no próximo).
 if [ -z "${CRM_DEPLOY_COPY:-}" ]; then
   tmp="$(mktemp /tmp/crm-deploy.XXXXXX.sh)"
-  cp "$0" "$tmp"
+  repo="${API_DIR:-/home/api/htdocs/api.crm-barber.local}"
+  dono="$(stat -c %U "$repo" 2>/dev/null || echo root)"
+  ramo="${BRANCH:-$(sudo -u "$dono" git -C "$repo" rev-parse --abbrev-ref HEAD 2>/dev/null || echo)}"
+  if [ -n "$ramo" ] && sudo -u "$dono" git -C "$repo" fetch --quiet origin "$ramo" 2>/dev/null \
+     && sudo -u "$dono" git -C "$repo" show "origin/$ramo:deploy/deploy.sh" > "$tmp" 2>/dev/null; then
+    :
+  else
+    cp "$0" "$tmp"
+  fi
   CRM_DEPLOY_COPY="$tmp" exec bash "$tmp" "$@"
 fi
 rm -f "$CRM_DEPLOY_COPY"   # o bash já está com o arquivo aberto; no Linux pode apagar
