@@ -18,6 +18,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AsaasWebhookController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\ImagemController;
 use App\Http\Controllers\Platform\PlatformBarbershopController;
 use App\Http\Controllers\Platform\PlatformMetricsController;
 use App\Http\Controllers\Platform\PlatformSettingsController;
@@ -96,6 +97,8 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
     Route::get('/profissionais/{worker}', [WorkerController::class, 'show'])->name('profissionais.show');
     Route::put('/profissionais/{worker}', [WorkerController::class, 'update'])->name('profissionais.update');
     Route::delete('/profissionais/{worker}', [WorkerController::class, 'destroy'])->name('profissionais.delete');
+    Route::post('/profissionais/{worker}/foto', [ImagemController::class, 'foto'])->middleware('throttle:20,1')->name('profissionais.foto');
+    Route::delete('/profissionais/{worker}/foto', [ImagemController::class, 'removerFoto'])->name('profissionais.foto.remover');
 
     // Service (idem)
     Route::get('/servicos', [ServiceController::class, 'index'])->name('servicos.index.admin');
@@ -143,6 +146,10 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
     |----------------------------------------------------------------------
     */
     Route::middleware('admin')->group(function () {
+        // Logo da barbearia (aparece na página de agendamento)
+        Route::post('/barbearia/logo', [ImagemController::class, 'logo'])->middleware('throttle:20,1')->name('barbearia.logo');
+        Route::delete('/barbearia/logo', [ImagemController::class, 'removerLogo'])->name('barbearia.logo.remover');
+
         // Assinatura do SaaS (sempre liberadas, mesmo em modo leitura)
         Route::get('/assinatura', [BillingController::class, 'show'])->name('assinatura.show');
         Route::post('/assinatura', [BillingController::class, 'subscribe'])->middleware('throttle:10,1')->name('assinatura.subscribe');
