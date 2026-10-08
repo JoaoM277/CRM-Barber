@@ -66,7 +66,7 @@ class BillingTest extends TestCase
     {
         $this->postJson('/api/cadastrar', [
             'name' => 'Dono', 'email' => 'dono@novo.test', 'password' => 'segredo123',
-            'barbershop_name' => 'Barbearia Nova',
+            'barbershop_name' => 'Barbearia Nova', 'aceite_termos' => true,
         ])->assertCreated();
 
         $sub = Subscription::with('plan')->latest('id')->first();

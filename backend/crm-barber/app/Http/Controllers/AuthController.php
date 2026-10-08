@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Subscription;
 use App\Models\User;
+use App\Notifications\WelcomeNotification;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Facades\Password;
 use App\Support\Audit;
 use App\Support\PlatformSettings;
 use App\Support\TenantProvisioner;
@@ -47,9 +50,17 @@ class AuthController extends Controller
             'barbershop_name' => 'required|string|max:255',
             'barbershop_phone' => 'nullable|string|max:20',
             'barbershop_whatsapp' => 'nullable|string|max:20',
+            'aceite_termos' => 'accepted',
+        ], [
+            'aceite_termos.accepted' => 'É preciso aceitar os Termos de Uso e a Política de Privacidade.',
+            'email.unique' => 'Já existe uma conta com este e-mail. Entre ou recupere a senha.',
         ]);
 
         [$user, $barbershop] = $provisioner->create($validated);
+        $user->forceFill(['terms_accepted_at' => now()])->save();
+
+        // e-mail na fila: falha no envio não pode derrubar o cadastro
+        rescue(fn () => $user->notify(new WelcomeNotification($barbershop, PlatformSettings::trialDays())));
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
@@ -139,5 +150,47 @@ class AuthController extends Controller
         Audit::log('senha.alterada', $user, 'Senha do usuário alterada');
 
         return response()->json(['message' => 'Senha atualizada com sucesso!']);
+    }
+
+    /**
+     * POST /senha/esqueci — manda o link de redefinição. A resposta é sempre a
+     * mesma, exista ou não a conta (não revela quais e-mails estão cadastrados).
+     */
+    public function forgotPassword(Request $request)
+    {
+        $data = $request->validate(['email' => 'required|email']);
+
+        rescue(fn () => Password::sendResetLink(['email' => strtolower(trim($data['email']))]));
+
+        return response()->json([
+            'message' => 'Se houver uma conta com este e-mail, enviamos um link para criar uma nova senha.',
+        ]);
+    }
+
+    /** POST /senha/redefinir — troca a senha com o token do e-mail e derruba as sessões abertas. */
+    public function resetPassword(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email',
+            'token' => 'required|string',
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
+        ]);
+
+        $status = Password::reset(
+            ['email' => strtolower(trim($data['email'])), 'token' => $data['token'], 'password' => $data['password']],
+            function (User $user, string $password) {
+                $user->forceFill(['password' => $password])->save();
+                $user->tokens()->delete();
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            return response()->json([
+                'message' => 'O link expirou ou já foi usado. Peça um novo em "Esqueci minha senha".',
+            ], 422);
+        }
+
+        return response()->json(['message' => 'Senha alterada! Entre com a nova senha.']);
     }
 }

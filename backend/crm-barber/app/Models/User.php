@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory;
+    use HasApiTokens, HasFactory, Notifiable;
 
     public const ROLE_ADMIN = 'admin';
 
@@ -27,6 +29,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'terms_accepted_at',
     ];
 
     protected $hidden = [
@@ -38,7 +41,14 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'terms_accepted_at' => 'datetime',
         ];
+    }
+
+    /** E-mail de "esqueci minha senha" em português, com link para a página do painel. */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 
     public function barbershop()

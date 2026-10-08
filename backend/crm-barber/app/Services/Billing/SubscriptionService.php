@@ -9,6 +9,7 @@ use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 use App\Models\User;
 use App\Models\Worker;
+use App\Notifications\PaymentOverdueNotification;
 use App\Services\Asaas\AsaasClient;
 use App\Services\Asaas\AsaasException;
 use App\Support\PlatformSettings;
@@ -234,8 +235,11 @@ class SubscriptionService
             return;
         }
 
-        DB::transaction(function () use ($type, $payment, $sub) {
-            $this->upsertPayment($sub, $payment);
+        // a fatura já estava vencida antes deste evento? (webhook repetido não reenvia o aviso)
+        $jaVencida = SubscriptionPayment::where('asaas_payment_id', $payment['id'] ?? null)->value('status') === 'OVERDUE';
+
+        $local = DB::transaction(function () use ($type, $payment, $sub) {
+            $local = $this->upsertPayment($sub, $payment);
             $due = isset($payment['dueDate']) ? Carbon::parse($payment['dueDate'])->startOfDay() : null;
 
             switch ($type) {
@@ -263,7 +267,14 @@ class SubscriptionService
             }
 
             $sub->save();
+
+            return $local;
         });
+
+        if ($type === 'PAYMENT_OVERDUE' && ! $jaVencida && $sub->status === Subscription::STATUS_PAST_DUE) {
+            // falha no e-mail não pode marcar o webhook como não processado
+            rescue(fn () => $sub->barbershop?->owner()?->notify(new PaymentOverdueNotification($local)));
+        }
     }
 
     protected function findSubscriptionForPayment(array $payment): ?Subscription

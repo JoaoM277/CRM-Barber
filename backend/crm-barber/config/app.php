@@ -66,6 +66,9 @@ return [
 
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:5500'),
 
+    // Endereço do painel da barbearia (login, redefinir senha) usado nos links dos e-mails.
+    'panel_url' => env('PANEL_URL', env('FRONTEND_URL', 'http://localhost:5500')),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

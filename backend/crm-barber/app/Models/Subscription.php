@@ -44,6 +44,8 @@ class Subscription extends Model
         'current_period_ends_at',
         'past_due_since',
         'canceled_at',
+        'trial_ending_notice_sent_at',
+        'trial_ended_notice_sent_at',
         'billing_type',
         'asaas_customer_id',
         'asaas_subscription_id',
@@ -54,6 +56,8 @@ class Subscription extends Model
         'current_period_ends_at' => 'datetime',
         'past_due_since' => 'datetime',
         'canceled_at' => 'datetime',
+        'trial_ending_notice_sent_at' => 'datetime',
+        'trial_ended_notice_sent_at' => 'datetime',
     ];
 
     public function barbershop()

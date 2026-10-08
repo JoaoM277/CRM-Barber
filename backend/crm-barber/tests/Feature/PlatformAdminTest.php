@@ -225,7 +225,7 @@ class PlatformAdminTest extends TestCase
             ->assertJsonPath('configuracoes.trial_days', 30);
 
         $this->postJson('/api/cadastrar', [
-            'name' => 'Novo', 'email' => 'novo@loja.test', 'password' => 'segredo123', 'barbershop_name' => 'Loja Nova',
+            'name' => 'Novo', 'email' => 'novo@loja.test', 'password' => 'segredo123', 'barbershop_name' => 'Loja Nova', 'aceite_termos' => true,
         ])->assertCreated();
 
         $sub = Subscription::with('plan')->latest('id')->first();
@@ -238,7 +238,7 @@ class PlatformAdminTest extends TestCase
         PlatformSettings::set(['signup_open' => false]);
 
         $this->postJson('/api/cadastrar', [
-            'name' => 'Novo', 'email' => 'novo2@loja.test', 'password' => 'segredo123', 'barbershop_name' => 'Loja X',
+            'name' => 'Novo', 'email' => 'novo2@loja.test', 'password' => 'segredo123', 'barbershop_name' => 'Loja X', 'aceite_termos' => true,
         ])->assertForbidden()->assertJsonPath('code', 'signup_closed');
     }
 

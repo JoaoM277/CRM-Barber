@@ -54,6 +54,12 @@ class Barbershop extends Model
         return $this->hasOne(Subscription::class);
     }
 
+    /** Dono da barbearia: o primeiro administrador (quem recebe os e-mails da conta). */
+    public function owner(): ?User
+    {
+        return $this->users()->where('role', User::ROLE_ADMIN)->orderBy('id')->first();
+    }
+
     public function services()
     {
         return $this->hasMany(Service::class);

@@ -29,6 +29,8 @@ use Illuminate\Support\Facades\Route;
 */
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1')->name('users.login');
 Route::post('/cadastrar', [AuthController::class, 'register'])->middleware('throttle:6,1')->name('users.register');
+Route::post('/senha/esqueci', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,1')->name('senha.esqueci');
+Route::post('/senha/redefinir', [AuthController::class, 'resetPassword'])->middleware('throttle:10,1')->name('senha.redefinir');
 
 // Planos à venda (landing page / tela de assinatura)
 Route::get('/planos', [BillingController::class, 'plans'])->name('planos.index');

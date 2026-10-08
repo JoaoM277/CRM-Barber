@@ -14,3 +14,6 @@ Schedule::command('instances:check')->everyFiveMinutes()->withoutOverlapping();
 
 // Limpa tokens de login expirados (ver SANCTUM_TOKEN_EXPIRATION).
 Schedule::command('sanctum:prune-expired --hours=24')->daily();
+
+// Avisos de fim do teste grátis (e-mail ao dono da barbearia).
+Schedule::command('billing:notify')->dailyAt('10:00')->withoutOverlapping();
