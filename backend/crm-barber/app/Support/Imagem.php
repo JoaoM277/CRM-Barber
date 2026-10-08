@@ -60,8 +60,8 @@ class Imagem
         $base = rtrim(Storage::disk('public')->url(''), '/').'/';
         $caminho = str_starts_with($caminhoOuUrl, $base) ? substr($caminhoOuUrl, strlen($base)) : $caminhoOuUrl;
 
-        // só apaga o que está nas pastas de upload (nunca algo fora delas)
-        if (preg_match('#^(logos|profissionais)/[^/]+\.webp$#', $caminho)) {
+        // só apaga o que esta classe gravou: {logos|profissionais}/{barbearia}/{uuid}.webp
+        if (preg_match('#^(logos|profissionais)/\d+/[0-9a-f-]+\.webp$#', $caminho)) {
             Storage::disk('public')->delete($caminho);
         }
     }
