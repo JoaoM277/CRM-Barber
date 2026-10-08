@@ -42,6 +42,7 @@ class Barbershop extends Model
         'closing_time' => 'datetime:H:i',
         'subscription_ends_at' => 'date',
         'active' => 'boolean',
+        'onboarding' => 'array',
     ];
 
     public function users()

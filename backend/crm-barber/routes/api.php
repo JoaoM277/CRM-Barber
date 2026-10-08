@@ -17,6 +17,7 @@ use App\Http\Controllers\PayoutController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AsaasWebhookController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Platform\PlatformBarbershopController;
 use App\Http\Controllers\Platform\PlatformMetricsController;
 use App\Http\Controllers\Platform\PlatformSettingsController;
@@ -76,6 +77,11 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
     Route::post('/logout', [AuthController::class, 'logout'])->name('users.logout');
     Route::put('/me/senha', [AuthController::class, 'updatePassword'])->name('users.update-password');
     Route::get('/pagina-inicial', [UserController::class, 'paginaInicial'])->name('users.pagina-inicial');
+
+    // Guia de primeiros passos
+    Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding.show');
+    Route::post('/onboarding/marcar', [OnboardingController::class, 'mark'])->name('onboarding.marcar');
+    Route::post('/onboarding/servicos-padrao', [OnboardingController::class, 'defaultServices'])->name('onboarding.servicos');
 
     // Client
     Route::get('/clientes', [ClientController::class, 'index'])->name('clientes.index');
