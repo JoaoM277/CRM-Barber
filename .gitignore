@@ -17,3 +17,6 @@ ATUALIZAR_VPS.md
 
 # Config do front por servidor (API_BASE_URL etc.) — ver front-end/js/env.example.js
 front-end/js/env.js
+
+# Build do painel novo (gerado no deploy a partir de painel/)
+front-end/painel/

@@ -108,7 +108,18 @@ update_clone() {
 # ---------------------------------------------------------------- front
 if [ "$TARGET" != "api" ]; then
   log "===== FRONT"
-  update_clone "$FRONT_DIR" "$FRONT_USER" >/dev/null
+  FRONT_OUT="$(update_clone "$FRONT_DIR" "$FRONT_USER")"
+  read -r FPREV FNEW <<<"$FRONT_OUT"
+
+  # painel novo (React): compila só se painel/ mudou ou se o build não existe
+  if ! sudo test -f "$FRONT_DIR/front-end/painel/index.html" || \
+     ! as "$FRONT_USER" git -C "$FRONT_DIR" diff --quiet "$FPREV" "$FNEW" -- painel/; then
+    log "build do painel (npm ci + vite build)"
+    as "$FRONT_USER" env -C "$FRONT_DIR/painel" npm ci --no-audit --no-fund --loglevel=error
+    as "$FRONT_USER" env -C "$FRONT_DIR/painel" npm run build --silent
+  else
+    log "painel sem mudanças, build mantido"
+  fi
   if ! sudo test -f "$FRONT_DIR/front-end/js/env.js"; then
     log "AVISO: $FRONT_DIR/front-end/js/env.js não existe — o front vai procurar a API em :8000."
     log "       Crie a partir de front-end/js/env.example.js."

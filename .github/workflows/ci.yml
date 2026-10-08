@@ -66,3 +66,23 @@ jobs:
 
       - name: Checagem de sintaxe
         run: find src -name '*.js' -print0 | xargs -0 -n1 node --check
+
+  painel:
+    name: Painel (React — tipos + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: painel
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: painel/package-lock.json
+
+      - run: npm ci
+
+      - name: Checagem de tipos + build
+        run: npm run build
