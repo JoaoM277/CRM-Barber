@@ -86,3 +86,36 @@ export type ResumoFaturamento = {
   mes: number
   ano: number
 }
+
+export type Profissional = {
+  id: number
+  name: string
+  phone: string
+  photo: string | null
+  speciality: string | null
+  active: boolean
+  payment_type: "comissao" | "fixo" | "misto" | string | null
+  commission_percent: number | string | null
+  fixed_salary: number | string | null
+  pix_key: string | null
+}
+
+export type Servico = {
+  id: number
+  name: string
+  description: string | null
+  duration_time: number
+  price: number | string
+  active: boolean
+}
+
+/** Horário de funcionamento de um dia da semana (0 = domingo … 6 = sábado). */
+export type Expediente = {
+  id: number
+  day_of_week: number
+  active: boolean
+  start_time: string
+  end_time: string
+  waiting_start: string | null
+  waiting_end: string | null
+}

@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router"
 import { AppShell } from "@/components/app-shell"
 import VisaoGeral from "@/pages/visao-geral"
 import EmMigracao from "@/pages/em-migracao"
+import Agenda from "@/pages/agenda"
 
 export default function App() {
   return (
@@ -9,7 +10,7 @@ export default function App() {
       <Routes>
         <Route element={<AppShell />}>
           <Route index element={<VisaoGeral />} />
-          <Route path="agenda" element={<EmMigracao titulo="A agenda completa" />} />
+          <Route path="agenda" element={<Agenda />} />
           <Route path="clientes" element={<EmMigracao titulo="Clientes" />} />
           <Route path="servicos" element={<EmMigracao titulo="Serviços" />} />
           <Route path="profissionais" element={<EmMigracao titulo="Profissionais" />} />

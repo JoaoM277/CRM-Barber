@@ -1,45 +1,21 @@
 import { useEffect, useState } from "react"
 import { Link, useSearchParams } from "react-router"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
+import { useQuery } from "@tanstack/react-query"
 import { CalendarPlus, Check, CheckCheck, Phone, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { OnboardingCard } from "@/components/onboarding-card"
 import { StatusAgendamentoBadge } from "@/components/status-agendamento"
+import { useAgendamentos, useMudarStatus } from "@/hooks/use-agenda"
 import { useMe, useRecurso } from "@/hooks/use-sessao"
 import { api } from "@/lib/api"
 import { hojeISO, moeda } from "@/lib/format"
-import type { Agendamento, Paginado, ResumoFaturamento, StatusAgendamento } from "@/lib/types"
+import type { Agendamento, ResumoFaturamento } from "@/lib/types"
 
 function saudacao() {
   const h = new Date().getHours()
   return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite"
-}
-
-/** Os agendamentos de um dia, ordenados por horário. */
-export function useAgendamentosDoDia(data: string) {
-  return useQuery({
-    queryKey: ["agendamentos", data],
-    queryFn: () => api<Paginado<Agendamento>>(`/agendamentos?data=${data}`).then((r) => r.data),
-  })
-}
-
-export function useMudarStatus() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, status }: { id: number; status: StatusAgendamento }) =>
-      api(`/agendamentos/${id}`, { method: "PUT", body: { status } }),
-    onSuccess: (_r, v) => {
-      qc.invalidateQueries({ queryKey: ["agendamentos"] })
-      qc.invalidateQueries({ queryKey: ["faturamento"] })
-      qc.invalidateQueries({ queryKey: ["onboarding"] })
-      const msg = { confirmado: "Agendamento confirmado.", concluido: "Atendimento concluído.", cancelado: "Agendamento cancelado.", pendente: "Agendamento reaberto." }
-      toast.success(msg[v.status])
-    },
-    onError: (e) => toast.error(e.message),
-  })
 }
 
 function Indicador({ rotulo, valor, nota }: { rotulo: string; valor: React.ReactNode; nota?: string }) {
@@ -125,7 +101,7 @@ export default function VisaoGeral() {
   }, [params, setParams])
 
   const hoje = hojeISO()
-  const { data: agenda, isLoading } = useAgendamentosDoDia(hoje)
+  const { data: agenda, isLoading } = useAgendamentos({ data: hoje })
   const { data: fat } = useQuery({
     queryKey: ["faturamento", "resumo"],
     queryFn: () => api<ResumoFaturamento>("/faturamento"),
