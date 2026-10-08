@@ -29,7 +29,8 @@ class PaginaPublicaTest extends TestCase
 
         // o painel continua recebendo o cadastro completo
         Sanctum::actingAs(User::factory()->admin()->create(['barbershop_id' => $bs->id]));
-        $this->getJson('/api/profissionais')->assertOk()->assertJsonCount(2)->assertJsonPath('0.pix_key', 'chave-secreta');
+        $painel = $this->getJson('/api/profissionais')->assertOk()->assertJsonCount(2)->json();
+        $this->assertSame('chave-secreta', collect($painel)->firstWhere('name', 'Ativo')['pix_key']);
     }
 
     public function test_servicos_publicos_so_os_ativos(): void
