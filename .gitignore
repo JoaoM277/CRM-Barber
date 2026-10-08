@@ -20,3 +20,6 @@ front-end/js/env.js
 
 # Build do painel novo (gerado no deploy a partir de painel/)
 front-end/painel/
+
+# Build da página de agendamento (gerado no deploy a partir de agendamento/)
+front-end/agendar/

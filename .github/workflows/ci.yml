@@ -86,3 +86,23 @@ jobs:
 
       - name: Checagem de tipos + build
         run: npm run build
+
+  agendamento:
+    name: Página de agendamento (React — tipos + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agendamento
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: agendamento/package-lock.json
+
+      - run: npm ci
+
+      - name: Checagem de tipos + build
+        run: npm run build

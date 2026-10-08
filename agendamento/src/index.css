@@ -1,0 +1,51 @@
+@import "tailwindcss";
+@import "@fontsource-variable/figtree";
+
+/* A página veste a marca da BARBEARIA (cor configurada no painel); a Vellis
+   só aparece no rodapé. --marca e --sobre-marca são definidas em runtime. */
+@theme inline {
+  --font-sans: "Figtree Variable", system-ui, sans-serif;
+  --color-fundo: var(--fundo);
+  --color-cartao: var(--cartao);
+  --color-texto: var(--texto);
+  --color-suave: var(--suave);
+  --color-linha: var(--linha);
+  --color-marca: var(--marca);
+  --color-sobre-marca: var(--sobre-marca);
+  --color-erro: var(--erro);
+}
+
+:root {
+  --fundo: #f5f4f0;
+  --cartao: #ffffff;
+  --texto: #15201d;
+  --suave: #5b6b66;
+  --linha: #e2e0d8;
+  --erro: #b3312a;
+  --marca: #c89b3c;
+  --sobre-marca: #15201d;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fundo: #0e1513;
+    --cartao: #161f1c;
+    --texto: #eeeae2;
+    --suave: #9fb0aa;
+    --linha: rgb(238 234 226 / 12%);
+    --erro: #e0605a;
+    color-scheme: dark;
+  }
+}
+
+@layer base {
+  html { -webkit-tap-highlight-color: transparent; }
+  body { @apply bg-fundo font-sans text-texto antialiased; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--marca); outline-offset: 2px; border-radius: 8px; }
+  .tabular { font-variant-numeric: tabular-nums; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+}
