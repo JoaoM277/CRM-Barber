@@ -120,11 +120,13 @@ if (subCadastro) {
   fetch(`${API}/publico/config`, { headers: { Accept: "application/json" } })
     .then((r) => r.json())
     .then((c) => {
-      if (!c.cadastro_aberto) {
+      // só fecha quando a API diz explicitamente que está fechado (falha na consulta não bloqueia o cadastro)
+      if (c.cadastro_aberto === false) {
         formCadastro.style.display = "none";
         avisar("Novos cadastros estão temporariamente fechados. Volte em breve!");
         return;
       }
+      if (typeof c.dias_teste !== "number") return;
       subCadastro.textContent = c.dias_teste > 0
         ? `Teste todos os recursos por ${c.dias_teste} dias. Sem cartão de crédito.`
         : "Crie sua conta e escolha um plano.";

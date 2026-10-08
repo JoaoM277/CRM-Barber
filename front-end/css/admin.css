@@ -954,3 +954,42 @@ textarea.admin-input:focus {
     cursor: pointer;
     font-size: 12px;
 }
+
+/* ==========================================================================
+   GUIA DE PRIMEIROS PASSOS
+   ========================================================================== */
+.onb-card {
+    background: var(--brand-bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+.onb-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.onb-topo h2 { font-size: 18px; margin-bottom: 4px; }
+.onb-topo p { color: var(--text-muted); font-size: 14px; }
+.onb-ocultar { background: none; border: none; color: var(--text-muted); text-decoration: underline; cursor: pointer; font-size: 13px; }
+.onb-progresso { height: 6px; background: var(--border-color); border-radius: 3px; margin: 16px 0; overflow: hidden; }
+.onb-progresso span { display: block; height: 100%; background: var(--brand-primary); border-radius: 3px; transition: width .3s; }
+.onb-lista { list-style: none; padding: 0; margin: 0; }
+.onb-passo { display: flex; gap: 14px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--border-color); }
+.onb-marca {
+    flex: 0 0 24px; height: 24px; border-radius: 50%;
+    border: 2px solid var(--border-color);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: var(--text-muted);
+}
+.onb-passo.feito .onb-marca { background: var(--success); border-color: var(--success); color: #000; }
+.onb-texto { flex: 1; min-width: 0; }
+.onb-texto strong { display: block; font-size: 15px; }
+.onb-passo.feito .onb-texto strong { color: var(--text-muted); text-decoration: line-through; }
+.onb-texto p { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+.onb-acoes { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.onb-acoes button, .onb-acoes a {
+    font-size: 13px; padding: 6px 12px; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--border-color); background: transparent; color: var(--text-main); text-decoration: none;
+}
+.onb-acoes .principal { background: var(--brand-primary); border-color: var(--brand-primary); color: #000; font-weight: 600; }
+.onb-link { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.onb-link input { flex: 1 1 220px; min-width: 0; }
+.onb-acoes > .onb-link { flex: 1 1 100%; }
