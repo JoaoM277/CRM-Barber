@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Console\Commands\SendReactivations;
 use App\Support\Reativacao;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
@@ -44,7 +45,7 @@ class ReativacaoController extends Controller
         return [
             'ativo' => (bool) $bs->reativacao_whatsapp,
             'dias' => (int) $bs->reativacao_dias,
-            'por_dia' => \App\Console\Commands\SendReactivations::POR_DIA,
+            'por_dia' => SendReactivations::POR_DIA,
         ] + Reativacao::resultados($bs);
     }
 }
