@@ -64,7 +64,7 @@ if (formCadastro) {
       });
       localStorage.setItem("admin_token", data.access_token);
       // o painel abre o guia de primeiros passos
-      window.location.href = "admin.html?bem-vindo=1";
+      window.location.href = "/painel/?bem-vindo=1";
     });
   });
 }

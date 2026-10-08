@@ -8,7 +8,15 @@ import { ApiError, getToken } from "@/lib/api"
 import App from "./App"
 import "./index.css"
 
-// sem sessão: vai para o login (o mesmo do painel anterior)
+// acesso de suporte aberto pelo painel da plataforma: /painel/#suporte=<token>
+// (guarda como sessão e tira o token da barra de endereço)
+const suporte = location.hash.match(/^#suporte=(.+)$/)
+if (suporte) {
+  localStorage.setItem("admin_token", decodeURIComponent(suporte[1]))
+  history.replaceState(null, "", location.pathname + location.search)
+}
+
+// sem sessão: vai para o login
 if (!getToken()) {
   window.location.replace("/login.html")
 }

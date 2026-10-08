@@ -26,7 +26,7 @@ class PaymentOverdueNotification extends Notification implements ShouldQueue
         $valor = 'R$ '.number_format($this->payment->value_cents / 100, 2, ',', '.');
         $venc = $this->payment->due_date?->format('d/m/Y');
         $carencia = PlatformSettings::graceDays();
-        $url = $this->payment->invoice_url ?: rtrim(config('app.panel_url'), '/').'/admin.html';
+        $url = $this->payment->invoice_url ?: rtrim(config('app.panel_url'), '/').'/painel/assinatura';
 
         return (new MailMessage)
             ->subject('Mensalidade em atraso — '.config('app.name'))

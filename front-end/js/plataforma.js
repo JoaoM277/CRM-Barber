@@ -361,7 +361,7 @@ async function abrirDetalhe(id) {
       const janela = window.open("", "_blank");
       try {
         const r = await api(`/plataforma/barbearias/${id}/acessar`, { method: "POST" });
-        janela.location.href = `admin.html#suporte=${encodeURIComponent(r.token)}`;
+        janela.location.href = `/painel/#suporte=${encodeURIComponent(r.token)}`;
       } catch (e) {
         janela?.close();
         toast(e.message, "erro");

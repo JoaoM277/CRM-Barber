@@ -22,7 +22,7 @@ class TrialEndingNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $url = rtrim(config('app.panel_url'), '/').'/admin.html';
+        $url = rtrim(config('app.panel_url'), '/').'/painel/assinatura';
         $fim = $this->subscription->trial_ends_at?->format('d/m/Y');
         $nome = $this->subscription->barbershop?->name ?? 'sua barbearia';
 

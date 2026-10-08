@@ -37,7 +37,7 @@ if (formLogin) {
                 }
 
                 localStorage.setItem("admin_token", data.access_token);
-                window.location.href = "admin.html";
+                window.location.href = "/painel/";
             } else {
                 feedback.innerText = data.message || "E-mail ou senha inválidos.";
                 feedback.classList.add("erro");
