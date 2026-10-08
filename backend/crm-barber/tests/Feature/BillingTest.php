@@ -197,6 +197,32 @@ class BillingTest extends TestCase
         $this->assertSame(1, $sub->payments()->count());
     }
 
+    public function test_celular_vai_sem_o_55_e_se_for_recusado_cria_o_cliente_sem_ele(): void
+    {
+        $this->bs->update(['whatsapp' => '+55 (99) 98888-7777']);
+        $this->sub();
+        $tentativas = 0;
+        Http::fake([
+            'asaas.test/v3/customers' => function (HttpRequest $r) use (&$tentativas) {
+                $tentativas++;
+
+                return isset($r['mobilePhone'])
+                    ? Http::response(['errors' => [['code' => 'invalid_mobilePhone', 'description' => 'O celular informado é inválido.']]], 400)
+                    : Http::response(['id' => 'cus_2']);
+            },
+            'asaas.test/v3/subscriptions' => Http::response(['id' => 'sub_2']),
+            'asaas.test/v3/subscriptions/sub_2/payments' => Http::response(['data' => []]),
+        ]);
+        Sanctum::actingAs($this->admin);
+
+        $this->postJson('/api/assinatura', ['plano' => 'pro', 'forma_pagamento' => 'PIX', 'cpf_cnpj' => '10433218100'])
+            ->assertOk();
+
+        $this->assertSame(2, $tentativas);
+        Http::assertSent(fn (HttpRequest $r) => str_ends_with($r->url(), '/customers') && $r['mobilePhone'] === '99988887777');
+        $this->assertSame('cus_2', Subscription::first()->asaas_customer_id);
+    }
+
     public function test_downgrade_recusado_se_tiver_mais_profissionais_que_o_plano(): void
     {
         $this->sub();

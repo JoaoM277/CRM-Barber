@@ -10,6 +10,7 @@ use App\Models\SubscriptionPayment;
 use App\Models\User;
 use App\Models\Worker;
 use App\Services\Asaas\AsaasClient;
+use App\Services\Asaas\AsaasException;
 use App\Support\PlatformSettings;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -53,13 +54,24 @@ class SubscriptionService
             if (! $cpfCnpj) {
                 throw ValidationException::withMessages(['cpf_cnpj' => 'Informe o CPF ou CNPJ para emitir a cobrança.']);
             }
-            $customer = $this->asaas->createCustomer(array_filter([
+            $dados = array_filter([
                 'name' => $barbershop->name,
                 'cpfCnpj' => $cpfCnpj,
                 'email' => $owner->email,
-                'mobilePhone' => $phone ?: $barbershop->whatsapp ?: $barbershop->phone,
+                'mobilePhone' => $this->asaasPhone($phone ?: $barbershop->whatsapp ?: $barbershop->phone),
                 'externalReference' => $this->reference($barbershop),
-            ]));
+            ]);
+
+            try {
+                $customer = $this->asaas->createCustomer($dados);
+            } catch (AsaasException $e) {
+                // celular é opcional: se o Asaas recusar o número, cria o cliente sem ele
+                if (! isset($dados['mobilePhone']) || ! in_array('invalid_mobilePhone', $e->codes, true)) {
+                    throw $e;
+                }
+                unset($dados['mobilePhone']);
+                $customer = $this->asaas->createCustomer($dados);
+            }
             $sub->asaas_customer_id = $customer['id'];
             $sub->save();
         } elseif ($cpfCnpj) {
@@ -318,6 +330,18 @@ class SubscriptionService
                 'plano' => "O plano {$plan->name} permite até {$plan->max_workers} profissionais e a barbearia tem {$count}. Exclua profissionais ou escolha um plano maior.",
             ]);
         }
+    }
+
+    /** Celular no formato do Asaas: DDD + número, sem o 55 (null se não parecer celular BR). */
+    protected function asaasPhone(?string $phone): ?string
+    {
+        $digits = preg_replace('/\D/', '', (string) $phone);
+
+        if (strlen($digits) >= 12 && str_starts_with($digits, '55')) {
+            $digits = substr($digits, 2);
+        }
+
+        return preg_match('/^\d{2}9\d{8}$/', $digits) ? $digits : null;
     }
 
     protected function reference(Barbershop $barbershop): string
