@@ -14,11 +14,19 @@ class WorkerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $worker = Worker::all();
-        
-        return response()->json($worker, 200);
+        // Página pública de agendamento (/b/{slug}/profissionais): só quem está
+        // atendendo e só o que o cliente precisa ver. Telefone, Pix, salário e
+        // comissão ficam para o painel autenticado.
+        if ($request->routeIs('profissionais.index')) {
+            return response()->json(
+                Worker::where('active', true)->orderBy('name')->get(['id', 'name', 'photo', 'speciality', 'active']),
+                200
+            );
+        }
+
+        return response()->json(Worker::all(), 200);
     }
 
     /**

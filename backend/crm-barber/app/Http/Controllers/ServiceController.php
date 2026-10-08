@@ -12,11 +12,17 @@ class ServiceController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $service = Service::all();
+        // página pública de agendamento: só os serviços oferecidos
+        if ($request->routeIs('servicos.index')) {
+            return response()->json(
+                Service::where('active', true)->orderBy('name')->get(['id', 'name', 'description', 'duration_time', 'price', 'active']),
+                200
+            );
+        }
 
-        return response()->json($service, 200);
+        return response()->json(Service::all(), 200);
     }
 
     /**
