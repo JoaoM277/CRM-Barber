@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Confirmar } from "@/components/confirmar"
+import { EnviarImagem } from "@/components/enviar-imagem"
 import { useExpediente } from "@/hooks/use-cadastros"
 import { useBarbearia, useMe } from "@/hooks/use-sessao"
 import { api, ApiError } from "@/lib/api"
@@ -63,6 +64,23 @@ function AbaBarbearia() {
 
   return (
     <div className="grid gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Logo</CardTitle>
+          <CardDescription>Aparece na página de agendamento e no seu painel.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <EnviarImagem
+            atual={b.logo_url}
+            rotulo="Logo"
+            inicial={b.name.slice(0, 1).toUpperCase()}
+            enviarPara="/barbearia/logo"
+            removerEm="/barbearia/logo"
+            onMudou={() => qc.invalidateQueries({ queryKey: ["barbearia"] })}
+          />
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Seu link de agendamento</CardTitle>

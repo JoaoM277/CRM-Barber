@@ -74,3 +74,29 @@ export async function api<T = unknown>(path: string, { body, headers, ...opts }:
 
   return data as T
 }
+
+/** Envia um arquivo (multipart) — upload de logo e de foto. */
+export async function enviarArquivo<T = unknown>(path: string, arquivo: File): Promise<T> {
+  const corpo = new FormData()
+  corpo.append("arquivo", arquivo)
+  let res: Response
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      method: "POST",
+      headers: { Accept: "application/json", ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}) },
+      body: corpo,
+    })
+  } catch {
+    throw new ApiError(0, "Sem conexão com o servidor. Verifique a internet e tente de novo.")
+  }
+  if (res.status === 401) {
+    sair()
+    throw new ApiError(401, "Sessão expirada.")
+  }
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    const errors = data?.errors as Record<string, string[]> | undefined
+    throw new ApiError(res.status, (errors && Object.values(errors).flat()[0]) || data?.message || "Não foi possível enviar a imagem.", data?.code, errors)
+  }
+  return data as T
+}

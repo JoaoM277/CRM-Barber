@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
 import { Confirmar } from "@/components/confirmar"
+import { EnviarImagem } from "@/components/enviar-imagem"
 import { useProfissionais } from "@/hooks/use-cadastros"
 import { useMe } from "@/hooks/use-sessao"
 import { api, ApiError } from "@/lib/api"
@@ -57,7 +58,9 @@ function FormProfissional({ prof, aberto, onFechar }: { prof: Profissional | nul
       setErros({})
       setLimite("")
     }
-  }, [aberto, prof])
+  // reinicia só ao abrir ou trocar de profissional (não quando a foto é atualizada)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aberto, prof?.id])
 
   const comComissao = f.payment_type !== "fixo"
   const comFixo = f.payment_type !== "comissao"
@@ -99,6 +102,19 @@ function FormProfissional({ prof, aberto, onFechar }: { prof: Profissional | nul
           <DialogDescription>O cliente escolhe o profissional na hora de agendar.</DialogDescription>
         </DialogHeader>
         <form id="form-prof" className="grid gap-4" onSubmit={(e) => { e.preventDefault(); salvar.mutate() }}>
+          {prof ? (
+            <EnviarImagem
+              atual={prof.photo}
+              rotulo="Foto"
+              inicial={prof.name.slice(0, 1).toUpperCase()}
+              enviarPara={`/profissionais/${prof.id}/foto`}
+              removerEm={`/profissionais/${prof.id}/foto`}
+              onMudou={() => qc.invalidateQueries({ queryKey: ["profissionais"] })}
+              redonda
+            />
+          ) : (
+            <p className="text-xs text-muted-foreground">Depois de cadastrar, você pode colocar uma foto (aparece na página de agendamento).</p>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">
               <Label htmlFor="p-nome">Nome</Label>
@@ -238,9 +254,13 @@ export default function Profissionais() {
             <Card key={p.id} className={p.active ? "" : "opacity-70"}>
               <CardContent className="grid gap-3">
                 <div className="flex items-start gap-3">
-                  <div className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-lg font-semibold text-secondary-foreground">
-                    {p.name.slice(0, 1).toUpperCase()}
-                  </div>
+                  {p.photo ? (
+                    <img src={p.photo} alt="" className="size-11 shrink-0 rounded-full object-cover" />
+                  ) : (
+                    <div className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-lg font-semibold text-secondary-foreground">
+                      {p.name.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{p.name}</p>
                     <p className="truncate text-sm text-muted-foreground">{p.speciality || fone(p.phone)}</p>
@@ -267,7 +287,7 @@ export default function Profissionais() {
         </div>
       )}
 
-      <FormProfissional prof={editando} aberto={formAberto} onFechar={() => setFormAberto(false)} />
+      <FormProfissional prof={(editando && profs.find((x) => x.id === editando.id)) ?? editando} aberto={formAberto} onFechar={() => setFormAberto(false)} />
       <Confirmar
         aberto={!!excluir}
         titulo={`Excluir ${excluir?.name}?`}

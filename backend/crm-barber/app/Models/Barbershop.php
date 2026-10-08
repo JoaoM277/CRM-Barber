@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Barbershop extends Model
 {
@@ -36,6 +37,18 @@ class Barbershop extends Model
         'subscription_ends_at',
         'active',
     ];
+
+    /** URL pública do logo (o banco guarda só o caminho no disco "public"). */
+    protected $appends = ['logo_url'];
+
+    public function getLogoUrlAttribute(): ?string
+    {
+        if (! $this->logo_path) {
+            return null;
+        }
+
+        return str_starts_with($this->logo_path, 'http') ? $this->logo_path : Storage::disk('public')->url($this->logo_path);
+    }
 
     protected $casts = [
         'opening_time' => 'datetime:H:i',

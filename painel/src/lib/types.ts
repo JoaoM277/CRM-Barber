@@ -41,6 +41,7 @@ export type Barbearia = {
   state: string | null
   accent_color: string | null
   secondary_color: string | null
+  logo_url: string | null
 }
 
 export type PassoOnboarding = {

@@ -110,9 +110,13 @@ export function AppShell() {
       <Sidebar collapsible="icon">
         <SidebarHeader className="px-3 pt-4 pb-2">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-sidebar-primary font-display text-xl font-extrabold text-sidebar-primary-foreground">
-              {(barbearia?.name ?? "V").slice(0, 1).toUpperCase()}
-            </div>
+            {barbearia?.logo_url ? (
+              <img src={barbearia.logo_url} alt="" className="size-9 shrink-0 rounded-lg object-cover" />
+            ) : (
+              <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-sidebar-primary font-display text-xl font-extrabold text-sidebar-primary-foreground">
+                {(barbearia?.name ?? "V").slice(0, 1).toUpperCase()}
+              </div>
+            )}
             <div className="min-w-0 group-data-[collapsible=icon]:hidden">
               <p className="truncate font-semibold leading-tight">{barbearia?.name ?? "Carregando…"}</p>
               <p className="font-display text-sm tracking-[0.16em] text-sidebar-foreground/60 uppercase">Vellis</p>
