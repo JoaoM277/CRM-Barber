@@ -66,10 +66,11 @@ webhooks, sandbox, emissão de NFS-e, subcontas para split na Fase 5).
 
 Recomendação: painel em **React + Vite + Tailwind + shadcn/ui** consumindo a API atual.
 
-- [ ] Design system (cores, tipografia, componentes)
-- [ ] Painel migrado módulo a módulo: Agenda → Clientes → Serviços/Profissionais → Financeiro → Configurações
-- [ ] Agenda em calendário (dia/semana por profissional) com arrastar para remarcar
-- [ ] Empty states, skeletons, toasts, dark mode
+- [x] Design system (cores, tipografia, componentes) — identidade Vellis em `painel/src/index.css`
+- [x] Painel novo (`painel/`, React + Vite + shadcn) com todos os módulos, padrão desde 08/10/2026 em /painel/
+- [x] Agenda em calendário (dia/semana por profissional) com arrastar para remarcar
+- [x] Empty states, skeletons, toasts, dark mode
+- [ ] Remover o admin.html antigo depois de algumas semanas sem uso
 - [ ] Página pública de agendamento refeita (leve, mobile-first, PWA)
 
 ## Fase 4 — Otimização e robustez (~1-2 semanas)
