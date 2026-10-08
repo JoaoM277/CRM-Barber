@@ -24,6 +24,7 @@ use App\Http\Controllers\MeuHorarioController;
 use App\Http\Controllers\ReativacaoController;
 use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\AvaliacaoController;
 use App\Http\Controllers\Platform\PlatformBarbershopController;
 use App\Http\Controllers\Platform\PlatformMetricsController;
 use App\Http\Controllers\Platform\PlatformSettingsController;
@@ -174,6 +175,10 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
         // Reativação de clientes sumidos (convite automático no WhatsApp)
         Route::get('/whatsapp/reativacao', [ReativacaoController::class, 'show'])->name('whatsapp.reativacao');
         Route::put('/whatsapp/reativacao', [ReativacaoController::class, 'update'])->name('whatsapp.reativacao.update');
+
+        // Avaliação pós-atendimento (pedido de nota + link do Google)
+        Route::get('/whatsapp/avaliacao', [AvaliacaoController::class, 'show'])->name('whatsapp.avaliacao');
+        Route::put('/whatsapp/avaliacao', [AvaliacaoController::class, 'update'])->name('whatsapp.avaliacao.update');
 
         // Cliente cancela/remarca pelo link (liga/desliga e antecedência mínima)
         Route::put('/barbearia/alteracao-pelo-cliente', [BarbershopController::class, 'alteracaoPeloCliente'])->name('barbearia.alteracao-cliente');

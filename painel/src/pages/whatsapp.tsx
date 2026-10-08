@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -157,6 +158,54 @@ function Reativacao() {
   )
 }
 
+/** Pedido de nota depois do atendimento + link do Google para quem gostou. */
+function Avaliacao() {
+  const qc = useQueryClient()
+  const { data } = useQuery({ queryKey: ["avaliacao"], queryFn: () => api<{ ativo: boolean; google_review_url: string | null }>("/whatsapp/avaliacao"), retry: false })
+  const [link, setLink] = useState<string | null>(null)
+  const salvar = useMutation({
+    mutationFn: (body: { ativo?: boolean; google_review_url?: string | null }) =>
+      api<{ message: string; ativo: boolean; google_review_url: string | null }>("/whatsapp/avaliacao", { method: "PUT", body }),
+    onSuccess: (r) => {
+      qc.setQueryData(["avaliacao"], r)
+      setLink(null)
+      toast.success(r.message)
+    },
+    onError: (e) => toast.error(e.message),
+  })
+
+  if (!data) return null
+  const valorLink = link ?? data.google_review_url ?? ""
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <div>
+          <CardTitle>Avaliação pós-atendimento</CardTitle>
+          <CardDescription>
+            1h depois de você marcar o atendimento como <strong>concluído</strong>, o cliente recebe "de 1 a 5, como foi?". Nota 4 ou 5
+            recebe o link de avaliação do Google; nota baixa pode contar o que houve, e você lê em Relatórios. No máximo um pedido
+            por cliente a cada 30 dias.
+          </CardDescription>
+        </div>
+        <Switch checked={data.ativo} disabled={salvar.isPending} onCheckedChange={(v) => salvar.mutate({ ativo: v })} aria-label="Avaliação pós-atendimento" />
+      </CardHeader>
+      {data.ativo && (
+        <CardContent>
+          <form className="grid gap-1.5" onSubmit={(e) => { e.preventDefault(); salvar.mutate({ google_review_url: valorLink.trim() || null }) }}>
+            <Label htmlFor="google-review">Link de avaliação no Google (opcional)</Label>
+            <div className="flex flex-wrap gap-2">
+              <Input id="google-review" type="url" value={valorLink} onChange={(e) => setLink(e.target.value)} placeholder="https://g.page/r/.../review" className="min-w-0 flex-1 basis-64" />
+              <Button type="submit" variant="outline" disabled={salvar.isPending || valorLink === (data.google_review_url ?? "")}>Salvar link</Button>
+            </div>
+            <p className="text-xs text-muted-foreground">No Perfil da Empresa no Google, use "Pedir avaliações" e copie o link.</p>
+          </form>
+        </CardContent>
+      )}
+    </Card>
+  )
+}
+
 function Opcao({ id, titulo, descricao, marcado, onMudar }: { id: string; titulo: string; descricao: ReactNode; marcado: boolean; onMudar: (v: boolean) => void }) {
   return (
     <div className="flex items-start gap-3">
@@ -281,6 +330,8 @@ export default function WhatsApp() {
           </CardContent>
         )}
       </Card>
+
+      <Avaliacao />
 
       <Reativacao />
 

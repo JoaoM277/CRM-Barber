@@ -41,9 +41,11 @@ class EvolutionWebhookController extends Controller
             return $this->ok('ignorado');
         }
 
-        $texto = data_get($dados, 'message.conversation') ?? data_get($dados, 'message.extendedTextMessage.text');
-        $acao = $this->interpretar((string) $texto);
-        if (! $acao) {
+        $texto = (string) (data_get($dados, 'message.conversation') ?? data_get($dados, 'message.extendedTextMessage.text'));
+        $acao = $this->interpretar($texto);
+        $nota = $this->nota($texto);
+        // texto livre também interessa: pode ser o comentário de uma avaliação baixa
+        if (trim($texto) === '') {
             return $this->ok('ignorado');
         }
 
@@ -78,6 +80,28 @@ class EvolutionWebhookController extends Controller
             ->orderBy('date')->orderBy('start_time')
             ->get()
             ->first(fn (Schedule $s) => now()->lessThan(\Illuminate\Support\Carbon::parse(substr((string) $s->date, 0, 10).' '.substr((string) $s->start_time, 0, 5))));
+
+        // avaliação pedida nas últimas 48h e ainda sem nota
+        $avaliacao = Schedule::withoutGlobalScopes()
+            ->where('barbershop_id', $instancia->barbershop_id)
+            ->where('client_id', $cliente->id)
+            ->where('avaliacao_pedida_em', '>=', now()->subHours(48))
+            ->whereNull('avaliacao_nota')
+            ->latest('avaliacao_pedida_em')
+            ->first();
+
+        // "1" e "2" também respondem ao lembrete: vale a pergunta enviada por último
+        if ($nota && $avaliacao) {
+            $lembreteEm = $agendamento ? max($agendamento->lembrete_24h_em, $agendamento->lembrete_2h_em) : null;
+            if (! $lembreteEm || $avaliacao->avaliacao_pedida_em->greaterThanOrEqualTo($lembreteEm)) {
+                return $this->registrarNota($avaliacao, $nota);
+            }
+        }
+
+        if (! $acao) {
+            return $nota ? $this->ok('ignorado') : $this->comentario($instancia->barbershop_id, $cliente->id, $texto);
+        }
+
         if (! $agendamento) {
             return $this->ok('sem agendamento');
         }
@@ -101,6 +125,44 @@ class EvolutionWebhookController extends Controller
         }
 
         return $this->ok($acao);
+    }
+
+    private function registrarNota(Schedule $s, int $nota): JsonResponse
+    {
+        $s->update(['avaliacao_nota' => $nota, 'avaliacao_em' => now()]);
+        Audit::logFor($s->barbershop_id, 'agendamento.avaliado', $s, "Cliente deu nota {$nota} ao atendimento");
+        SendAppointmentWhatsapp::dispatch($s->id, $nota >= 4 ? SendAppointmentWhatsapp::AVALIACAO_ALTA : SendAppointmentWhatsapp::AVALIACAO_BAIXA);
+
+        return $this->ok('avaliacao');
+    }
+
+    /** Depois de uma nota baixa, a próxima mensagem (em até 24h) vira o comentário. */
+    private function comentario(int $barbershopId, int $clienteId, string $texto): JsonResponse
+    {
+        $s = Schedule::withoutGlobalScopes()
+            ->where('barbershop_id', $barbershopId)
+            ->where('client_id', $clienteId)
+            ->where('avaliacao_nota', '<=', 3)
+            ->where('avaliacao_em', '>=', now()->subHours(24))
+            ->whereNull('avaliacao_comentario')
+            ->latest('avaliacao_em')
+            ->first();
+
+        if (! $s) {
+            return $this->ok('ignorado');
+        }
+
+        $s->update(['avaliacao_comentario' => Str::limit(trim($texto), 990)]);
+
+        return $this->ok('comentario');
+    }
+
+    /** Nota de 1 a 5 ("5", "5 estrelas", "4/5", "nota 3"). */
+    private function nota(string $texto): ?int
+    {
+        $t = trim(Str::lower(Str::ascii($texto)), " \t\n\r.!?*");
+
+        return preg_match('/^(?:nota )?([1-5])(?: ?estrelas?| ?de 5| ?\/ ?5)?$/', $t, $m) ? (int) $m[1] : null;
     }
 
     private function interpretar(string $texto): ?string

@@ -43,6 +43,8 @@ class Barbershop extends Model
         'antecedencia_alteracao_horas',
         'reativacao_whatsapp',
         'reativacao_dias',
+        'avaliacao_whatsapp',
+        'google_review_url',
     ];
 
     /** URL pública do logo (o banco guarda só o caminho no disco "public"). */
@@ -70,6 +72,7 @@ class Barbershop extends Model
         'antecedencia_alteracao_horas' => 'integer',
         'reativacao_whatsapp' => 'boolean',
         'reativacao_dias' => 'integer',
+        'avaliacao_whatsapp' => 'boolean',
     ];
 
     public function users()

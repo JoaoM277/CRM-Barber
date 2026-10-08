@@ -8,6 +8,7 @@ import { Indicador } from "@/components/indicador"
 import { SeletorPeriodo, usePeriodo } from "@/components/seletor-periodo"
 import { useRecurso } from "@/hooks/use-sessao"
 import { api } from "@/lib/api"
+import { dataBR } from "@/lib/format"
 
 type Relatorio = {
   agenda: { total: number; concluidos: number; cancelados: number; cancelados_pelo_cliente: number; taxa_cancelamento: number }
@@ -18,6 +19,81 @@ type Relatorio = {
     por_profissional: { worker_id: number; profissional: string; atendimentos: number; horas_ocupadas: number; horas_disponiveis: number; ocupacao: number }[]
     por_dia_semana: { dia: number; aberto: boolean; ocupacao: number }[]
   }
+  avaliacoes: {
+    total: number
+    pedidos: number
+    media: number | null
+    distribuicao: Record<string, number>
+    por_profissional: { profissional: string | null; media: number; total: number }[]
+    recentes: { id: number; nota: number; comentario: string | null; cliente: string | null; profissional: string | null; em: string }[]
+  }
+}
+
+const estrelas = (n: number) => "★★★★★".slice(0, Math.round(n)) + "☆☆☆☆☆".slice(0, 5 - Math.round(n))
+
+/** Notas dos clientes (pedidas no WhatsApp depois do atendimento concluído). */
+function Avaliacoes({ a }: { a: Relatorio["avaliacoes"] }) {
+  if (!a.total) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Avaliações dos clientes</CardTitle>
+          <CardDescription>
+            {a.pedidos ? `${a.pedidos} pedido(s) de avaliação no período, ainda sem resposta.` : "Nenhuma avaliação no período."} O pedido sai no WhatsApp 1h depois do atendimento marcado como concluído (ligue em WhatsApp).
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
+  const maior = Math.max(1, ...Object.values(a.distribuicao))
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Avaliações dos clientes</CardTitle>
+        <CardDescription>{a.total} nota(s) de {a.pedidos} pedido(s) no período. As notas baixas aparecem primeiro.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-6 lg:grid-cols-[16rem_1fr]">
+        <div className="grid content-start gap-4">
+          <div>
+            <p className="text-4xl font-semibold tabular">{a.media?.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}</p>
+            <p className="text-lg text-warning" aria-label={`Média ${a.media} de 5`}>{estrelas(a.media ?? 0)}</p>
+          </div>
+          <ul className="grid gap-1.5" aria-label="Distribuição das notas">
+            {[5, 4, 3, 2, 1].map((n) => (
+              <li key={n} className="grid grid-cols-[1.5rem_1fr_2rem] items-center gap-2 text-sm">
+                <span className="tabular">{n}★</span>
+                <Barra valor={(a.distribuicao[n] ?? 0) / maior} rotulo={`Notas ${n}`} />
+                <span className="text-right tabular text-muted-foreground">{a.distribuicao[n] ?? 0}</span>
+              </li>
+            ))}
+          </ul>
+          {a.por_profissional.length > 1 && (
+            <ul className="grid gap-1 text-sm">
+              {a.por_profissional.map((p) => (
+                <li key={p.profissional ?? "-"} className="flex justify-between gap-2">
+                  <span className="truncate">{p.profissional ?? "—"}</span>
+                  <span className="tabular text-muted-foreground"><strong className="text-foreground">{p.media.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}</strong> · {p.total}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <ul className="grid content-start divide-y">
+          {a.recentes.map((r) => (
+            <li key={r.id} className="grid gap-0.5 py-3 first:pt-0">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
+                <span className="font-medium">{r.cliente ?? "Cliente"}{r.profissional ? <span className="font-normal text-muted-foreground"> · com {r.profissional}</span> : null}</span>
+                <span className={r.nota <= 3 ? "text-destructive" : "text-warning"} aria-label={`Nota ${r.nota}`}>{estrelas(r.nota)}</span>
+              </div>
+              {r.comentario && <p className="text-sm text-muted-foreground">“{r.comentario}”</p>}
+              <p className="text-xs text-muted-foreground">{dataBR(r.em)}</p>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  )
 }
 
 const pct = (v: number) => `${Math.round(v * 100)}%`
@@ -152,6 +228,8 @@ export default function Relatorios() {
               </CardContent>
             </Card>
           </div>
+
+          {data.avaliacoes && <Avaliacoes a={data.avaliacoes} />}
         </div>
       )}
     </div>

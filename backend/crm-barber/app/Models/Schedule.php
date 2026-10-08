@@ -49,6 +49,10 @@ class Schedule extends Model
         'lembrete_24h_em',
         'lembrete_2h_em',
         'resposta_cliente_em',
+        'avaliacao_pedida_em',
+        'avaliacao_nota',
+        'avaliacao_em',
+        'avaliacao_comentario',
     ];
 
     /** Chave do link "meu horário": só vai para o cliente (WhatsApp / tela de sucesso). */
@@ -108,6 +112,9 @@ class Schedule extends Model
         'lembrete_24h_em' => 'datetime',
         'lembrete_2h_em' => 'datetime',
         'resposta_cliente_em' => 'datetime',
+        'avaliacao_pedida_em' => 'datetime',
+        'avaliacao_nota' => 'integer',
+        'avaliacao_em' => 'datetime',
     ];
 
     // withTrashed(): histórico não pode sumir quando cliente/profissional/

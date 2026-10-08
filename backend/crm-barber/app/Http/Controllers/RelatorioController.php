@@ -52,7 +52,45 @@ class RelatorioController extends Controller
             'clientes' => $this->clientes($doPeriodo, $ini),
             'retorno' => $this->retorno(),
             'ocupacao' => $this->ocupacao($doPeriodo, $inicio, $fim),
+            'avaliacoes' => $this->avaliacoes($inicio, $fim),
         ]);
+    }
+
+    /** Notas dadas no período (pela data da resposta do cliente). */
+    private function avaliacoes(Carbon $inicio, Carbon $fim): array
+    {
+        $janela = [$inicio->copy()->startOfDay(), $fim->copy()->endOfDay()];
+
+        $notas = Schedule::query()
+            ->with(['client:id,name', 'worker:id,name'])
+            ->whereNotNull('avaliacao_nota')
+            ->whereBetween('avaliacao_em', $janela)
+            ->latest('avaliacao_em')
+            ->get(['id', 'client_id', 'worker_id', 'avaliacao_nota', 'avaliacao_em', 'avaliacao_comentario']);
+
+        $pedidos = Schedule::query()->whereBetween('avaliacao_pedida_em', $janela)->count();
+        $media = fn ($c) => $c->count() ? round($c->avg('avaliacao_nota'), 2) : null;
+
+        return [
+            'total' => $notas->count(),
+            'pedidos' => $pedidos,
+            'media' => $media($notas),
+            'distribuicao' => collect(range(1, 5))->mapWithKeys(fn ($n) => [$n => $notas->where('avaliacao_nota', $n)->count()]),
+            'por_profissional' => $notas->groupBy('worker_id')->map(fn ($g) => [
+                'profissional' => $g->first()->worker?->name,
+                'media' => $media($g),
+                'total' => $g->count(),
+            ])->sortByDesc('media')->values(),
+            // notas baixas primeiro: é o que o dono precisa ler
+            'recentes' => $notas->sortBy(fn ($s) => [$s->avaliacao_nota > 3 ? 1 : 0, -$s->avaliacao_em->timestamp])->take(10)->map(fn (Schedule $s) => [
+                'id' => $s->id,
+                'nota' => $s->avaliacao_nota,
+                'comentario' => $s->avaliacao_comentario,
+                'cliente' => $s->client?->name,
+                'profissional' => $s->worker?->name,
+                'em' => $s->avaliacao_em,
+            ])->values(),
+        ];
     }
 
     private function agenda(Collection $doPeriodo, Carbon $inicio, Carbon $fim): array

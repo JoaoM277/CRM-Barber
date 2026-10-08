@@ -42,6 +42,13 @@ class SendAppointmentWhatsapp implements ShouldQueue
     /** Confirmação do novo horário quando o cliente remarca pelo link. */
     public const REMARCADO = 'REMARCADO';
 
+    /** Avaliação pós-atendimento: o pedido e o agradecimento (nota alta / baixa). */
+    public const AVALIACAO_PEDIDO = 'AVALIACAO_PEDIDO';
+
+    public const AVALIACAO_ALTA = 'AVALIACAO_ALTA';
+
+    public const AVALIACAO_BAIXA = 'AVALIACAO_BAIXA';
+
     /** Mensagens que levam o link "meu horário" (cancelar/remarcar). */
     private const COM_LINK_DO_CLIENTE = [self::AGENDAMENTO, self::REMARCADO, self::LEMBRETE_24H];
 
@@ -82,6 +89,8 @@ class SendAppointmentWhatsapp implements ShouldQueue
             'link' => $schedule->barbershop
                 ? rtrim(config('app.frontend_url'), '/').'/?b='.$schedule->barbershop->slug
                 : null,
+            // avaliação no Google (agradecimento de nota alta)
+            'review_link' => $this->trigger === self::AVALIACAO_ALTA ? ($schedule->barbershop?->google_review_url ?: null) : null,
             // link para o próprio cliente cancelar/remarcar, se ainda pode
             'manage_link' => in_array($this->trigger, self::COM_LINK_DO_CLIENTE, true) && $schedule->bloqueioAlteracaoCliente() === null
                 ? $schedule->linkCliente()

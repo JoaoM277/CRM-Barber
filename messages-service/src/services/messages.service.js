@@ -6,7 +6,7 @@ const logController = require("../controllers/message.log.controller");
 // --------------------------------------------------------------------------
 
 const messageService = async (mensageData) => {
-  const { phone, name, trigger, date, time, barber, services, ip, instance, client_id, barbershop, ask_reply, allow_cancel, link, manage_link } =
+  const { phone, name, trigger, date, time, barber, services, ip, instance, client_id, barbershop, ask_reply, allow_cancel, link, manage_link, review_link } =
     mensageData;
   // registro da mensagem vai para o cliente certo (antes ia sempre para o id 1)
   const clienteId = client_id ?? null;
@@ -89,7 +89,7 @@ const messageService = async (mensageData) => {
   // --------------------------------------------------------------------------
   // 5. Seleção de template baseado nas informações vindas do controller
   // --------------------------------------------------------------------------
-  const respost = templateSelect(name, { date, time, barber, services, barbershop, askReply: ask_reply, allowCancel: allow_cancel !== false, link, manageLink: manage_link });
+  const respost = templateSelect(name, { date, time, barber, services, barbershop, askReply: ask_reply, allowCancel: allow_cancel !== false, link, manageLink: manage_link, reviewLink: review_link });
 
   // Envio exclusivamente pela Evolution API (instância conectada)
   if (!instance) {

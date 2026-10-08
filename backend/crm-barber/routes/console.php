@@ -21,5 +21,8 @@ Schedule::command('billing:notify')->dailyAt('10:00')->withoutOverlapping();
 // Lembretes de 24h e 2h antes no WhatsApp (o comando só envia entre 8h e 21h).
 Schedule::command('lembretes:enviar')->everyFiveMinutes()->withoutOverlapping();
 
+// Avaliação pós-atendimento (1h depois de concluído, só entre 8h e 21h).
+Schedule::command('avaliacoes:enviar')->everyTenMinutes()->withoutOverlapping();
+
 // Reativação de clientes sumidos (só barbearias que ligaram; limite diário por barbearia).
 Schedule::command('reativacao:enviar')->dailyAt('10:30')->withoutOverlapping();

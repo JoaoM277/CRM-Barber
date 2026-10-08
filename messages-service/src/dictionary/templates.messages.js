@@ -57,6 +57,18 @@ messageList.REMARCADO = (name, a) =>
 messageList.REATIVACAO = (name, a) =>
   `Oi, ${name}! Faz um tempinho que você não aparece${naBarbearia(a)}. 💈 Que tal deixar o visual em dia?${a?.link ? `\n\nEscolha seu horário: ${a.link}` : ""}\n\nSe não quiser mais receber esses convites, responda *SAIR*.`;
 
+// Avaliação pós-atendimento
+messageList.AVALIACAO_PEDIDO = (name, a) =>
+  `Oi, ${name}! Obrigado pela visita${naBarbearia(a)}. 💈\n\nDe *1 a 5*, como foi o seu atendimento${a?.barber ? ` com ${a.barber}` : ""}? Responda só com o número.`;
+
+messageList.AVALIACAO_ALTA = (name, a) =>
+  a?.reviewLink
+    ? `Que bom saber, ${name}! ⭐ Se puder, deixe sua avaliação no Google. Leva 1 minuto e ajuda muito a barbearia:\n\n${a.reviewLink}`
+    : `Que bom saber, ${name}! ⭐ Obrigado pela avaliação. Até a próxima!`;
+
+messageList.AVALIACAO_BAIXA = (name) =>
+  `Obrigado pela sinceridade, ${name}. Se quiser, conte aqui o que aconteceu: a barbearia vai ler e melhorar.`;
+
 messageList.RESPOSTA_CONFIRMADO = (name, a) =>
   `Confirmado, ${name}! ✅ Te esperamos dia ${diaMes(a?.date)} às ${a?.time}.`;
 
