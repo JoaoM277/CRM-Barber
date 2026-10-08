@@ -53,12 +53,14 @@ webhooks, sandbox, emissão de NFS-e, subcontas para split na Fase 5).
 
 ## Fase 2 — Aquisição e onboarding self-service (~2 semanas) ⭐
 
-- [ ] Landing page: proposta de valor, prints/vídeo, preços, FAQ, depoimentos, CTA "Teste grátis"
-- [ ] E-mail transacional (Resend ou SES): verificação de e-mail, **esqueci minha senha**, boas-vindas
-- [ ] Wizard pós-cadastro: dados/logo → serviços (templates) → profissionais → horários → WhatsApp → "seu link está pronto"
+- [x] Landing page (`landing/index.html`): agenda de sábado se enchendo, recursos, como começar, preços e dias de teste vindos da API, FAQ — falta: apontar o DNS de usevellis.tech e publicar; depoimentos quando houver clientes reais
+- [x] E-mails: esqueci minha senha, boas-vindas, fim do teste, fatura vencida — falta: conta no Resend + DNS do domínio de envio
+- [ ] Verificação de e-mail no cadastro (adiado: cadastro sem atrito por enquanto)
+- [x] Guia de primeiros passos no painel (serviços de exemplo, profissionais, horários, WhatsApp, link, 1º agendamento)
+- [x] Página de cadastro self-service (`cadastro.html`)
 - [ ] Subdomínio por barbearia (DNS wildcard + certificado wildcard)
 - [x] Painel universal (`plataforma.html`): MRR, receita, conversão do trial, churn, cadastros/dia, situação das contas; barbearias com busca/filtro, conceder dias, trocar plano, suspender/reativar, acesso de suporte (2h, auditado); regras da assinatura, planos e webhooks do Asaas
-- [ ] Termos de Uso + Política de Privacidade (LGPD), aceite no cadastro
+- [x] Termos de Uso + Política de Privacidade (modelos) com aceite no cadastro — falta: revisão jurídica e preencher razão social/CNPJ/contatos
 
 ## Fase 3 — Layout profissional (~3-4 semanas, paralelo à Fase 2)
 
