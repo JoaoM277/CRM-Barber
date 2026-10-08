@@ -37,6 +37,8 @@ class Barbershop extends Model
         'subscription_ends_at',
         'active',
         'lembretes_whatsapp',
+        'aviso_cancelamento_whatsapp',
+        'cancelar_pelo_lembrete',
     ];
 
     /** URL pública do logo (o banco guarda só o caminho no disco "public"). */
@@ -58,6 +60,8 @@ class Barbershop extends Model
         'active' => 'boolean',
         'onboarding' => 'array',
         'lembretes_whatsapp' => 'boolean',
+        'aviso_cancelamento_whatsapp' => 'boolean',
+        'cancelar_pelo_lembrete' => 'boolean',
     ];
 
     public function users()

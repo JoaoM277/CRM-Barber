@@ -33,7 +33,8 @@ class InstanceController extends Controller
             // o painel usa isso pra mostrar um aviso quando o WhatsApp está fora do ar
             'alerta_sem_whatsapp' => $instances->isNotEmpty() && $conectadas === 0,
             'conectadas' => $conectadas,
-            'lembretes_whatsapp' => (bool) \App\Models\Barbershop::whereKey($request->user()->barbershop_id)->value('lembretes_whatsapp'),
+            'lembretes' => \App\Models\Barbershop::whereKey($request->user()->barbershop_id)
+                ->first(['lembretes_whatsapp', 'aviso_cancelamento_whatsapp', 'cancelar_pelo_lembrete']),
         ]);
     }
 
@@ -150,15 +151,29 @@ class InstanceController extends Controller
         }
     }
 
-    /** PUT /whatsapp/lembretes {ativo} — liga/desliga os lembretes de 24h e 2h antes. */
+    /**
+     * PUT /whatsapp/lembretes — liga/desliga os lembretes e as opções extras
+     * {ativo?, aviso_cancelamento?, cancelar_pelo_lembrete?}
+     */
     public function lembretes(Request $request): JsonResponse
     {
-        $data = $request->validate(['ativo' => 'required|boolean']);
-        \App\Models\Barbershop::whereKey($request->user()->barbershop_id)->update(['lembretes_whatsapp' => $data['ativo']]);
+        $data = $request->validate([
+            'ativo' => 'sometimes|boolean',
+            'aviso_cancelamento' => 'sometimes|boolean',
+            'cancelar_pelo_lembrete' => 'sometimes|boolean',
+        ]);
+        $campos = array_filter([
+            'lembretes_whatsapp' => $data['ativo'] ?? null,
+            'aviso_cancelamento_whatsapp' => $data['aviso_cancelamento'] ?? null,
+            'cancelar_pelo_lembrete' => $data['cancelar_pelo_lembrete'] ?? null,
+        ], fn ($v) => $v !== null);
+
+        $bs = \App\Models\Barbershop::findOrFail($request->user()->barbershop_id);
+        $bs->update($campos);
 
         return response()->json([
-            'message' => $data['ativo'] ? 'Lembretes automáticos ligados.' : 'Lembretes automáticos desligados.',
-            'ativo' => (bool) $data['ativo'],
+            'message' => 'Preferências dos lembretes salvas.',
+            'lembretes' => $bs->only(['lembretes_whatsapp', 'aviso_cancelamento_whatsapp', 'cancelar_pelo_lembrete']),
         ]);
     }
 }

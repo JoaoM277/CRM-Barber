@@ -7,9 +7,11 @@ use App\Models\Barbershop;
 use App\Models\Client;
 use App\Models\Instance;
 use App\Models\Schedule;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class LembretesTest extends TestCase
@@ -146,5 +148,60 @@ class LembretesTest extends TestCase
 
         $this->assertSame(Schedule::STATUS_PENDENTE, $s->fresh()->status);
         Bus::assertNotDispatched(SendAppointmentWhatsapp::class);
+    }
+
+    // ------------------------------------------------------------ opções de cancelamento
+
+    public function test_com_cancelamento_pelo_lembrete_desligado_o_2_e_ignorado(): void
+    {
+        $s = $this->prepararResposta();
+        $this->bs->update(['cancelar_pelo_lembrete' => false]);
+
+        $this->resposta('2')->assertOk()->assertJsonPath('resultado', 'cancelamento pelo lembrete desligado');
+
+        $this->assertSame(Schedule::STATUS_PENDENTE, $s->fresh()->status);
+        Bus::assertNotDispatched(SendAppointmentWhatsapp::class);
+    }
+
+    public function test_barbearia_cancela_pelo_painel_e_o_cliente_e_avisado(): void
+    {
+        $s = $this->agendamento('2026-10-09', '10:00');
+        Sanctum::actingAs(User::factory()->admin()->create(['barbershop_id' => $this->bs->id]));
+
+        $this->putJson("/api/agendamentos/{$s->id}", ['status' => 'cancelado'])->assertOk();
+
+        $this->assertSame(1, $this->enviados(SendAppointmentWhatsapp::CANCELAMENTO));
+    }
+
+    public function test_sem_aviso_quando_a_opcao_ou_os_lembretes_estao_desligados_ou_o_horario_ja_passou(): void
+    {
+        Sanctum::actingAs(User::factory()->admin()->create(['barbershop_id' => $this->bs->id]));
+
+        $this->bs->update(['aviso_cancelamento_whatsapp' => false]);
+        $a = $this->agendamento('2026-10-09', '10:00');
+        $this->putJson("/api/agendamentos/{$a->id}", ['status' => 'cancelado'])->assertOk();
+
+        $this->bs->update(['aviso_cancelamento_whatsapp' => true, 'lembretes_whatsapp' => false]);
+        $b = $this->agendamento('2026-10-09', '11:00');
+        $this->putJson("/api/agendamentos/{$b->id}", ['status' => 'cancelado'])->assertOk();
+
+        $this->bs->update(['lembretes_whatsapp' => true]);
+        $c = $this->agendamento('2026-10-07', '10:00'); // ontem
+        $this->putJson("/api/agendamentos/{$c->id}", ['status' => 'cancelado'])->assertOk();
+
+        $this->assertSame(0, $this->enviados(SendAppointmentWhatsapp::CANCELAMENTO));
+    }
+
+    public function test_preferencias_dos_lembretes_salvam_em_partes(): void
+    {
+        Sanctum::actingAs(User::factory()->admin()->create(['barbershop_id' => $this->bs->id]));
+
+        $this->putJson('/api/whatsapp/lembretes', ['cancelar_pelo_lembrete' => false])
+            ->assertOk()
+            ->assertJsonPath('lembretes.cancelar_pelo_lembrete', false)
+            ->assertJsonPath('lembretes.lembretes_whatsapp', true)
+            ->assertJsonPath('lembretes.aviso_cancelamento_whatsapp', true);
+
+        $this->getJson('/api/instances')->assertOk()->assertJsonPath('lembretes.cancelar_pelo_lembrete', false);
     }
 }

@@ -21,9 +21,6 @@ const messageList = {
   AGENDAMENTO: (name, appointment) =>
     `Olá, ${name}! Seu agendamento${servicesClause(appointment?.services)} foi confirmado para o dia ${appointment?.date || "marcado"} às ${appointment?.time || "marcado"}${appointment?.barber ? ` com ${appointment.barber}` : ""}. Te esperamos! 💈`,
 
-  CANCELAMENTO: (name, appointment) =>
-    `Olá, ${name}. Seu agendamento${servicesClause(appointment?.services)} para o dia ${appointment?.date} às ${appointment?.time} foi cancelado.`,
-
   LEMBRETE: (name, appointment) =>
     `Ei, ${name}, passando para lembrar do seu horário hoje às ${appointment?.time}${appointment?.services && formatServices(appointment.services) ? ` (${formatServices(appointment.services)})` : ""}! ⏰`,
 };
@@ -31,8 +28,12 @@ const messageList = {
 // "08/10" a partir de "2026-10-08"
 const diaMes = (iso) => (iso ? String(iso).slice(0, 10).split("-").reverse().slice(0, 2).join("/") : "");
 const naBarbearia = (a) => (a?.barbershop ? ` na ${a.barbershop}` : "");
-const pedirResposta = (a) =>
-  a?.askReply ? "\n\nResponda *1* para confirmar ou *2* para cancelar." : "";
+const pedirResposta = (a) => {
+  if (!a?.askReply) return "";
+  return a?.allowCancel === false
+    ? "\n\nResponda *1* para confirmar."
+    : "\n\nResponda *1* para confirmar ou *2* para cancelar.";
+};
 
 // Lembretes automáticos (enviados pelo CRM 24h e 2h antes) e respostas ao cliente
 messageList.LEMBRETE_24H = (name, a) =>
@@ -40,6 +41,10 @@ messageList.LEMBRETE_24H = (name, a) =>
 
 messageList.LEMBRETE_2H = (name, a) =>
   `${name}, seu horário${naBarbearia(a)} é hoje às ${a?.time}${a?.barber ? ` com ${a.barber}` : ""}. Até já! ⏰${pedirResposta(a)}`;
+
+// Aviso de que a barbearia cancelou o horário (opção dos lembretes)
+messageList.CANCELAMENTO = (name, a) =>
+  `Olá, ${name}. Seu horário${naBarbearia(a)} do dia ${diaMes(a?.date)} às ${a?.time}${formatServices(a?.services) ? ` (${formatServices(a.services)})` : ""} foi cancelado.${a?.link ? `\n\nPara marcar um novo horário: ${a.link}` : " Para marcar um novo horário, fale com a barbearia."}`;
 
 messageList.RESPOSTA_CONFIRMADO = (name, a) =>
   `Confirmado, ${name}! ✅ Te esperamos dia ${diaMes(a?.date)} às ${a?.time}.`;

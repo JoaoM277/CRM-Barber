@@ -80,6 +80,10 @@ class EvolutionWebhookController extends Controller
             Audit::logFor($instancia->barbershop_id, 'agendamento.confirmado_cliente', $agendamento, 'Cliente confirmou pelo WhatsApp');
             SendAppointmentWhatsapp::dispatch($agendamento->id, SendAppointmentWhatsapp::RESPOSTA_CONFIRMADO);
         } else {
+            // a barbearia pode desligar o cancelamento pelo lembrete (aí o "2" é ignorado)
+            if (! \App\Models\Barbershop::whereKey($instancia->barbershop_id)->value('cancelar_pelo_lembrete')) {
+                return $this->ok('cancelamento pelo lembrete desligado');
+            }
             $agendamento->update(['status' => Schedule::STATUS_CANCELADO, 'resposta_cliente_em' => now()]);
             Audit::logFor($instancia->barbershop_id, 'agendamento.cancelado_cliente', $agendamento, 'Cliente cancelou pelo WhatsApp');
             SendAppointmentWhatsapp::dispatch($agendamento->id, SendAppointmentWhatsapp::RESPOSTA_CANCELADO);

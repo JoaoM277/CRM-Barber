@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { Link } from "react-router"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
@@ -6,7 +6,9 @@ import { CheckCircle2, Loader2, MessageCircle, RefreshCw, Smartphone, Trash2 } f
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
 import { Confirmar } from "@/components/confirmar"
@@ -15,7 +17,10 @@ import { api } from "@/lib/api"
 import { dataBR, fone } from "@/lib/format"
 
 type Instancia = { id: number; name: string; status: "conectado" | "conectando" | "desconectado" | "erro"; phone_number: string | null; last_connected_at: string | null }
-type Lista = { data: Instancia[]; conectadas: number; alerta_sem_whatsapp: boolean; lembretes_whatsapp: boolean }
+type Lembretes = { lembretes_whatsapp: boolean; aviso_cancelamento_whatsapp: boolean; cancelar_pelo_lembrete: boolean }
+type Lista = { data: Instancia[]; conectadas: number; alerta_sem_whatsapp: boolean; lembretes: Lembretes | null }
+// o que o PUT /whatsapp/lembretes aceita (manda só o que mudou)
+type Preferencias = { ativo?: boolean; aviso_cancelamento?: boolean; cancelar_pelo_lembrete?: boolean }
 
 const STATUS: Record<Instancia["status"], { texto: string; classe: string }> = {
   conectado: { texto: "Conectado", classe: "border-success/50 bg-success/10 text-success" },
@@ -92,6 +97,18 @@ function Conectar({ instancia, qrInicial, onFechar }: { instancia: Instancia | n
   )
 }
 
+function Opcao({ id, titulo, descricao, marcado, onMudar }: { id: string; titulo: string; descricao: ReactNode; marcado: boolean; onMudar: (v: boolean) => void }) {
+  return (
+    <div className="flex items-start gap-3">
+      <Checkbox id={id} checked={marcado} onCheckedChange={(v) => onMudar(v === true)} className="mt-0.5" />
+      <div className="grid gap-1">
+        <Label htmlFor={id}>{titulo}</Label>
+        <p className="text-sm text-muted-foreground">{descricao}</p>
+      </div>
+    </div>
+  )
+}
+
 export default function WhatsApp() {
   const qc = useQueryClient()
   const temRecurso = useRecurso("whatsapp")
@@ -101,6 +118,7 @@ export default function WhatsApp() {
 
   const { data, isLoading } = useQuery({ queryKey: ["instancias"], queryFn: () => api<Lista>("/instances") })
   const instancias = data?.data ?? []
+  const pref: Lembretes = data?.lembretes ?? { lembretes_whatsapp: true, aviso_cancelamento_whatsapp: true, cancelar_pelo_lembrete: true }
 
   const criar = useMutation({
     mutationFn: () => {
@@ -115,7 +133,7 @@ export default function WhatsApp() {
     onError: (e) => toast.error(e.message),
   })
   const lembretes = useMutation({
-    mutationFn: (ativo: boolean) => api<{ message: string }>("/whatsapp/lembretes", { method: "PUT", body: { ativo } }),
+    mutationFn: (body: Preferencias) => api<{ message: string }>("/whatsapp/lembretes", { method: "PUT", body }),
     onSuccess: (r) => {
       qc.invalidateQueries({ queryKey: ["instancias"] })
       toast.success(r.message)
@@ -171,16 +189,37 @@ export default function WhatsApp() {
             <CardTitle>Lembretes automáticos</CardTitle>
             <CardDescription>
               O cliente recebe um lembrete 24h antes e outro 2h antes do horário (só entre 8h e 21h). Se ainda não confirmou,
-              pode responder <strong>1</strong> para confirmar ou <strong>2</strong> para cancelar — a agenda atualiza sozinha.
+              pode responder <strong>1</strong> para confirmar{pref.cancelar_pelo_lembrete && <> ou <strong>2</strong> para cancelar</>} — a agenda atualiza sozinha.
             </CardDescription>
           </div>
           <Switch
-            checked={data?.lembretes_whatsapp ?? true}
+            checked={pref.lembretes_whatsapp}
             disabled={!data || lembretes.isPending}
-            onCheckedChange={(v) => lembretes.mutate(v)}
+            onCheckedChange={(v) => lembretes.mutate({ ativo: v })}
             aria-label="Lembretes automáticos"
           />
         </CardHeader>
+        {pref.lembretes_whatsapp && (
+          <CardContent>
+            <fieldset className="grid gap-4 rounded-lg border p-4" disabled={!data || lembretes.isPending}>
+              <legend className="px-1 text-sm font-medium">Cancelamentos</legend>
+              <Opcao
+                id="aviso-cancelamento"
+                titulo="Avisar o cliente quando a barbearia cancelar"
+                descricao="Ao cancelar um horário pelo painel, o cliente recebe uma mensagem com o link para marcar outro."
+                marcado={pref.aviso_cancelamento_whatsapp}
+                onMudar={(v) => lembretes.mutate({ aviso_cancelamento: v })}
+              />
+              <Opcao
+                id="cancelar-pelo-lembrete"
+                titulo="Cliente pode cancelar respondendo ao lembrete"
+                descricao={<>O lembrete oferece <strong>2</strong> para cancelar. Desmarcado, ele só pede a confirmação.</>}
+                marcado={pref.cancelar_pelo_lembrete}
+                onMudar={(v) => lembretes.mutate({ cancelar_pelo_lembrete: v })}
+              />
+            </fieldset>
+          </CardContent>
+        )}
       </Card>
 
       {isLoading ? (

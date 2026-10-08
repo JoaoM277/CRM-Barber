@@ -350,6 +350,11 @@ class ScheduleController extends Controller
                 $schedule,
                 "Agendamento #{$schedule->id}: {$statusAnterior} -> {$update['status']}",
             );
+
+            // cancelado pela barbearia: avisa o cliente (opção dos lembretes)
+            if ($update['status'] === Schedule::STATUS_CANCELADO) {
+                $this->avisarCancelamento($schedule);
+            }
         }
 
         return response()->json([
@@ -425,6 +430,24 @@ class ScheduleController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+    /** Aviso de cancelamento no WhatsApp, se a barbearia ligou a opção e o horário ainda não passou. */
+    private function avisarCancelamento(Schedule $schedule): void
+    {
+        $bs = $schedule->barbershop;
+        if (! $bs || ! $bs->lembretes_whatsapp || ! $bs->aviso_cancelamento_whatsapp) {
+            return;
+        }
+        $inicio = Carbon::parse(substr((string) $schedule->date, 0, 10).' '.substr((string) $schedule->start_time, 0, 5));
+        if ($inicio->isPast()) {
+            return;
+        }
+        try {
+            Bus::dispatch(new SendAppointmentWhatsapp($schedule->id, SendAppointmentWhatsapp::CANCELAMENTO));
+        } catch (\Throwable $e) {
+            Log::warning('Falha ao enfileirar aviso de cancelamento: '.$e->getMessage());
+        }
+    }
+
     public function destroy(Schedule $schedule)
     {
         \App\Support\Audit::log('agendamento.removido', $schedule, "Agendamento #{$schedule->id} removido");

@@ -24,6 +24,10 @@ const messageCreateSchema = z.object({
   barbershop: z.string().nullish(),
   // lembrete pede "1 confirma / 2 cancela" só se o cliente ainda não confirmou
   ask_reply: z.boolean().nullish(),
+  // a barbearia permite cancelar respondendo "2" ao lembrete?
+  allow_cancel: z.boolean().nullish(),
+  // link da página de agendamento (aviso de cancelamento)
+  link: z.string().url().nullish(),
 });
 
 const schemaWebhook = z.object({

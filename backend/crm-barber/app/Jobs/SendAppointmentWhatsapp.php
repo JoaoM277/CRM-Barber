@@ -46,6 +46,9 @@ class SendAppointmentWhatsapp implements ShouldQueue
 
     public const RESPOSTA_CANCELADO = 'RESPOSTA_CANCELADO';
 
+    /** Aviso ao cliente de que a barbearia cancelou o horário. */
+    public const CANCELAMENTO = 'CANCELAMENTO';
+
     public function __construct(public int $scheduleId, public string $trigger = self::AGENDAMENTO) {}
 
     public function handle(): void
@@ -97,6 +100,12 @@ class SendAppointmentWhatsapp implements ShouldQueue
             'barbershop' => $schedule->barbershop?->name,
             // lembrete pede "1 confirma / 2 cancela" só enquanto o cliente não confirmou
             'ask_reply' => str_starts_with($this->trigger, 'LEMBRETE') && $schedule->status === Schedule::STATUS_PENDENTE,
+            // "2 para cancelar" só se a barbearia permite cancelar pelo lembrete
+            'allow_cancel' => (bool) ($schedule->barbershop?->cancelar_pelo_lembrete ?? true),
+            // link para agendar de novo (aviso de cancelamento)
+            'link' => $schedule->barbershop
+                ? rtrim(config('app.frontend_url'), '/').'/?b='.$schedule->barbershop->slug
+                : null,
         ];
 
         if ($instanceName) {
