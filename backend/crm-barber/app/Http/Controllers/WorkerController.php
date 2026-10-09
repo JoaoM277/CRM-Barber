@@ -35,7 +35,53 @@ class WorkerController extends Controller
             );
         }
 
-        return response()->json(Worker::all(), 200);
+        return response()->json($this->paraQuemVe($request, Worker::all()), 200);
+    }
+
+    /**
+     * Como cada um recebe (e quem é o dono, que não tem comissão) é assunto
+     * só do administrador: os outros usuários não recebem esses campos.
+     */
+    private const DADOS_PAGAMENTO = ['payment_type', 'commission_percent', 'fixed_salary', 'pix_key'];
+
+    private function paraQuemVe(Request $request, $workers)
+    {
+        if ($request->user()?->isAdmin()) {
+            return $workers;
+        }
+        $esconder = fn (Worker $w) => $w->makeHidden(self::DADOS_PAGAMENTO);
+
+        return $workers instanceof Worker ? $esconder($workers) : $workers->each($esconder);
+    }
+
+    /**
+     * POST /profissionais/eu-tambem-atendo (admin)
+     * O dono da equipe que também atende entra na agenda como "Dono":
+     * sem comissão nem salário, e só ele (admin) vê isso.
+     */
+    public function euTambemAtendo(Request $request, TenantContext $tenant)
+    {
+        $user = $request->user();
+        $bs = $tenant->barbershop();
+
+        $limit = $bs?->subscription?->workerLimit();
+        if ($limit !== null && Worker::count() >= $limit) {
+            return response()->json([
+                'code' => 'plan_limit',
+                'message' => "Seu plano permite até {$limit} profissionais. Faça upgrade em \"Assinatura\" para cadastrar mais.",
+            ], 403);
+        }
+
+        $worker = Worker::create([
+            'name' => $user->name,
+            'phone' => null,
+            'payment_type' => Worker::PAYMENT_PROPRIETARIO,
+            'commission_percent' => 0,
+            'fixed_salary' => 0,
+            'active' => true,
+        ]);
+
+        return response()->json(['message' => 'Pronto: você está na agenda como dono, sem comissão.', 'worker' => $worker], 201);
     }
 
     /**
@@ -52,6 +98,10 @@ class WorkerController extends Controller
     public function store(StoreWorkerRequest $request, TenantContext $tenant)
     {
         $data = $request->validated();
+        // pagamento (e quem é o dono) só o administrador define
+        if (! $request->user()?->isAdmin()) {
+            $data = array_diff_key($data, array_flip(self::DADOS_PAGAMENTO));
+        }
 
         // limite de profissionais do plano (restaurar um excluído também conta)
         $limit = $tenant->barbershop()?->subscription?->workerLimit();
@@ -82,7 +132,7 @@ class WorkerController extends Controller
 
         return response()->json([
             'message' => $virouEquipe ? 'Profissional cadastrado. Sua barbearia agora está no modo equipe.' : 'Profissional criado com sucesso!',
-            'worker' => $worker,
+            'worker' => $this->paraQuemVe($request, $worker),
             'modelo_equipe' => $bs?->modelo_equipe,
         ], 201);
     }
@@ -90,9 +140,9 @@ class WorkerController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Worker $worker)
+    public function show(Request $request, Worker $worker)
     {
-        return response()->json($worker, 200);
+        return response()->json($this->paraQuemVe($request, $worker), 200);
     }
 
     /**
@@ -114,11 +164,16 @@ class WorkerController extends Controller
             'instagram' => 'sometimes|nullable|string|max:60',
         ]);
 
+        // pagamento (e quem é o dono) só o administrador define
+        if (! $request->user()?->isAdmin()) {
+            $data = array_diff_key($data, array_flip(self::DADOS_PAGAMENTO));
+        }
+
         $worker->update($data);
 
         return response()->json([
             'message' => 'Profissional atualizado com sucesso!',
-            'worker' => $worker->fresh(),
+            'worker' => $this->paraQuemVe($request, $worker->fresh()),
         ], 200);
     }
 

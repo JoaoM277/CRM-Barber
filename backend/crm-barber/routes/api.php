@@ -219,6 +219,9 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
         // Fidelidade (cartão de selos): meta e prêmio
         Route::put('/fidelidade', [FidelidadeController::class, 'update'])->name('fidelidade.update');
 
+        // Dono da equipe que também atende (entra na agenda como "Dono")
+        Route::post('/profissionais/eu-tambem-atendo', [WorkerController::class, 'euTambemAtendo'])->name('profissionais.eu-tambem-atendo');
+
         // Barbeiro solo x equipe
         Route::put('/barbearia/modelo-equipe', [BarbershopController::class, 'modeloEquipe'])->name('barbearia.modelo-equipe');
 

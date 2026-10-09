@@ -157,8 +157,9 @@ function FormProfissional({ prof, aberto, onFechar }: { prof: Profissional | nul
             </div>
           )}
 
+          {me?.role === "admin" && (
           <fieldset className="grid gap-4 rounded-lg border p-4">
-            <legend className="px-1 text-sm font-medium">Pagamento</legend>
+            <legend className="px-1 text-sm font-medium">Pagamento <span className="font-normal text-muted-foreground">(só você vê)</span></legend>
             <div className="grid gap-1.5">
               <Label>Como recebe</Label>
               <Select value={f.payment_type} onValueChange={(v) => setF({ ...f, payment_type: v })}>
@@ -197,6 +198,7 @@ function FormProfissional({ prof, aberto, onFechar }: { prof: Profissional | nul
               </div>
             )}
           </fieldset>
+          )}
           {viraEquipe && (
             <p className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
               Hoje você atende sozinho. Ao cadastrar este barbeiro, a conta passa para o <strong>modo equipe</strong>: você continua como dono
@@ -255,6 +257,15 @@ export default function Profissionais() {
     },
     onError: (e) => toast.error(e.message),
   })
+  const euAtendo = useMutation({
+    mutationFn: () => api<{ message: string }>("/profissionais/eu-tambem-atendo", { method: "POST" }),
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["profissionais"] })
+      qc.invalidateQueries({ queryKey: ["onboarding"] })
+      toast.success(r.message)
+    },
+    onError: (e) => toast.error(e.message),
+  })
   const remover = useMutation({
     mutationFn: (p: Profissional) => api(`/profissionais/${p.id}`, { method: "DELETE" }),
     onSuccess: () => {
@@ -271,9 +282,16 @@ export default function Profissionais() {
           {solo ? "Você atende sozinho: a agenda é só sua e não há comissões." : "Quem atende na barbearia."}
           {limite !== null && ` Seu plano permite até ${limite}.`}
         </p>
-        <Button onClick={() => { setEditando(null); setFormAberto(true) }}>
-          <Plus aria-hidden /> {solo ? "Adicionar um barbeiro" : "Novo profissional"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {me?.role === "admin" && !solo && !isLoading && !profs.some((p) => p.payment_type === "proprietario") && (
+            <Button variant="outline" onClick={() => euAtendo.mutate()} disabled={euAtendo.isPending} title="Você entra na agenda como dono: sem comissão, e só você vê isso">
+              <UserRound aria-hidden /> Eu também atendo
+            </Button>
+          )}
+          <Button onClick={() => { setEditando(null); setFormAberto(true) }}>
+            <Plus aria-hidden /> {solo ? "Adicionar um barbeiro" : "Novo profissional"}
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -299,11 +317,16 @@ export default function Profissionais() {
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">{p.name}</p>
+                    <p className="flex items-center gap-1.5 truncate font-semibold">
+                      {p.name}
+                      {me?.role === "admin" && p.payment_type === "proprietario" && (
+                        <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold text-primary" title="Só você vê: sem comissão, o resultado é seu">Dono</span>
+                      )}
+                    </p>
                     <p className="truncate text-sm text-muted-foreground">{p.speciality || fone(p.phone)}</p>
                   </div>
                 </div>
-                <p className="text-sm">{resumoPagamento(p)}</p>
+                {me?.role === "admin" && <p className="text-sm">{resumoPagamento(p)}</p>}
                 <div className="flex items-center justify-between border-t pt-3">
                   <label className="flex items-center gap-2 text-sm">
                     <Switch checked={p.active} onCheckedChange={() => alternar.mutate(p)} />

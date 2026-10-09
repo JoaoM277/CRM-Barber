@@ -114,6 +114,32 @@ class EquipeTest extends TestCase
         $this->putJson('/api/barbearia/modelo-equipe', ['modelo' => 'equipe'])->assertOk()->assertJsonPath('modelo_equipe', 'equipe');
     }
 
+    public function test_dono_da_equipe_que_atende_e_so_ele_ve(): void
+    {
+        $bs = $this->cadastrar('equipe');
+        $this->entrar($bs);
+        $barbeiro = Worker::factory()->create(['barbershop_id' => $bs->id, 'active' => true, 'payment_type' => 'comissao', 'commission_percent' => 40]);
+
+        $this->postJson('/api/profissionais/eu-tambem-atendo')->assertCreated()
+            ->assertJsonPath('worker.name', 'Léo Navalha')
+            ->assertJsonPath('worker.payment_type', Worker::PAYMENT_PROPRIETARIO);
+        $this->getJson('/api/profissionais')->assertOk()->assertJsonPath('1.payment_type', Worker::PAYMENT_PROPRIETARIO);
+
+        // um barbeiro (usuário comum) não vê como cada um recebe nem consegue mudar
+        Sanctum::actingAs(User::factory()->create(['barbershop_id' => $bs->id, 'role' => 'user']));
+        $lista = $this->getJson('/api/profissionais')->assertOk()->json();
+        foreach ($lista as $w) {
+            $this->assertArrayNotHasKey('payment_type', $w);
+            $this->assertArrayNotHasKey('commission_percent', $w);
+            $this->assertArrayNotHasKey('pix_key', $w);
+        }
+        $this->putJson("/api/profissionais/{$barbeiro->id}", ['commission_percent' => 90, 'payment_type' => 'proprietario', 'speciality' => 'Degradê'])->assertOk();
+        $this->assertEquals(40, $barbeiro->fresh()->commission_percent);
+        $this->assertSame('comissao', $barbeiro->fresh()->payment_type);
+        $this->assertSame('Degradê', $barbeiro->fresh()->speciality);
+        $this->postJson('/api/profissionais/eu-tambem-atendo')->assertForbidden();
+    }
+
     public function test_profissional_sem_telefone(): void
     {
         $bs = $this->cadastrar('equipe');
