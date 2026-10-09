@@ -91,11 +91,11 @@ class PresencaTest extends TestCase
     {
         $s = $this->agendamento(['date' => '2026-10-09']);
 
-        Http::fake(['*' => Http::response(['status' => 'held'])]); // retido pelo horário: não saiu
+        // 1º envio retido pelo horário (não saiu); o 2º sai
+        Http::fake(['*' => Http::sequence()->push(['status' => 'held'])->push(['status' => 'dispatched'])]);
         (new SendAppointmentWhatsapp($s->id, SendAppointmentWhatsapp::LEMBRETE_24H))->handle();
         $this->assertNull($s->fresh()->confirmacao_pedida_em);
 
-        Http::fake(['*' => Http::response(['status' => 'dispatched'])]);
         (new SendAppointmentWhatsapp($s->id, SendAppointmentWhatsapp::LEMBRETE_24H))->handle();
         $this->assertNotNull($s->fresh()->confirmacao_pedida_em);
     }
