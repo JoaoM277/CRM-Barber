@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBarbershopRequest;
 use App\Models\Barbershop;
+use App\Models\Worker;
 use App\Support\Avaliacoes;
 use App\Support\PaginaPersonalizada;
 use App\Support\TenantContext;
@@ -145,6 +146,37 @@ class BarbershopController extends Controller
         $barbershop->update($validated);
 
         return response()->json($barbershop->fresh(), 200);
+    }
+
+    /**
+     * PUT /barbearia/modelo-equipe {modelo: solo|equipe}
+     * Solo: o dono atende sozinho (precisa ter no máximo 1 profissional ativo,
+     * que passa a ser o "dono", sem comissão). Equipe: comissões de sempre.
+     */
+    public function modeloEquipe(Request $request)
+    {
+        $data = $request->validate(['modelo' => 'required|in:solo,equipe']);
+        $bs = $this->tenant->barbershop();
+        abort_unless($bs, 404);
+
+        if ($data['modelo'] === Barbershop::SOLO) {
+            $ativos = Worker::where('active', true)->get();
+            if ($ativos->count() > 1) {
+                return response()->json([
+                    'message' => 'Para atender sozinho, deixe só um profissional ativo (desative os outros em Profissionais).',
+                    'errors' => ['modelo' => ['Há mais de um profissional ativo.']],
+                ], 422);
+            }
+            // quem atende passa a ser o dono (sem comissão nem salário)
+            $ativos->first()?->update(['payment_type' => Worker::PAYMENT_PROPRIETARIO, 'commission_percent' => 0, 'fixed_salary' => 0]);
+        }
+
+        $bs->update(['modelo_equipe' => $data['modelo']]);
+
+        return response()->json([
+            'message' => $data['modelo'] === Barbershop::SOLO ? 'Pronto: você atende sozinho.' : 'Pronto: modo equipe ligado.',
+            'modelo_equipe' => $bs->modelo_equipe,
+        ]);
     }
 
     /**

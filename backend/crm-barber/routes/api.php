@@ -219,6 +219,9 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
         // Fidelidade (cartão de selos): meta e prêmio
         Route::put('/fidelidade', [FidelidadeController::class, 'update'])->name('fidelidade.update');
 
+        // Barbeiro solo x equipe
+        Route::put('/barbearia/modelo-equipe', [BarbershopController::class, 'modeloEquipe'])->name('barbearia.modelo-equipe');
+
         // Cliente cancela/remarca pelo link (liga/desliga e antecedência mínima)
         Route::put('/barbearia/alteracao-pelo-cliente', [BarbershopController::class, 'alteracaoPeloCliente'])->name('barbearia.alteracao-cliente');
 

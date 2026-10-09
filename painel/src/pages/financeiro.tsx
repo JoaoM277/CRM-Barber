@@ -11,13 +11,13 @@ import { Confirmar } from "@/components/confirmar"
 import { GraficoColunas } from "@/components/grafico-colunas"
 import { Indicador } from "@/components/indicador"
 import { SeletorPeriodo, usePeriodo } from "@/components/seletor-periodo"
-import { useRecurso } from "@/hooks/use-sessao"
+import { useBarbearia, useRecurso } from "@/hooks/use-sessao"
 import { api } from "@/lib/api"
 import { dataBR, moeda, somarDias } from "@/lib/format"
 
 type Fat = {
   periodo: { inicio: string; fim: string; atendimentos: number; faturamento_total: number; faturamento_servicos: number; faturamento_produtos: number; total_comissoes: number; total_fixo: number; lucro_liquido: number }
-  por_profissional: { worker_id: number; profissional: string; atendimentos: number; bruto: number; comissao: number; fixo: number; total_a_pagar: number }[]
+  por_profissional: { worker_id: number; profissional: string; payment_type?: string | null; atendimentos: number; bruto: number; comissao: number; fixo: number; total_a_pagar: number }[]
   por_servico: { servico: string; quantidade: number; total: number }[]
   por_produto: { produto: string; quantidade: number; total: number }[]
   itens: { id: number; data: string; valor: number }[]
@@ -42,6 +42,9 @@ function SemRecurso() {
 export default function Financeiro() {
   const qc = useQueryClient()
   const temRecurso = useRecurso("financeiro")
+  // barbeiro solo: sem comissões nem repasses, o resultado é do dono
+  const { data: barbearia } = useBarbearia()
+  const solo = barbearia?.modelo_equipe === "solo"
   const periodo = usePeriodo()
   const [pagar, setPagar] = useState<Fat["por_profissional"][number] | null>(null)
   const { inicio, fim } = periodo
@@ -94,8 +97,12 @@ export default function Financeiro() {
           <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Indicador rotulo="Faturamento" valor={moeda(p.faturamento_total)} nota={`${p.atendimentos} atendimento(s)${p.faturamento_produtos ? ` · ${moeda(p.faturamento_produtos)} em produtos` : ""}`} />
             <Indicador rotulo="Ticket médio" valor={moeda(p.atendimentos ? p.faturamento_total / p.atendimentos : 0)} />
-            <Indicador rotulo="Comissões e fixos" valor={moeda(p.total_comissoes + p.total_fixo)} />
-            <Indicador rotulo="Fica para a barbearia" valor={moeda(p.lucro_liquido)} nota="Faturamento menos pagamentos" />
+            {solo ? (
+              <Indicador rotulo="Produtos vendidos" valor={moeda(p.faturamento_produtos)} />
+            ) : (
+              <Indicador rotulo="Comissões e fixos" valor={moeda(p.total_comissoes + p.total_fixo)} />
+            )}
+            <Indicador rotulo={solo ? "Seu resultado" : "Fica para a barbearia"} valor={moeda(p.lucro_liquido)} nota={solo ? "Tudo o que entrou no período" : "Faturamento menos pagamentos"} />
           </div>
 
           <div className="mb-6 grid gap-6 lg:grid-cols-[2fr_1fr]">
@@ -158,6 +165,8 @@ export default function Financeiro() {
             </Card>
           </div>
 
+          {!solo && (
+          <>
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>A pagar por profissional</CardTitle>
@@ -193,9 +202,13 @@ export default function Financeiro() {
                       <TableCell className="tabular">{moeda(r.fixo)}</TableCell>
                       <TableCell className="font-semibold tabular">{moeda(r.total_a_pagar)}</TableCell>
                       <TableCell className="pr-6 text-right">
-                        <Button size="sm" variant="outline" onClick={() => setPagar(r)} disabled={r.total_a_pagar <= 0}>
-                          <HandCoins aria-hidden /> Registrar repasse
-                        </Button>
+                        {r.payment_type === "proprietario" ? (
+                          <span className="text-xs text-muted-foreground">Dono: o resultado é seu</span>
+                        ) : (
+                          <Button size="sm" variant="outline" onClick={() => setPagar(r)} disabled={r.total_a_pagar <= 0}>
+                            <HandCoins aria-hidden /> Registrar repasse
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -228,6 +241,8 @@ export default function Financeiro() {
               )}
             </CardContent>
           </Card>
+          </>
+          )}
         </>
       )}
 

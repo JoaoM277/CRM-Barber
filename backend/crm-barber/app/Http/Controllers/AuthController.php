@@ -50,6 +50,7 @@ class AuthController extends Controller
             'barbershop_name' => 'required|string|max:255',
             'barbershop_phone' => 'nullable|string|max:20',
             'barbershop_whatsapp' => 'nullable|string|max:20',
+            'modelo_equipe' => 'nullable|in:solo,equipe',
             'aceite_termos' => 'accepted',
         ], [
             'aceite_termos.accepted' => 'É preciso aceitar os Termos de Uso e a Política de Privacidade.',

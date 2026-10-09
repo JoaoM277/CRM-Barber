@@ -58,6 +58,7 @@ if (formCadastro) {
         name: v("cad-nome"),
         barbershop_name: v("cad-barbearia"),
         barbershop_whatsapp: v("cad-whatsapp") || null,
+        modelo_equipe: document.querySelector('input[name="modelo_equipe"]:checked')?.value || "equipe",
         email: v("cad-email"),
         password: v("cad-senha"),
         aceite_termos: true,

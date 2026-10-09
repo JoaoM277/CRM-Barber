@@ -159,6 +159,51 @@ function AbaBarbearia() {
   )
 }
 
+/* ------------------------------------------------------------------ solo x equipe */
+function ModeloEquipe() {
+  const qc = useQueryClient()
+  const { data: b } = useBarbearia()
+  const mudar = useMutation({
+    mutationFn: (modelo: "solo" | "equipe") => api<{ message: string }>("/barbearia/modelo-equipe", { method: "PUT", body: { modelo } }),
+    onSuccess: (r) => {
+      ;["barbearia", "profissionais", "faturamento"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }))
+      toast.success(r.message)
+    },
+    onError: (e) => toast.error(e.message),
+  })
+  if (!b) return null
+  const atual = b.modelo_equipe ?? "equipe"
+  const opcoes = [
+    { id: "solo" as const, titulo: "Trabalho sozinho", texto: "Você atende e fica com o resultado. Sem comissões nem repasses." },
+    { id: "equipe" as const, titulo: "Tenho equipe", texto: "Barbeiros com comissão ou salário, e registro de repasses." },
+  ]
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Como você trabalha</CardTitle>
+        <CardDescription>Ao cadastrar um barbeiro, a conta passa para equipe sozinha. Para voltar a solo, deixe só um profissional ativo.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Como você trabalha">
+        {opcoes.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            role="radio"
+            aria-checked={atual === o.id}
+            disabled={mudar.isPending}
+            onClick={() => atual !== o.id && mudar.mutate(o.id)}
+            className={`grid gap-1 rounded-lg border p-4 text-left transition ${atual === o.id ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "hover:bg-muted"}`}
+          >
+            <span className="font-semibold">{o.titulo}</span>
+            <span className="text-sm text-muted-foreground">{o.texto}</span>
+          </button>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
 /* ------------------------------------------------------------------ horários */
 const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"]
 const curta = (t: string | null) => (t ? t.slice(0, 5) : "")
@@ -639,7 +684,7 @@ export default function Configuracoes() {
         <TabsTrigger value="equipe">Equipe</TabsTrigger>
         <TabsTrigger value="senha">Minha senha</TabsTrigger>
       </TabsList>
-      <TabsContent value="barbearia"><AbaBarbearia /></TabsContent>
+      <TabsContent value="barbearia" className="grid gap-6"><AbaBarbearia /><ModeloEquipe /></TabsContent>
       <TabsContent value="horarios" className="grid gap-6"><AbaHorarios /><AlteracaoPeloCliente /></TabsContent>
       <TabsContent value="fidelidade"><AbaFidelidade /></TabsContent>
       <TabsContent value="aviso"><AbaAviso /></TabsContent>

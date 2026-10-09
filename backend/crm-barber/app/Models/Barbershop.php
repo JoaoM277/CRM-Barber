@@ -52,6 +52,7 @@ class Barbershop extends Model
         'fidelidade_desde',
         'lista_espera_ativa',
         'pagina',
+        'modelo_equipe',
     ];
 
     /** URL pública do logo (o banco guarda só o caminho no disco "public"). */
@@ -87,6 +88,15 @@ class Barbershop extends Model
         'lista_espera_ativa' => 'boolean',
         'pagina' => 'array',
     ];
+
+    public const SOLO = 'solo';
+
+    public const EQUIPE = 'equipe';
+
+    public function ehSolo(): bool
+    {
+        return $this->modelo_equipe === self::SOLO;
+    }
 
     public function users()
     {

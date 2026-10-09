@@ -64,7 +64,7 @@ class WorkerController extends Controller
 
         // Se existir um profissional excluído com o mesmo telefone, restaura
         // em vez de tentar inserir (o índice único não distingue soft-deleted).
-        $worker = Worker::withTrashed()->where('phone', $data['phone'])->first();
+        $worker = ! empty($data['phone']) ? Worker::withTrashed()->where('phone', $data['phone'])->first() : null;
         if ($worker) {
             $worker->restore();
             $worker->update($data);
@@ -72,9 +72,18 @@ class WorkerController extends Controller
             $worker = Worker::create($data);
         }
 
+        // barbeiro solo que contratou alguém: a conta passa para equipe (comissões)
+        $bs = $tenant->barbershop();
+        $virouEquipe = false;
+        if ($bs?->ehSolo() && Worker::where('active', true)->count() > 1) {
+            $bs->update(['modelo_equipe' => \App\Models\Barbershop::EQUIPE]);
+            $virouEquipe = true;
+        }
+
         return response()->json([
-            'message' => 'Profissional criado com sucesso!',
-            'worker' => $worker
+            'message' => $virouEquipe ? 'Profissional cadastrado. Sua barbearia agora está no modo equipe.' : 'Profissional criado com sucesso!',
+            'worker' => $worker,
+            'modelo_equipe' => $bs?->modelo_equipe,
         ], 201);
     }
 
@@ -93,7 +102,7 @@ class WorkerController extends Controller
     {
         $data = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'phone' => ['sometimes', 'required', 'string', 'max:20', Rule::unique('workers', 'phone')->where('barbershop_id', $worker->barbershop_id)->whereNull('deleted_at')->ignore($worker->id)],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:20', Rule::unique('workers', 'phone')->where('barbershop_id', $worker->barbershop_id)->whereNull('deleted_at')->ignore($worker->id)],
             'photo' => 'sometimes|nullable|string',
             'speciality' => 'sometimes|nullable|string',
             'active' => 'sometimes|boolean',

@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch"
 import { Confirmar } from "@/components/confirmar"
 import { EnviarImagem } from "@/components/enviar-imagem"
 import { useProfissionais } from "@/hooks/use-cadastros"
-import { useMe, useRecurso } from "@/hooks/use-sessao"
+import { useBarbearia, useMe, useRecurso } from "@/hooks/use-sessao"
 import { api, ApiError } from "@/lib/api"
 import { fone, moeda } from "@/lib/format"
 import type { Profissional } from "@/lib/types"
@@ -23,6 +23,7 @@ const PAGAMENTO: Record<string, string> = {
   comissao: "Comissão",
   fixo: "Salário fixo",
   comissao_mais_fixo: "Comissão + fixo",
+  proprietario: "Dono (fica com o resultado)",
 }
 
 type Form = { name: string; phone: string; speciality: string; payment_type: string; commission_percent: string; fixed_salary: string; pix_key: string; bio: string; instagram: string }
@@ -42,6 +43,7 @@ const deProf = (p: Profissional | null): Form => ({
 function resumoPagamento(p: Profissional) {
   const pct = Number(p.commission_percent ?? 0)
   const fixo = Number(p.fixed_salary ?? 0)
+  if (p.payment_type === "proprietario") return "Dono: sem comissão, o resultado é seu"
   if (p.payment_type === "fixo") return `Fixo de ${moeda(fixo)}`
   if (p.payment_type === "comissao_mais_fixo") return `${pct}% + ${moeda(fixo)} fixo`
   return `${pct}% de comissão`
@@ -65,27 +67,32 @@ function FormProfissional({ prof, aberto, onFechar }: { prof: Profissional | nul
   }, [aberto, prof?.id])
 
   const personaliza = useRecurso("personalizacao")
-  const comComissao = f.payment_type !== "fixo"
-  const comFixo = f.payment_type !== "comissao"
+  const { data: barbearia } = useBarbearia()
+  const dono = f.payment_type === "proprietario"
+  const comComissao = !dono && f.payment_type !== "fixo"
+  const comFixo = !dono && f.payment_type !== "comissao"
+  // solo cadastrando outro barbeiro: a conta vira equipe
+  const viraEquipe = !prof && barbearia?.modelo_equipe === "solo"
 
   const salvar = useMutation({
     mutationFn: () => {
       const body = {
         name: f.name.trim(),
-        phone: f.phone,
+        phone: f.phone.trim() || null,
         speciality: f.speciality.trim() || null,
         payment_type: f.payment_type,
         commission_percent: comComissao ? Number(f.commission_percent || 0) : 0,
         fixed_salary: comFixo ? Number((f.fixed_salary || "0").replace(",", ".")) : 0,
-        pix_key: f.pix_key.trim() || null,
+        pix_key: dono ? null : f.pix_key.trim() || null,
         ...(personaliza ? { bio: f.bio.trim() || null, instagram: f.instagram.trim() || null } : {}),
       }
       return prof ? api(`/profissionais/${prof.id}`, { method: "PUT", body }) : api("/profissionais", { method: "POST", body: { ...body, active: true } })
     },
-    onSuccess: () => {
+    onSuccess: (r) => {
       qc.invalidateQueries({ queryKey: ["profissionais"] })
       qc.invalidateQueries({ queryKey: ["onboarding"] })
-      toast.success(prof ? "Profissional atualizado." : "Profissional cadastrado.")
+      qc.invalidateQueries({ queryKey: ["barbearia"] })
+      toast.success(prof ? "Profissional atualizado." : (r as { message?: string })?.message ?? "Profissional cadastrado.")
       onFechar()
     },
     onError: (e) => {
@@ -127,7 +134,7 @@ function FormProfissional({ prof, aberto, onFechar }: { prof: Profissional | nul
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="p-tel">Telefone</Label>
-              <Input id="p-tel" type="tel" inputMode="tel" value={f.phone} onChange={set("phone")} placeholder="(11) 99999-9999" required />
+              <Input id="p-tel" type="tel" inputMode="tel" value={f.phone} onChange={set("phone")} placeholder="(11) 99999-9999" required={!dono} />
               {erro("phone")}
             </div>
           </div>
@@ -181,11 +188,21 @@ function FormProfissional({ prof, aberto, onFechar }: { prof: Profissional | nul
                 </div>
               )}
             </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="p-pix">Chave Pix (opcional)</Label>
-              <Input id="p-pix" value={f.pix_key} onChange={set("pix_key")} />
-            </div>
+            {dono ? (
+              <p className="text-sm text-muted-foreground">O dono não recebe comissão nem salário: o que sobra no financeiro é o seu resultado.</p>
+            ) : (
+              <div className="grid gap-1.5">
+                <Label htmlFor="p-pix">Chave Pix (opcional)</Label>
+                <Input id="p-pix" value={f.pix_key} onChange={set("pix_key")} />
+              </div>
+            )}
           </fieldset>
+          {viraEquipe && (
+            <p className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+              Hoje você atende sozinho. Ao cadastrar este barbeiro, a conta passa para o <strong>modo equipe</strong>: você continua como dono
+              e ele recebe pela comissão ou salário que você definir.
+            </p>
+          )}
 
           {limite && (
             <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
@@ -218,6 +235,8 @@ export default function Profissionais() {
   const [formAberto, setFormAberto] = useState(false)
   const [excluir, setExcluir] = useState<Profissional | null>(null)
   const limite = me?.assinatura?.plano?.max_profissionais ?? null
+  const { data: barbearia } = useBarbearia()
+  const solo = barbearia?.modelo_equipe === "solo"
 
   // vindo do guia de primeiros passos (?novo=1)
   useEffect(() => {
@@ -249,11 +268,11 @@ export default function Profissionais() {
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <p className="text-muted-foreground">
-          Quem atende na barbearia.
+          {solo ? "Você atende sozinho: a agenda é só sua e não há comissões." : "Quem atende na barbearia."}
           {limite !== null && ` Seu plano permite até ${limite}.`}
         </p>
         <Button onClick={() => { setEditando(null); setFormAberto(true) }}>
-          <Plus aria-hidden /> Novo profissional
+          <Plus aria-hidden /> {solo ? "Adicionar um barbeiro" : "Novo profissional"}
         </Button>
       </div>
 

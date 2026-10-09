@@ -27,7 +27,10 @@ class ComandaProdutos
             throw ValidationException::withMessages(['itens' => ['Atendimento cancelado não recebe produtos.']]);
         }
 
-        DB::transaction(function () use ($schedule, $itens) {
+        // o dono que atende não ganha comissão (o resultado já é dele)
+        $semComissao = (bool) $schedule->worker?->ehProprietario();
+
+        DB::transaction(function () use ($schedule, $itens, $semComissao) {
             $atuais = $schedule->products()->get()->keyBy('id');
             $ids = array_unique(array_merge(array_keys($itens), $atuais->keys()->all()));
             $produtos = Product::withTrashed()->whereIn('id', $ids)->lockForUpdate()->get()->keyBy('id');
@@ -50,9 +53,9 @@ class ComandaProdutos
 
                 if ($novaQtd > 0) {
                     $unitario = $antes ? (float) $antes->pivot->price : (float) $produto->price;
-                    $comissaoUnit = $antes && $qtdAntes > 0
+                    $comissaoUnit = $semComissao ? 0.0 : ($antes && $qtdAntes > 0
                         ? (float) $antes->pivot->commission_value / $qtdAntes
-                        : $produto->commissionOn($unitario);
+                        : $produto->commissionOn($unitario));
                     $pivot[$id] = [
                         'quantity' => $novaQtd,
                         'price' => $unitario,

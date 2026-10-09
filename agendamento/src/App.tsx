@@ -33,13 +33,16 @@ const lembrar = {
 
 const ETAPAS = ["Serviço", "Profissional", "Horário", "Seus dados"]
 
-function Progresso({ etapa }: { etapa: number }) {
+/** Com um profissional só (barbeiro solo), o passo "Profissional" some da barra. */
+function Progresso({ etapa, semProfissional }: { etapa: number; semProfissional?: boolean }) {
+  const etapas = semProfissional ? ETAPAS.filter((t) => t !== "Profissional") : ETAPAS
+  const atual = semProfissional && etapa >= 2 ? etapa - 1 : etapa
   return (
-    <ol className="mb-5 flex gap-1.5" aria-label={`Etapa ${etapa + 1} de ${ETAPAS.length}: ${ETAPAS[etapa]}`}>
-      {ETAPAS.map((t, i) => (
+    <ol className="mb-5 flex gap-1.5" aria-label={`Etapa ${atual + 1} de ${etapas.length}: ${etapas[atual]}`}>
+      {etapas.map((t, i) => (
         <li key={t} className="flex-1">
-          <span className={clsx("block h-1 rounded-full", i <= etapa ? "bg-marca" : "bg-linha")} />
-          <span className={clsx("mt-1.5 block text-[11px]", i === etapa ? "font-semibold text-texto" : "text-suave")}>{t}</span>
+          <span className={clsx("block h-1 rounded-full", i <= atual ? "bg-marca" : "bg-linha")} />
+          <span className={clsx("mt-1.5 block text-[11px]", i === atual ? "font-semibold text-texto" : "text-suave")}>{t}</span>
         </li>
       ))}
     </ol>
@@ -235,8 +238,16 @@ export default function App() {
     }
   }
 
+  // um profissional só (barbeiro solo): não pergunta "com quem?"
+  const unico = dados?.profissionais.length === 1 ? dados.profissionais[0] : null
+
   function avancar() {
-    if (etapa < 3) {
+    if (etapa === 0 && unico) {
+      setProf(unico.id)
+      setEtapa(2)
+      setErroEnvio(null)
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    } else if (etapa < 3) {
       setEtapa(etapa + 1)
       setErroEnvio(null)
       window.scrollTo({ top: 0, behavior: "smooth" })
@@ -305,10 +316,10 @@ export default function App() {
     <main className="entrar mx-auto max-w-lg px-5 pb-40">
       <Cabecalho id={idVisivel} comContatos={etapa === 0} />
       {etapa === 0 && pagina && <Galeria fotos={pagina.galeria} />}
-      <Progresso etapa={etapa} />
+      <Progresso etapa={etapa} semProfissional={!!unico} />
 
       {etapa > 0 && (
-        <button type="button" onClick={() => setEtapa(etapa - 1)} className="-ml-1 mb-3 inline-flex items-center gap-1 text-sm font-medium text-suave">
+        <button type="button" onClick={() => setEtapa(etapa === 2 && unico ? 0 : etapa - 1)} className="-ml-1 mb-3 inline-flex items-center gap-1 text-sm font-medium text-suave">
           <ChevronLeft className="size-4" aria-hidden /> Voltar
         </button>
       )}

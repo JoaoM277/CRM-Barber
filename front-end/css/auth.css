@@ -120,3 +120,16 @@ a { color: var(--brand-primary); }
     border: 1px solid var(--success);
     display: block;
 }
+
+/* cadastro: solo ou equipe */
+.modelo-equipe { border: 0; margin-bottom: 18px; display: grid; gap: 8px; }
+.modelo-equipe legend { font-size: 14px; margin-bottom: 6px; }
+.modelo-equipe .opcao {
+    display: flex; gap: 10px; align-items: flex-start; cursor: pointer;
+    padding: 12px; border: 1px solid #444; border-radius: 8px; background: #2b2b2b;
+    transition: border-color .2s, background-color .2s;
+}
+.modelo-equipe .opcao:has(input:checked) { border-color: var(--brand-primary); background: rgba(212, 175, 55, .08); }
+.modelo-equipe .opcao input { margin-top: 3px; accent-color: var(--brand-primary); }
+.modelo-equipe .opcao strong { display: block; font-size: 15px; }
+.modelo-equipe .opcao small { display: block; color: var(--text-muted); font-size: 13px; line-height: 1.4; margin-top: 2px; }

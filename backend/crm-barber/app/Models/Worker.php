@@ -18,11 +18,20 @@ class Worker extends Model
 
     public const PAYMENT_COMISSAO_MAIS_FIXO = 'comissao_mais_fixo';
 
+    /** O dono que atende: sem comissão nem salário, fica com o resultado. */
+    public const PAYMENT_PROPRIETARIO = 'proprietario';
+
     public const PAYMENT_TYPES = [
         self::PAYMENT_COMISSAO,
         self::PAYMENT_FIXO,
         self::PAYMENT_COMISSAO_MAIS_FIXO,
+        self::PAYMENT_PROPRIETARIO,
     ];
+
+    public function ehProprietario(): bool
+    {
+        return $this->payment_type === self::PAYMENT_PROPRIETARIO;
+    }
 
     protected $fillable = [
         'barbershop_id',

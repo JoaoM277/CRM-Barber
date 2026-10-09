@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Barbershop;
 use App\Models\OperationTime;
 use App\Models\User;
+use App\Models\Worker;
 use App\Services\Billing\SubscriptionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -41,6 +42,22 @@ class TenantProvisioner
             ]);
 
             $this->seedDefaultOperationTimes($barbershop->id);
+
+            // barbeiro solo: o dono já entra na agenda como profissional "dono"
+            // (sem comissão nem salário; o resultado é dele)
+            if (($data['modelo_equipe'] ?? Barbershop::EQUIPE) === Barbershop::SOLO) {
+                $barbershop->update(['modelo_equipe' => Barbershop::SOLO]);
+                $fone = Phone::normalizeBr((string) ($data['barbershop_whatsapp'] ?? $data['barbershop_phone'] ?? ''));
+                Worker::create([
+                    'barbershop_id' => $barbershop->id,
+                    'name' => $data['name'],
+                    'phone' => strlen($fone) >= 12 ? $fone : null,
+                    'payment_type' => Worker::PAYMENT_PROPRIETARIO,
+                    'commission_percent' => 0,
+                    'fixed_salary' => 0,
+                    'active' => true,
+                ]);
+            }
 
             // toda barbearia nova nasce em trial (ver config/billing.php)
             $this->billing->startTrial($barbershop);

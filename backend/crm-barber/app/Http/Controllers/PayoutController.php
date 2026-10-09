@@ -40,6 +40,9 @@ class PayoutController extends Controller
         ]);
 
         $worker = Worker::findOrFail($data['worker_id']);
+        if ($worker->ehProprietario()) {
+            return response()->json(['message' => 'O dono não recebe repasse: o resultado já é dele.'], 422);
+        }
         $inicio = Carbon::parse($data['inicio'])->startOfDay();
         $fim = Carbon::parse($data['fim'])->endOfDay();
 

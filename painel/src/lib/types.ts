@@ -45,6 +45,7 @@ export type Barbearia = {
   alterar_pelo_link?: boolean
   antecedencia_alteracao_horas?: number
   lista_espera_ativa?: boolean
+  modelo_equipe?: "solo" | "equipe"
 }
 
 export type PassoOnboarding = {
@@ -115,7 +116,7 @@ export type ResumoFaturamento = {
 export type Profissional = {
   id: number
   name: string
-  phone: string
+  phone: string | null
   photo: string | null
   speciality: string | null
   active: boolean

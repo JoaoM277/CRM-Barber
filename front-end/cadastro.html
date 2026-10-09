@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Criar conta | Vellis</title>
     <meta name="description" content="Crie a conta da sua barbearia na Vellis: agenda online, WhatsApp automático e financeiro. Teste grátis, sem cartão.">
-    <link rel="stylesheet" href="css/auth.css?v=20261009a">
+    <link rel="stylesheet" href="css/auth.css?v=20261010a">
 </head>
 <body>
 
@@ -25,6 +25,18 @@
                 <label for="cad-barbearia">Nome da barbearia</label>
                 <input type="text" id="cad-barbearia" required maxlength="255" placeholder="Ex.: Barbearia do João">
             </div>
+            <fieldset class="modelo-equipe">
+                <legend>Como você trabalha?</legend>
+                <label class="opcao">
+                    <input type="radio" name="modelo_equipe" value="solo">
+                    <span><strong>Trabalho sozinho</strong><small>Você atende e fica com o resultado. Sem comissões.</small></span>
+                </label>
+                <label class="opcao">
+                    <input type="radio" name="modelo_equipe" value="equipe" checked>
+                    <span><strong>Tenho equipe</strong><small>Barbeiros com comissão ou salário, e repasses.</small></span>
+                </label>
+                <div class="input-ajuda">Dá para mudar depois: ao cadastrar um barbeiro, a conta vira equipe sozinha.</div>
+            </fieldset>
             <div class="input-group">
                 <label for="cad-whatsapp">WhatsApp da barbearia</label>
                 <input type="tel" id="cad-whatsapp" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="(11) 99999-9999">
@@ -56,6 +68,6 @@
 
     <script src="js/env.js"></script>
     <script src="js/config.js?v=20261007a"></script>
-    <script src="js/auth.js?v=20261009b"></script>
+    <script src="js/auth.js?v=20261010a"></script>
 </body>
 </html>
