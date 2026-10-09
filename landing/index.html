@@ -395,7 +395,7 @@
     // ---- preços e dias de teste vêm do produto
     const brl = (v) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
     const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-    const RECURSOS = { whatsapp: "Confirmação automática no WhatsApp", financeiro: "Financeiro e comissões" };
+    const RECURSOS = { whatsapp: "Confirmação automática no WhatsApp", financeiro: "Financeiro e comissões", personalizacao: "Página com a cara da barbearia (estilos, capa e galeria)", seletores_premium: "Todos os 10 modelos de seletor" };
 
     fetch(`${API}/publico/config`, { headers: { Accept: "application/json" } })
         .then((r) => r.json())

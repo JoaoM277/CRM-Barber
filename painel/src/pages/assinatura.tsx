@@ -23,7 +23,7 @@ const FORMAS = [
   { v: "BOLETO", t: "Boleto", d: "Você recebe o boleto todo mês por e-mail." },
   { v: "CREDIT_CARD", t: "Cartão de crédito", d: "Cobrado sozinho todo mês. O cartão fica na página segura do Asaas." },
 ] as const
-const RECURSO: Record<string, string> = { whatsapp: "Confirmação automática no WhatsApp", financeiro: "Financeiro e comissões" }
+const RECURSO: Record<string, string> = { whatsapp: "Confirmação automática no WhatsApp", financeiro: "Financeiro e comissões", personalizacao: "Página com a cara da barbearia (estilos, capa e galeria)", seletores_premium: "Todos os 10 modelos de seletor" }
 const FATURA: Record<string, string> = { PENDING: "Em aberto", OVERDUE: "Vencida", CONFIRMED: "Paga", RECEIVED: "Paga", RECEIVED_IN_CASH: "Paga", REFUNDED: "Estornada", DELETED: "Cancelada" }
 
 function situacao(a: Assinatura | null) {
