@@ -51,7 +51,7 @@ trait ValidaAgenda
         $conflito = Schedule::query()
             ->where('worker_id', $workerId)
             ->whereDate('date', $date)
-            ->where('status', '!=', Schedule::STATUS_CANCELADO)
+            ->whereNotIn('status', Schedule::NAO_ACONTECEU)
             ->where('start_time', '<', $end)
             ->where('end_time', '>', $start)
             ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))

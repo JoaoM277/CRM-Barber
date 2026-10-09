@@ -29,6 +29,7 @@ use App\Http\Controllers\AvaliacoesController;
 use App\Http\Controllers\FidelidadeController;
 use App\Http\Controllers\ListaEsperaController;
 use App\Http\Controllers\PaginaController;
+use App\Http\Controllers\PendenciaController;
 use App\Http\Controllers\Platform\PlatformBarbershopController;
 use App\Http\Controllers\Platform\PlatformMetricsController;
 use App\Http\Controllers\Platform\PlatformSettingsController;
@@ -78,6 +79,7 @@ Route::middleware('tenant')->group(function () {
         Route::middleware('throttle:30,1')->group(function () {
             Route::get('/meu-horario/{token}', [MeuHorarioController::class, 'show'])->name('meu-horario.show');
             Route::post('/meu-horario/{token}/cancelar', [MeuHorarioController::class, 'cancelar'])->name('meu-horario.cancelar');
+            Route::post('/meu-horario/{token}/confirmar', [MeuHorarioController::class, 'confirmar'])->name('meu-horario.confirmar');
             Route::post('/meu-horario/{token}/remarcar', [MeuHorarioController::class, 'remarcar'])->middleware('booking.open')->name('meu-horario.remarcar');
         });
     });
@@ -146,6 +148,12 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
     Route::get('/agendamentos/{schedule}', [ScheduleController::class, 'show'])->name('agendamentos.show');
     Route::put('/agendamentos/{schedule}', [ScheduleController::class, 'update'])->name('agendamentos.update');
     Route::delete('/agendamentos/{schedule}', [ScheduleController::class, 'destroy'])->name('agendamentos.delete');
+
+    // Pendências da agenda: dias anteriores sem registro e faltas automáticas
+    Route::get('/pendencias/resumo', [PendenciaController::class, 'resumo'])->name('pendencias.resumo');
+    Route::get('/pendencias', [PendenciaController::class, 'index'])->name('pendencias.index');
+    Route::post('/pendencias/dia', [PendenciaController::class, 'registrarDia'])->name('pendencias.dia');
+    Route::post('/agendamentos/{schedule}/registrar', [PendenciaController::class, 'registrar'])->name('agendamentos.registrar');
 
     // Lista de espera do dia (agenda)
     Route::get('/lista-espera', [ListaEsperaController::class, 'index'])->name('lista-espera.index');

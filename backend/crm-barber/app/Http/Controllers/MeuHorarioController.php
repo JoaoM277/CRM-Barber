@@ -40,12 +40,29 @@ class MeuHorarioController extends Controller
         $s = $this->agendamento($token);
         $this->exigirAlteravel($s);
 
-        $s->update(['status' => Schedule::STATUS_CANCELADO, 'resposta_cliente_em' => now()]);
+        $s->update(['status' => Schedule::STATUS_CANCELADO, 'cancelado_por' => Schedule::POR_CLIENTE, 'resposta_cliente_em' => now()]);
         ComandaProdutos::devolverTudo($s);
         ListaEspera::vagaAberta($s);
         Audit::logFor($s->barbershop_id, 'agendamento.cancelado_cliente', $s, 'Cliente cancelou pelo link');
 
         return response()->json(['message' => 'Horário cancelado.', 'horario' => $this->resumo($s->fresh())]);
+    }
+
+    /** POST /b/{slug}/meu-horario/{token}/confirmar — "vou, sim" (vale até a hora do horário) */
+    public function confirmar(string $barbershop, string $token): JsonResponse
+    {
+        $s = $this->agendamento($token);
+        if ($s->status === Schedule::STATUS_CONFIRMADO) {
+            return response()->json(['message' => 'Presença já confirmada.', 'horario' => $this->resumo($s)]);
+        }
+        if ($s->status !== Schedule::STATUS_PENDENTE || $s->inicio()->isPast()) {
+            abort(response()->json(['code' => 'confirmacao_bloqueada', 'message' => 'Este horário não pode mais ser confirmado.'], 422));
+        }
+
+        $s->update(['status' => Schedule::STATUS_CONFIRMADO, 'resposta_cliente_em' => now()]);
+        Audit::logFor($s->barbershop_id, 'agendamento.confirmado_cliente', $s, 'Cliente confirmou pelo link');
+
+        return response()->json(['message' => 'Presença confirmada. Te esperamos!', 'horario' => $this->resumo($s->fresh())]);
     }
 
     /** POST /b/{slug}/meu-horario/{token}/remarcar {dataAgendamento, horario, barbeiroId?} */
@@ -142,6 +159,8 @@ class MeuHorarioController extends Controller
             'servicos' => $servicos->pluck('name')->values(),
             'valor' => (float) ($s->price ?? $servicos->sum(fn ($x) => (float) $x->price)),
             'pode_alterar' => $motivo === null,
+            // o cliente confirma presença enquanto o horário está pendente e não passou
+            'pode_confirmar' => $s->status === Schedule::STATUS_PENDENTE && ! $s->inicio()->isPast(),
             'motivo' => $motivo,
             'antecedencia_horas' => (int) $s->barbershop?->antecedencia_alteracao_horas,
             // cartão de selos do cliente (null com a fidelidade desligada)

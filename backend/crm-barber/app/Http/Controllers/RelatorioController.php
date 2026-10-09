@@ -44,7 +44,7 @@ class RelatorioController extends Controller
         $ini = $inicio->toDateString();
         $f = $fim->toDateString();
 
-        $doPeriodo = Schedule::query()->whereBetween('date', [$ini, $f])->get(['id', 'client_id', 'worker_id', 'date', 'start_time', 'end_time', 'status']);
+        $doPeriodo = Schedule::query()->whereBetween('date', [$ini, $f])->get(['id', 'client_id', 'worker_id', 'date', 'start_time', 'end_time', 'status', 'cancelado_por']);
 
         return response()->json([
             'periodo' => ['inicio' => $ini, 'fim' => $f],
@@ -96,15 +96,18 @@ class RelatorioController extends Controller
     private function agenda(Collection $doPeriodo, Carbon $inicio, Carbon $fim): array
     {
         $cancelados = $doPeriodo->where('status', Schedule::STATUS_CANCELADO);
+        $faltas = $doPeriodo->where('status', Schedule::STATUS_FALTA);
         $total = $doPeriodo->count();
 
-        // cancelamentos feitos pelo cliente (resposta "2" ao lembrete ou link "meu horário")
-        $peloCliente = $cancelados->isEmpty() ? 0 : AuditLog::query()
+        // cancelamentos feitos pelo cliente (resposta "2", link "meu horário");
+        // os antigos, sem cancelado_por, vêm do registro de auditoria
+        $semOrigem = $cancelados->whereNull('cancelado_por')->pluck('id');
+        $peloCliente = $cancelados->where('cancelado_por', Schedule::POR_CLIENTE)->count() + ($semOrigem->isEmpty() ? 0 : AuditLog::query()
             ->where('action', 'agendamento.cancelado_cliente')
             ->where('subject_type', Schedule::class)
-            ->whereIn('subject_id', $cancelados->pluck('id'))
+            ->whereIn('subject_id', $semOrigem)
             ->distinct()
-            ->count('subject_id');
+            ->count('subject_id'));
 
         return [
             'total' => $total,
@@ -112,6 +115,8 @@ class RelatorioController extends Controller
             'cancelados' => $cancelados->count(),
             'cancelados_pelo_cliente' => $peloCliente,
             'taxa_cancelamento' => $total ? round($cancelados->count() / $total, 4) : 0,
+            'faltas' => $faltas->count(),
+            'taxa_faltas' => $total ? round($faltas->count() / $total, 4) : 0,
         ];
     }
 
@@ -119,7 +124,7 @@ class RelatorioController extends Controller
     {
         $hoje = now()->toDateString();
         $atendidos = $doPeriodo
-            ->where('status', '!=', Schedule::STATUS_CANCELADO)
+            ->whereNotIn('status', Schedule::NAO_ACONTECEU)
             ->filter(fn (Schedule $s) => substr((string) $s->date, 0, 10) <= $hoje)
             ->pluck('client_id')->unique()->values();
 
@@ -130,7 +135,7 @@ class RelatorioController extends Controller
         // novo = a primeira visita da história caiu dentro do período
         $novos = Schedule::query()
             ->whereIn('client_id', $atendidos)
-            ->where('status', '!=', Schedule::STATUS_CANCELADO)
+            ->whereNotIn('status', Schedule::NAO_ACONTECEU)
             ->groupBy('client_id')
             ->selectRaw('client_id, MIN(date) as primeira')
             ->get()
@@ -144,7 +149,7 @@ class RelatorioController extends Controller
     {
         $hoje = now()->startOfDay();
         $visitas = Schedule::query()
-            ->where('status', '!=', Schedule::STATUS_CANCELADO)
+            ->whereNotIn('status', Schedule::NAO_ACONTECEU)
             ->where('date', '<=', $hoje->toDateString())
             ->orderBy('date')
             ->get(['client_id', 'date'])
@@ -201,6 +206,7 @@ class RelatorioController extends Controller
         });
 
         $profissionais = Worker::where('active', true)->orderBy('name')->get(['id', 'name']);
+        // a falta conta na ocupação: o horário ficou reservado para o cliente
         $marcados = $doPeriodo->where('status', '!=', Schedule::STATUS_CANCELADO);
         $duracao = fn (Schedule $s) => max(0, $minutos((string) $s->end_time) - $minutos((string) $s->start_time));
 

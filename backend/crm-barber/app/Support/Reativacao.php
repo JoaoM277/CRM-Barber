@@ -26,7 +26,7 @@ class Reativacao
         $ultimas = DB::table('schedules')
             ->select('client_id', DB::raw('MAX(date) as ultima_visita'))
             ->where('barbershop_id', $bs->id)
-            ->where('status', '!=', Schedule::STATUS_CANCELADO)
+            ->whereNotIn('status', Schedule::NAO_ACONTECEU)
             ->groupBy('client_id');
 
         return Client::withoutGlobalScopes()
@@ -52,7 +52,7 @@ class Reativacao
 
         $voltaram = (clone $enviados)->whereExists(fn ($q) => $q->from('schedules')
             ->whereColumn('schedules.client_id', 'clients.id')
-            ->where('schedules.status', '!=', Schedule::STATUS_CANCELADO)
+            ->whereNotIn('schedules.status', Schedule::NAO_ACONTECEU)
             ->whereColumn('schedules.created_at', '>', 'clients.reativacao_enviada_em'));
 
         return [

@@ -21,6 +21,12 @@ Schedule::command('billing:notify')->dailyAt('10:00')->withoutOverlapping();
 // Lembretes de 24h e 2h antes no WhatsApp (o comando só envia entre 8h e 21h).
 Schedule::command('lembretes:enviar')->everyFiveMinutes()->withoutOverlapping();
 
+// Falta automática: 1h depois do horário, quem foi lembrado e não confirmou.
+Schedule::command('agenda:faltas')->everyFiveMinutes()->withoutOverlapping();
+
+// Mensagem de apoio às faltas do dia anterior (se o dono não reverteu).
+Schedule::command('agenda:apoio')->dailyAt('10:00')->withoutOverlapping();
+
 // Avaliação pós-atendimento (1h depois de concluído, só entre 8h e 21h).
 Schedule::command('avaliacoes:enviar')->everyTenMinutes()->withoutOverlapping();
 

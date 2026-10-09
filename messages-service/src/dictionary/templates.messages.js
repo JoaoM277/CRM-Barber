@@ -22,7 +22,7 @@ const linkAlterar = (a) => (a?.manageLink ? `\n\nPrecisa cancelar ou remarcar? $
 
 const messageList = {
   AGENDAMENTO: (name, appointment) =>
-    `Olá, ${name}! Seu agendamento${servicesClause(appointment?.services)} foi confirmado para o dia ${diaMes(appointment?.date) || "marcado"} às ${appointment?.time || "marcado"}${appointment?.barber ? ` com ${appointment.barber}` : ""}. Te esperamos! 💈${linkAlterar(appointment)}`,
+    `Olá, ${name}! Seu agendamento${servicesClause(appointment?.services)} está marcado para o dia ${diaMes(appointment?.date) || "marcado"} às ${appointment?.time || "marcado"}${appointment?.barber ? ` com ${appointment.barber}` : ""}. Te esperamos! 💈${appointment?.manageLink ? `\n\nConfirme sua presença (ou cancele/remarque) por aqui: ${appointment.manageLink}` : ""}`,
 
   LEMBRETE: (name, appointment) =>
     `Ei, ${name}, passando para lembrar do seu horário hoje às ${appointment?.time}${appointment?.services && formatServices(appointment.services) ? ` (${formatServices(appointment.services)})` : ""}! ⏰`,
@@ -76,6 +76,12 @@ messageList.FIDELIDADE_PREMIO = (name, a) =>
 // Lista de espera: abriu vaga no dia que o cliente queria
 messageList.LISTA_ESPERA = (name, a) =>
   `${name}, abriu uma vaga${naBarbearia(a)} no dia ${diaMes(a?.date)}${a?.time ? ` às ${a.time}` : ""}! 💈 Quem marcar primeiro fica com o horário:${a?.link ? `\n\n${a.link}` : ""}`;
+
+// Falta automática não revertida: apoio no dia seguinte (tom neutro: pode ter sido imprevisto)
+messageList.APOIO_FALTA = (name, a) =>
+  `Oi, ${name}. Não conseguimos registrar seu horário${naBarbearia(a)} de ${diaMes(a?.date)} às ${a?.time}. Se não pôde vir, tudo bem: imprevistos acontecem. 💈${a?.link ? `
+
+Quando quiser, é só marcar de novo: ${a.link}` : ""}`;
 
 messageList.RESPOSTA_CONFIRMADO = (name, a) =>
   `Confirmado, ${name}! ✅ Te esperamos dia ${diaMes(a?.date)} às ${a?.time}.`;

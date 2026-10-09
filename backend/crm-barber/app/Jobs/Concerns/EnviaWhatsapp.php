@@ -42,8 +42,11 @@ trait EnviaWhatsapp
         return true;
     }
 
-    /** Manda o payload ao serviço de mensagens; lança exceção se não saiu (a fila tenta de novo). */
-    protected function enviarMensagem(int $barbershopId, array $payload, array $contexto = []): void
+    /**
+     * Manda o payload ao serviço de mensagens; lança exceção se não saiu (a fila tenta de novo).
+     * Devolve "dispatched" (enviada) ou "held" (retida pelo horário, não saiu).
+     */
+    protected function enviarMensagem(int $barbershopId, array $payload, array $contexto = []): string
     {
         // Instância da Evolution a usar: a conectada da barbearia.
         // Sem instância conectada, o Node registra SEM_INSTANCIA e nada é enviado.
@@ -75,5 +78,7 @@ trait EnviaWhatsapp
             // relança pra fila tentar de novo (até $tries); no fim cai em failed()
             throw new \RuntimeException('Message service não confirmou o envio ('.($statusMsg ?? 'HTTP '.$response->status()).')');
         }
+
+        return (string) $statusMsg;
     }
 }

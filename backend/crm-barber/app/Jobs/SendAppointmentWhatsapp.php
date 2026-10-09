@@ -49,6 +49,9 @@ class SendAppointmentWhatsapp implements ShouldQueue
 
     public const AVALIACAO_BAIXA = 'AVALIACAO_BAIXA';
 
+    /** Faltou (falta automática não revertida): mensagem de apoio no dia seguinte. */
+    public const APOIO_FALTA = 'APOIO_FALTA';
+
     /** Fidelidade: o cliente completou o cartão de selos. */
     public const FIDELIDADE_PREMIO = 'FIDELIDADE_PREMIO';
 
@@ -88,7 +91,7 @@ class SendAppointmentWhatsapp implements ShouldQueue
             'ask_reply' => str_starts_with($this->trigger, 'LEMBRETE') && $schedule->status === Schedule::STATUS_PENDENTE,
             // "2 para cancelar" só se a barbearia permite cancelar pelo lembrete
             'allow_cancel' => (bool) ($schedule->barbershop?->cancelar_pelo_lembrete ?? true),
-            // link para agendar de novo (aviso de cancelamento)
+            // link para agendar de novo (aviso de cancelamento, apoio à falta)
             'link' => $schedule->barbershop
                 ? rtrim(config('app.frontend_url'), '/').'/?b='.$schedule->barbershop->slug
                 : null,
@@ -98,12 +101,22 @@ class SendAppointmentWhatsapp implements ShouldQueue
             // avaliação no Google (agradecimento de nota alta)
             'review_link' => $this->trigger === self::AVALIACAO_ALTA && $schedule->barbershop?->avaliacao_google ? ($schedule->barbershop->google_review_url ?: null) : null,
             // link para o próprio cliente cancelar/remarcar, se ainda pode
-            'manage_link' => in_array($this->trigger, self::COM_LINK_DO_CLIENTE, true) && $schedule->bloqueioAlteracaoCliente() === null
+            // (pendente: vai sempre, para o cliente poder confirmar presença)
+            'manage_link' => in_array($this->trigger, self::COM_LINK_DO_CLIENTE, true)
+                && ($schedule->bloqueioAlteracaoCliente() === null || ($schedule->status === Schedule::STATUS_PENDENTE && ! $schedule->inicio()->isPast()))
                 ? $schedule->linkCliente()
                 : null,
         ];
 
-        $this->enviarMensagem($schedule->barbershop_id, $payload, ['schedule_id' => $this->scheduleId]);
+        $status = $this->enviarMensagem($schedule->barbershop_id, $payload, ['schedule_id' => $this->scheduleId]);
+
+        // o cliente recebeu o "responda 1 para confirmar": a partir daqui, se não
+        // confirmar, pode cair em falta automática (ver agenda:faltas)
+        // (vale também a confirmação do agendamento com o link "confirmar presença")
+        $pediuConfirmacao = $payload['ask_reply'] || ($this->trigger === self::AGENDAMENTO && $payload['manage_link'] && $schedule->status === Schedule::STATUS_PENDENTE);
+        if ($pediuConfirmacao && $status === 'dispatched') {
+            Schedule::withoutGlobalScopes()->whereKey($schedule->id)->whereNull('confirmacao_pedida_em')->update(['confirmacao_pedida_em' => now()]);
+        }
     }
 
     /**

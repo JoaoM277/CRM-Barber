@@ -118,7 +118,7 @@ class EvolutionWebhookController extends Controller
             if (! \App\Models\Barbershop::whereKey($instancia->barbershop_id)->value('cancelar_pelo_lembrete')) {
                 return $this->ok('cancelamento pelo lembrete desligado');
             }
-            $agendamento->update(['status' => Schedule::STATUS_CANCELADO, 'resposta_cliente_em' => now()]);
+            $agendamento->update(['status' => Schedule::STATUS_CANCELADO, 'cancelado_por' => Schedule::POR_CLIENTE, 'resposta_cliente_em' => now()]);
             \App\Support\ComandaProdutos::devolverTudo($agendamento);
             \App\Support\ListaEspera::vagaAberta($agendamento);
             Audit::logFor($instancia->barbershop_id, 'agendamento.cancelado_cliente', $agendamento, 'Cliente cancelou pelo WhatsApp');

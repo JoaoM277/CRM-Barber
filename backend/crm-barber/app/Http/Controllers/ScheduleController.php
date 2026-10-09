@@ -133,7 +133,7 @@ class ScheduleController extends Controller
     {
         $ocupados = Schedule::query()
             ->whereDate('date', '>=', now()->toDateString())
-            ->where('status', '!=', Schedule::STATUS_CANCELADO)
+            ->whereNotIn('status', Schedule::NAO_ACONTECEU)
             ->get(['date', 'start_time', 'end_time', 'worker_id'])
             ->map(fn (Schedule $s) => [
                 'date' => (string) $s->date,
@@ -292,13 +292,20 @@ class ScheduleController extends Controller
     public function update(Request $request, Schedule $schedule)
     {
         $data = $request->validate([
-            'status' => ['sometimes', Rule::in(Schedule::STATUSES)],
+            // a confirmação é do cliente (lembrete ou link); o painel só conclui ou cancela
+            'status' => ['sometimes', Rule::in([Schedule::STATUS_CONCLUIDO, Schedule::STATUS_CANCELADO])],
             'observation' => 'sometimes|nullable|string|max:1000',
             'observacoes' => 'sometimes|nullable|string|max:1000',
             'dataAgendamento' => 'sometimes|date',
             'horario' => ['sometimes', 'regex:/^\d{2}:\d{2}$/'],
             'barbeiroId' => ['sometimes', 'integer', Rule::exists('workers', 'id')->where('barbershop_id', $schedule->barbershop_id)->whereNull('deleted_at')],
+        ], [
+            'status.in' => 'A confirmação vem do cliente (resposta ao lembrete ou link). Aqui dá para concluir ou cancelar o atendimento.',
         ]);
+
+        if ($request->has('status') && $schedule->status === Schedule::STATUS_FALTA) {
+            return response()->json(['message' => 'Este atendimento está como falta. Para corrigir, use a aba Pendências.'], 422);
+        }
 
         $update = [];
         if ($request->filled('barbeiroId') && (int) $data['barbeiroId'] !== (int) $schedule->worker_id) {
@@ -307,6 +314,8 @@ class ScheduleController extends Controller
 
         if ($request->has('status')) {
             $update['status'] = $data['status'];
+            // cancelamento ativo pelo painel (diferente da falta automática)
+            $update['cancelado_por'] = $data['status'] === Schedule::STATUS_CANCELADO ? Schedule::POR_BARBEARIA : null;
 
             // ao concluir, garante o snapshot de valor/comissão (registros antigos)
             if ($data['status'] === Schedule::STATUS_CONCLUIDO && $schedule->price === null) {

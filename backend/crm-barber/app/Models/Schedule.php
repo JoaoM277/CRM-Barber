@@ -23,12 +23,37 @@ class Schedule extends Model
 
     public const STATUS_CANCELADO = 'cancelado';
 
+    /** Não compareceu (falta automática do sistema ou registrada pelo dono). */
+    public const STATUS_FALTA = 'falta';
+
     public const STATUSES = [
         self::STATUS_PENDENTE,
         self::STATUS_CONFIRMADO,
         self::STATUS_CONCLUIDO,
         self::STATUS_CANCELADO,
+        self::STATUS_FALTA,
     ];
+
+    /** Não acontecem (não ocupam agenda nem contam como visita). */
+    public const NAO_ACONTECEU = [self::STATUS_CANCELADO, self::STATUS_FALTA];
+
+    /** Quem cancelou. */
+    public const POR_CLIENTE = 'cliente';
+
+    public const POR_BARBEARIA = 'barbearia';
+
+    public const POR_SISTEMA = 'sistema';
+
+    /** Por quanto tempo o dono pode reverter uma falta automática. */
+    public const DIAS_PARA_REVERTER = 3;
+
+    public function faltaRevertivel(): bool
+    {
+        return $this->status === self::STATUS_FALTA
+            && $this->cancelado_por === self::POR_SISTEMA
+            && $this->falta_em
+            && $this->falta_em->greaterThan(now()->subDays(self::DIAS_PARA_REVERTER));
+    }
 
     protected $attributes = [
         'status' => self::STATUS_PENDENTE,
@@ -56,6 +81,11 @@ class Schedule extends Model
         'avaliacao_oculta',
         'avaliacao_resposta',
         'avaliacao_respondida_em',
+        'cancelado_por',
+        'confirmacao_pedida_em',
+        'falta_em',
+        'falta_confirmada_em',
+        'apoio_enviado_em',
     ];
 
     /** Chave do link "meu horário": só vai para o cliente (WhatsApp / tela de sucesso). */
@@ -95,7 +125,7 @@ class Schedule extends Model
         if ($this->status === self::STATUS_CANCELADO) {
             return 'Este horário foi cancelado.';
         }
-        if ($this->status === self::STATUS_CONCLUIDO || $this->inicio()->isPast()) {
+        if (in_array($this->status, [self::STATUS_CONCLUIDO, self::STATUS_FALTA], true) || $this->inicio()->isPast()) {
             return 'Este horário já passou.';
         }
         if (! $bs || ! $bs->alterar_pelo_link) {
@@ -120,6 +150,10 @@ class Schedule extends Model
         'avaliacao_em' => 'datetime',
         'avaliacao_oculta' => 'boolean',
         'avaliacao_respondida_em' => 'datetime',
+        'confirmacao_pedida_em' => 'datetime',
+        'falta_em' => 'datetime',
+        'falta_confirmada_em' => 'datetime',
+        'apoio_enviado_em' => 'datetime',
     ];
 
     // withTrashed(): histórico não pode sumir quando cliente/profissional/
