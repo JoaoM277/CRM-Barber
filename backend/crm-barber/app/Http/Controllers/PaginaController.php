@@ -41,7 +41,9 @@ class PaginaController extends Controller
             // modelos de seletor: o Premium tem os 10; o Pro, 5
             'seletor_servicos' => ['sometimes', Rule::in(PaginaPersonalizada::seletores($this->tenant->barbershop()))],
             'seletor_profissionais' => ['sometimes', Rule::in(PaginaPersonalizada::seletores($this->tenant->barbershop()))],
+            'seletor_horarios' => ['sometimes', Rule::in(PaginaPersonalizada::seletoresHorario($this->tenant->barbershop()))],
         ], [
+            'seletor_horarios.in' => 'Esse modelo é do plano Premium.',
             'seletor_servicos.in' => 'Esse modelo é do plano Premium.',
             'seletor_profissionais.in' => 'Esse modelo é do plano Premium.',
         ]);
@@ -180,6 +182,8 @@ class PaginaController extends Controller
                 'max_fotos' => PaginaPersonalizada::MAX_FOTOS,
                 'seletores' => [...PaginaPersonalizada::SELETORES_PRO, ...PaginaPersonalizada::SELETORES_PREMIUM],
                 'seletores_liberados' => PaginaPersonalizada::seletores($bs),
+                'horarios' => [...PaginaPersonalizada::HORARIOS_PRO, ...PaginaPersonalizada::HORARIOS_PREMIUM],
+                'horarios_liberados' => PaginaPersonalizada::seletoresHorario($bs),
             ],
         ];
     }

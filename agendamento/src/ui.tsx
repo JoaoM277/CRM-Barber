@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import { MapPin } from "lucide-react"
 import clsx from "clsx"
 import type { Identidade } from "./lib/api"
-import { deISO, isoLocal, minutos, type Horario } from "./lib/horarios"
+import { deISO, isoLocal, minutos } from "./lib/horarios"
 import { Contatos } from "./pagina"
 
 export const moeda = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
@@ -142,87 +142,5 @@ export function Rodape() {
       Agenda online por{" "}
       <a href={LANDING} target="_blank" rel="noopener" className="font-semibold underline-offset-2 hover:underline">Vellis</a>
     </footer>
-  )
-}
-
-/** Fita de dias + grade de horários livres (manhã / tarde / noite). */
-export function SeletorHorario({ dias, livresPorDia, data, horario, onData, onHorario, lotadoClicavel, rodapeVazio }: {
-  dias: string[]
-  livresPorDia: Record<string, Horario[]>
-  data: string | null
-  horario: Horario | null
-  onData: (d: string) => void
-  onHorario: (h: Horario) => void
-  /** dia aberto mas sem vaga continua clicável (para entrar na lista de espera) */
-  lotadoClicavel?: (d: string) => boolean
-  /** conteúdo extra quando o dia escolhido não tem vaga */
-  rodapeVazio?: React.ReactNode
-}) {
-  return (
-    <>
-      <div className="-mx-5 mb-5 flex snap-x gap-2 overflow-x-auto px-5 pb-1" role="listbox" aria-label="Dia">
-        {dias.map((d) => {
-          const vagas = livresPorDia[d]?.length ?? 0
-          const dt = deISO(d)
-          const sel = d === data
-          return (
-            <button
-              key={d}
-              type="button"
-              role="option"
-              aria-selected={sel}
-              disabled={!vagas && !lotadoClicavel?.(d)}
-              onClick={() => onData(d)}
-              className={clsx(
-                "flex w-16 shrink-0 snap-start flex-col items-center rounded-2xl border py-2.5 transition",
-                sel ? "border-marca bg-marca text-sobre-marca" : "border-linha bg-cartao",
-                !vagas && "opacity-35",
-              )}
-              aria-label={`${dataLonga(d)}${vagas ? `, ${vagas} horários` : ", sem horários"}`}
-            >
-              <span className="text-[11px] uppercase">{d === isoLocal(new Date()) ? "Hoje" : dt.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}</span>
-              <span className="text-xl font-bold leading-tight">{dt.getDate()}</span>
-              <span className="text-[11px]">{dt.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "")}</span>
-            </button>
-          )
-        })}
-      </div>
-
-      {data && (livresPorDia[data]?.length ? (
-        (["Manhã", "Tarde", "Noite"] as const).map((periodo) => {
-          const lista = livresPorDia[data].filter((h) => {
-            const m = minutos(h.hora)
-            return periodo === "Manhã" ? m < 720 : periodo === "Tarde" ? m >= 720 && m < 1080 : m >= 1080
-          })
-          if (!lista.length) return null
-          return (
-            <div key={periodo} className="mb-5">
-              <h3 className="mb-2 text-sm font-semibold text-suave">{periodo}</h3>
-              <div className="grid grid-cols-4 gap-2">
-                {lista.map((h) => {
-                  const sel = horario?.hora === h.hora
-                  return (
-                    <button
-                      key={h.hora}
-                      type="button"
-                      onClick={() => onHorario(h)}
-                      aria-pressed={sel}
-                      className={clsx("rounded-xl border py-2.5 font-semibold tabular transition", sel ? "border-marca bg-marca text-sobre-marca" : "border-linha bg-cartao")}
-                    >
-                      {h.hora}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })
-      ) : (
-        <>
-          <p className="rounded-2xl border border-dashed border-linha p-6 text-center text-suave">Nenhum horário livre neste dia. Escolha outro dia acima.</p>
-          {rodapeVazio}
-        </>
-      ))}
-    </>
   )
 }

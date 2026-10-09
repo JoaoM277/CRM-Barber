@@ -144,6 +144,9 @@ class PaginaTest extends TestCase
         $this->getJson('/api/pagina')->assertOk()->assertJsonCount(5, 'opcoes.seletores_liberados')->assertJsonCount(10, 'opcoes.seletores');
 
         $this->putJson('/api/pagina', ['seletor_servicos' => 'cards', 'seletor_profissionais' => 'chips'])->assertOk();
+        $this->putJson('/api/pagina', ['seletor_horarios' => 'calendario'])->assertOk();
+        $this->putJson('/api/pagina', ['seletor_horarios' => 'semana'])->assertStatus(422)->assertJsonValidationErrors('seletor_horarios');
+        $this->getJson('/api/pagina')->assertJsonCount(5, 'opcoes.horarios_liberados')->assertJsonCount(10, 'opcoes.horarios');
         $this->putJson('/api/pagina', ['seletor_servicos' => 'carrossel'])->assertStatus(422)
             ->assertJsonPath('errors.seletor_servicos.0', 'Esse modelo é do plano Premium.');
         $this->getJson('/api/b/loja/barbearia')
@@ -152,14 +155,16 @@ class PaginaTest extends TestCase
 
         // no Premium, os 10
         Subscription::where('barbershop_id', $this->bs->id)->update(['plan_id' => Plan::where('slug', 'premium')->value('id')]);
-        $this->putJson('/api/pagina', ['seletor_servicos' => 'carrossel', 'seletor_profissionais' => 'sanfona'])->assertOk();
+        $this->putJson('/api/pagina', ['seletor_servicos' => 'carrossel', 'seletor_profissionais' => 'sanfona', 'seletor_horarios' => 'semana'])->assertOk();
+        $this->getJson('/api/b/loja/barbearia')->assertJsonPath('pagina.seletor_horarios', 'semana');
         $this->getJson('/api/b/loja/barbearia')->assertJsonPath('pagina.seletor_servicos', 'carrossel');
 
         // voltou para o Pro: o modelo Premium cai para a lista (o salvo continua lá)
         Subscription::where('barbershop_id', $this->bs->id)->update(['plan_id' => Plan::where('slug', 'pro')->value('id')]);
         $this->getJson('/api/b/loja/barbearia')
             ->assertJsonPath('pagina.seletor_servicos', 'lista')
-            ->assertJsonPath('pagina.seletor_profissionais', 'lista');
+            ->assertJsonPath('pagina.seletor_profissionais', 'lista')
+            ->assertJsonPath('pagina.seletor_horarios', 'lista');
         $this->assertSame('carrossel', $this->bs->fresh()->pagina['seletor_servicos']);
     }
 

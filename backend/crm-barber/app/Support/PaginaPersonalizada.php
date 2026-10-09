@@ -28,6 +28,11 @@ class PaginaPersonalizada
 
     public const SELETORES_PREMIUM = ['carrossel', 'mosaico', 'cardapio', 'vitrine', 'sanfona'];
 
+    /** Como o cliente escolhe dia e horário: mesma regra (5 no Pro, 10 no Premium). */
+    public const HORARIOS_PRO = ['lista', 'compacta', 'calendario', 'dropdown', 'periodos'];
+
+    public const HORARIOS_PREMIUM = ['linha_tempo', 'proximos', 'semana', 'cartoes', 'sanfona'];
+
     public const PADRAO = [
         'estilo' => 'moderno',
         'fonte' => 'figtree',
@@ -41,6 +46,7 @@ class PaginaPersonalizada
         'mostrar_horarios' => true,
         'seletor_servicos' => 'lista',
         'seletor_profissionais' => 'lista',
+        'seletor_horarios' => 'lista',
     ];
 
     /** O plano libera? (sem assinatura registrada = conta antiga, libera) */
@@ -54,16 +60,27 @@ class PaginaPersonalizada
         return ! $sub || $sub->hasFeature(Plan::FEATURE_PERSONALIZACAO);
     }
 
-    /** Modelos de seletor que o plano da barbearia libera. */
+    /** Modelos de seletor de serviços/profissionais que o plano da barbearia libera. */
     public static function seletores(?Barbershop $bs): array
+    {
+        return self::porPlano($bs, self::SELETORES_PRO, self::SELETORES_PREMIUM);
+    }
+
+    /** Modelos de seletor de horário que o plano da barbearia libera. */
+    public static function seletoresHorario(?Barbershop $bs): array
+    {
+        return self::porPlano($bs, self::HORARIOS_PRO, self::HORARIOS_PREMIUM);
+    }
+
+    /** Básico: só a lista; Pro: os 5 do Pro; Premium (ou conta antiga): os 10. */
+    private static function porPlano(?Barbershop $bs, array $pro, array $premium): array
     {
         if (! self::liberada($bs)) {
             return ['lista'];
         }
         $sub = Subscription::with('plan')->where('barbershop_id', $bs->id)->first();
-        $premium = ! $sub || $sub->hasFeature(Plan::FEATURE_SELETORES_PREMIUM);
 
-        return $premium ? [...self::SELETORES_PRO, ...self::SELETORES_PREMIUM] : self::SELETORES_PRO;
+        return ! $sub || $sub->hasFeature(Plan::FEATURE_SELETORES_PREMIUM) ? [...$pro, ...$premium] : $pro;
     }
 
     /** Configuração completa (para o painel), com os padrões preenchidos. */
@@ -97,6 +114,7 @@ class PaginaPersonalizada
             'mostrar_horarios' => (bool) $c['mostrar_horarios'],
             'seletor_servicos' => in_array($c['seletor_servicos'], $permitidos, true) ? $c['seletor_servicos'] : 'lista',
             'seletor_profissionais' => in_array($c['seletor_profissionais'], $permitidos, true) ? $c['seletor_profissionais'] : 'lista',
+            'seletor_horarios' => in_array($c['seletor_horarios'], self::seletoresHorario($bs), true) ? $c['seletor_horarios'] : 'lista',
             'instagram' => $contato['instagram'],
             'whatsapp' => $contato['whatsapp'],
             'galeria' => BarbershopPhoto::withoutGlobalScopes()->where('barbershop_id', $bs->id)->orderBy('ordem')->orderBy('id')

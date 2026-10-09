@@ -4,7 +4,8 @@ import clsx from "clsx"
 import { api, ErroApi, slugDaPagina, type Identidade, type MeuHorario as Horario, type Profissional } from "./lib/api"
 import { deISO, horariosLivres, isoLocal, minutos, type Expediente, type Horario as Vaga, type Ocupado } from "./lib/horarios"
 import { usePagina } from "./pagina"
-import { Abertura, baixarIcs, Cabecalho, dataLonga, guardarMarca, marcaGuardada, moeda, Rodape, SeletorHorario, useAberturaMinima, useMarca } from "./ui"
+import { SeletorDeHorario } from "./seletor-horario"
+import { Abertura, baixarIcs, Cabecalho, dataLonga, guardarMarca, marcaGuardada, moeda, Rodape, useAberturaMinima, useMarca } from "./ui"
 
 const DIAS_A_FRENTE = 14
 const QUALQUER = "qualquer" as const
@@ -180,7 +181,7 @@ export default function MeuHorario({ token }: { token: string }) {
           </div>
         )}
 
-        <SeletorHorario dias={dias} livresPorDia={livresPorDia} data={data} horario={vaga} onData={(d) => { setData(d); setVaga(null) }} onHorario={setVaga} />
+        <SeletorDeHorario modelo={base.id.pagina?.seletor_horarios ?? "lista"} nomeProf={nomeProf} dias={dias} livresPorDia={livresPorDia} data={data} horario={vaga} onData={(d) => { setData(d); setVaga(null) }} onHorario={setVaga} />
         {!dias.some((d) => livresPorDia[d]?.length) && (
           <p className="rounded-2xl border border-dashed border-linha p-6 text-center text-suave">
             Sem horários livres nos próximos {DIAS_A_FRENTE} dias{prof !== QUALQUER ? ". Tente “Sem preferência”." : ". Fale com a barbearia."}

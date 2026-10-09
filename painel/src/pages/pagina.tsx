@@ -3,8 +3,8 @@ import { Link } from "react-router"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import {
-  ArrowLeft, ArrowRight, BookOpen, Check, ChevronsUpDown, ExternalLink, GalleryHorizontal, Grid3x3, ImagePlus, LayoutGrid, List,
-  ListCollapse, Loader2, Lock, Palette, Presentation, Rows3, Tags, Trash2,
+  ArrowLeft, ArrowRight, BookOpen, CalendarDays, CalendarRange, Check, ChevronsUpDown, Columns3, ExternalLink, GalleryHorizontal,
+  GitCommitVertical, Grid3x3, ImagePlus, LayoutGrid, List, ListCollapse, Loader2, Lock, Palette, Presentation, Rows3, SunMoon, Tags, Trash2, Zap,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -33,7 +33,9 @@ type Config = {
   capa_url: string | null
   seletor_servicos: Seletor
   seletor_profissionais: Seletor
+  seletor_horarios: SeletorHorario
 }
+type SeletorHorario = "lista" | "compacta" | "calendario" | "dropdown" | "periodos" | "linha_tempo" | "proximos" | "semana" | "cartoes" | "sanfona"
 type Seletor = "lista" | "compacta" | "cards" | "dropdown" | "chips" | "carrossel" | "mosaico" | "cardapio" | "vitrine" | "sanfona"
 type Foto = { id: number; url: string; legenda: string | null; ordem: number }
 type Estado = {
@@ -41,7 +43,7 @@ type Estado = {
   galeria: Foto[]
   contato: { endereco: string | null; mapa_url: string | null; instagram: string | null; whatsapp: string | null }
   slug: string
-  opcoes: { max_fotos: number; seletores: Seletor[]; seletores_liberados: Seletor[] }
+  opcoes: { max_fotos: number; seletores: Seletor[]; seletores_liberados: Seletor[]; horarios: SeletorHorario[]; horarios_liberados: SeletorHorario[] }
 }
 
 /** Estilos prontos: cada um sugere fonte, fundo e modo que combinam (dá para ajustar depois). */
@@ -76,12 +78,28 @@ const SELETORES: { id: Seletor; nome: string; descricao: string; Icone: typeof L
   { id: "sanfona", nome: "Sanfona", descricao: "Abre e fecha por categoria", Icone: ListCollapse },
 ]
 
-function EscolhaSeletor({ titulo, valor, liberados, onMudar }: { titulo: string; valor: Seletor; liberados: Seletor[]; onMudar: (v: Seletor) => void }) {
+/** Os 10 modelos de seletor de dia e horário (mesma regra de planos). */
+const HORARIOS: { id: SeletorHorario; nome: string; descricao: string; Icone: typeof List }[] = [
+  { id: "lista", nome: "Faixa de dias", descricao: "Dias de lado, horários por período", Icone: CalendarRange },
+  { id: "compacta", nome: "Compacto", descricao: "Tudo numa grade só", Icone: Grid3x3 },
+  { id: "calendario", nome: "Calendário", descricao: "Mês em grade, como no celular", Icone: CalendarDays },
+  { id: "dropdown", nome: "Menu suspenso", descricao: "Dois campos: dia e horário", Icone: ChevronsUpDown },
+  { id: "periodos", nome: "Por período", descricao: "Abas Manhã, Tarde e Noite", Icone: SunMoon },
+  { id: "linha_tempo", nome: "Linha do tempo", descricao: "O dia em lista, com o profissional", Icone: GitCommitVertical },
+  { id: "proximos", nome: "Próximos horários", descricao: "Os primeiros livres de todos os dias", Icone: Zap },
+  { id: "semana", nome: "Semana", descricao: "Uma coluna por dia", Icone: Columns3 },
+  { id: "cartoes", nome: "Cartões por dia", descricao: "Um cartão por dia, de lado", Icone: GalleryHorizontal },
+  { id: "sanfona", nome: "Sanfona", descricao: "Lista de dias que abre ao tocar", Icone: ListCollapse },
+]
+
+function EscolhaSeletor<T extends string>({ titulo, valor, liberados, onMudar, opcoes = SELETORES as unknown as { id: T; nome: string; descricao: string; Icone: typeof List }[] }: {
+  titulo: string; valor: T; liberados: T[]; onMudar: (v: T) => void; opcoes?: { id: T; nome: string; descricao: string; Icone: typeof List }[]
+}) {
   return (
     <div className="grid gap-2">
       <Label>{titulo}</Label>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5" role="radiogroup" aria-label={titulo}>
-        {SELETORES.map(({ id, nome, descricao, Icone }) => {
+        {opcoes.map(({ id, nome, descricao, Icone }) => {
           const livre = liberados.includes(id)
           const ativo = valor === id
           return (
@@ -315,7 +333,7 @@ export default function PaginaAgendamento() {
           <CardHeader>
             <CardTitle>Como o cliente escolhe</CardTitle>
             <CardDescription>
-              O jeito de mostrar os serviços e os profissionais na hora de agendar.
+              O jeito de mostrar os serviços, os profissionais e os horários na hora de agendar.
               {data.opcoes.seletores_liberados.length < data.opcoes.seletores.length && (
                 <> No seu plano são {data.opcoes.seletores_liberados.length} modelos; o <Link to="/assinatura" className="underline underline-offset-2">Premium</Link> libera os {data.opcoes.seletores.length}.</>
               )}
@@ -324,6 +342,7 @@ export default function PaginaAgendamento() {
           <CardContent className="grid gap-6">
             <EscolhaSeletor titulo="Serviços" valor={rascunho.seletor_servicos} liberados={data.opcoes.seletores_liberados} onMudar={(v) => set("seletor_servicos", v)} />
             <EscolhaSeletor titulo="Profissionais" valor={rascunho.seletor_profissionais} liberados={data.opcoes.seletores_liberados} onMudar={(v) => set("seletor_profissionais", v)} />
+            <EscolhaSeletor titulo="Dia e horário" opcoes={HORARIOS} valor={rascunho.seletor_horarios} liberados={data.opcoes.horarios_liberados} onMudar={(v) => set("seletor_horarios", v)} />
           </CardContent>
         </Card>
 

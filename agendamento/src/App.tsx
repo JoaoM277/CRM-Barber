@@ -5,7 +5,8 @@ import { api, ErroApi, slugDaPagina, type Aviso, type Identidade, type Profissio
 import { deISO, horariosLivres, isoLocal, type Expediente, type Horario, type Ocupado } from "./lib/horarios"
 import { emPrevia, Galeria, Sobre, usePagina, usePreviaDoPainel } from "./pagina"
 import { QUALQUER, SeletorProfissionais, SeletorServicos } from "./seletores"
-import { Abertura, baixarIcs, Cabecalho, dataLonga, guardarMarca, marcaGuardada, moeda, Rodape, SeletorHorario, useAberturaMinima, useMarca } from "./ui"
+import { SeletorDeHorario } from "./seletor-horario"
+import { Abertura, baixarIcs, Cabecalho, dataLonga, guardarMarca, marcaGuardada, moeda, Rodape, useAberturaMinima, useMarca } from "./ui"
 
 const DIAS_A_FRENTE = 14
 
@@ -347,7 +348,9 @@ export default function App() {
       {etapa === 2 && (
         <section>
           <h2 className="mb-4 text-xl font-bold">Quando?</h2>
-          <SeletorHorario
+          <SeletorDeHorario
+            modelo={pagina?.seletor_horarios ?? "lista"}
+            nomeProf={nomeProf}
             dias={dias}
             livresPorDia={livresPorDia}
             data={data}
