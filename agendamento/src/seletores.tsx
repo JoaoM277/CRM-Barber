@@ -488,35 +488,7 @@ export function SeletorProfissionais({ modelo, profissionais, valor, escolher }:
       )
 
     case "sanfona":
-      // toque escolhe e abre a bio
-      return (
-        <ul className="divide-y divide-linha overflow-hidden rounded-2xl border border-linha bg-cartao">
-          {[null, ...profissionais].map((p) => {
-            const ativo = p ? valor === p.id : ehQualquer
-            return (
-              <li key={p?.id ?? "q"} className={clsx(ativo && "bg-marca/6")}>
-                <button type="button" onClick={() => escolher(p ? p.id : QUALQUER)} aria-pressed={ativo} aria-expanded={ativo} className="flex w-full items-center gap-3 px-4 py-3 text-left">
-                  {p ? <FotoProf p={p} className="size-11 shrink-0 rounded-full" /> : <IconeQualquer className="size-11 shrink-0 rounded-full" />}
-                  <span className="min-w-0 flex-1 font-semibold">{p ? p.name : "Sem preferência"}</span>
-                  <ChevronDown className={clsx("size-5 text-suave transition", ativo && "rotate-180")} aria-hidden />
-                </button>
-                {ativo && (
-                  <div className="px-4 pb-4 pl-[4.75rem] text-sm text-suave">
-                    {p ? (
-                      <>
-                        {p.speciality && <p className="font-medium text-texto">{p.speciality}</p>}
-                        {p.bio && <p className="mt-0.5">{p.bio}</p>}
-                        {!p.speciality && !p.bio && <p>Escolhido. Continue para ver os horários.</p>}
-                        <Instagram p={p} />
-                      </>
-                    ) : <p>Mostramos os horários de toda a equipe.</p>}
-                  </div>
-                )}
-              </li>
-            )
-          })}
-        </ul>
-      )
+      return <SanfonaProfissionais profissionais={profissionais} valor={valor} escolher={escolher} IconeQualquer={IconeQualquer} Instagram={Instagram} />
 
     default: // lista
       return (
@@ -548,4 +520,56 @@ export function SeletorProfissionais({ modelo, profissionais, valor, escolher }:
         </ul>
       )
   }
+}
+
+/** Toque escolhe e abre a bio; tocar de novo no escolhido recolhe (continua escolhido). */
+function SanfonaProfissionais({ profissionais, valor, escolher, IconeQualquer, Instagram }: {
+  profissionais: Profissional[]
+  valor: EscolhaProf
+  escolher: (v: number | typeof QUALQUER) => void
+  IconeQualquer: (p: { className?: string }) => ReactNode
+  Instagram: (p: { p: Profissional }) => ReactNode
+}) {
+  const [aberto, setAberto] = useState<EscolhaProf>(valor)
+  return (
+    <ul className="divide-y divide-linha overflow-hidden rounded-2xl border border-linha bg-cartao">
+      {[null, ...profissionais].map((p) => {
+        const id = p ? p.id : QUALQUER
+        const ativo = valor === id
+        const estaAberto = ativo && aberto === id
+        return (
+          <li key={p?.id ?? "q"} className={clsx(ativo && "bg-marca/6")}>
+            <button
+              type="button"
+              onClick={() => {
+                if (estaAberto) return setAberto(null)
+                escolher(id)
+                setAberto(id)
+              }}
+              aria-pressed={ativo}
+              aria-expanded={estaAberto}
+              className="flex w-full items-center gap-3 px-4 py-3 text-left"
+            >
+              {p ? <FotoProf p={p} className="size-11 shrink-0 rounded-full" /> : <IconeQualquer className="size-11 shrink-0 rounded-full" />}
+              <span className="min-w-0 flex-1 font-semibold">{p ? p.name : "Sem preferência"}</span>
+              {ativo && <Check className="size-4 text-marca" strokeWidth={3} aria-hidden />}
+              <ChevronDown className={clsx("size-5 text-suave transition", estaAberto && "rotate-180")} aria-hidden />
+            </button>
+            {estaAberto && (
+              <div className="px-4 pb-4 pl-[4.75rem] text-sm text-suave">
+                {p ? (
+                  <>
+                    {p.speciality && <p className="font-medium text-texto">{p.speciality}</p>}
+                    {p.bio && <p className="mt-0.5">{p.bio}</p>}
+                    {!p.speciality && !p.bio && <p>Escolhido. Continue para ver os horários.</p>}
+                    <Instagram p={p} />
+                  </>
+                ) : <p>Mostramos os horários de toda a equipe.</p>}
+              </div>
+            )}
+          </li>
+        )
+      })}
+    </ul>
+  )
 }

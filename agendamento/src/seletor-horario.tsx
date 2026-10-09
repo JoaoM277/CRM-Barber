@@ -1,6 +1,6 @@
 // Modelos de seletor de dia + horário (passo "Quando?" e remarcação).
 // A barbearia escolhe no painel: Básico = faixa de dias; Pro = 5 modelos; Premium = 10.
-import { useMemo, useState, type ReactNode } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
 import clsx from "clsx"
 import type { Pagina } from "./lib/api"
@@ -254,32 +254,7 @@ export function SeletorDeHorario(props: Props) {
       )
 
     case "sanfona":
-      return (
-        <>
-          <ul className="divide-y divide-linha overflow-hidden rounded-2xl border border-linha bg-cartao">
-            {dias.map((d) => {
-              const lista = livresPorDia[d] ?? []
-              const aberto = d === data
-              const clicavel = lista.length > 0 || lotadoClicavel?.(d)
-              return (
-                <li key={d}>
-                  <button type="button" disabled={!clicavel} onClick={() => onData(d)} aria-expanded={aberto} className={clsx("flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left", !clicavel && "opacity-40")}>
-                    <span className="font-semibold first-letter:uppercase">{rotuloDia(d)}</span>
-                    <span className="flex items-center gap-2 text-sm text-suave">
-                      {lista.length ? `${lista.length} horário${lista.length > 1 ? "s" : ""}` : "lotado"}
-                      <ChevronDown className={clsx("size-5 transition", aberto && "rotate-180")} aria-hidden />
-                    </span>
-                  </button>
-                  {aberto && lista.length > 0 && (
-                    <div className="px-4 pb-4"><GradeHoras lista={lista} horario={horario} onHorario={onHorario} porPeriodo={false} colunas={4} pequeno /></div>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-          {data && !doDia.length && rodapeVazio}
-        </>
-      )
+      return <SanfonaDias {...props} />
 
     default: // lista: faixa de dias + horários por período
       return (
@@ -289,6 +264,51 @@ export function SeletorDeHorario(props: Props) {
         </>
       )
   }
+}
+
+/** Lista de dias: a seta abre e fecha os horários do dia (o dia continua escolhido). */
+function SanfonaDias({ dias, livresPorDia, data, horario, onData, onHorario, lotadoClicavel, rodapeVazio }: Props) {
+  const [aberto, setAberto] = useState<string | null>(data)
+  // dia trocado por fora (pré-seleção do primeiro dia com vaga): abre ele
+  useEffect(() => setAberto(data), [data])
+  const doDia = data ? livresPorDia[data] ?? [] : []
+
+  return (
+    <>
+      <ul className="divide-y divide-linha overflow-hidden rounded-2xl border border-linha bg-cartao">
+        {dias.map((d) => {
+          const lista = livresPorDia[d] ?? []
+          const estaAberto = d === aberto
+          const clicavel = lista.length > 0 || lotadoClicavel?.(d)
+          return (
+            <li key={d}>
+              <button
+                type="button"
+                disabled={!clicavel}
+                onClick={() => {
+                  if (estaAberto) return setAberto(null)
+                  if (d !== data) onData(d)
+                  setAberto(d)
+                }}
+                aria-expanded={estaAberto}
+                className={clsx("flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left", !clicavel && "opacity-40", d === data && "text-marca")}
+              >
+                <span className="font-semibold first-letter:uppercase">{rotuloDia(d)}</span>
+                <span className="flex items-center gap-2 text-sm text-suave">
+                  {lista.length ? `${lista.length} horário${lista.length > 1 ? "s" : ""}` : "lotado"}
+                  <ChevronDown className={clsx("size-5 transition", estaAberto && "rotate-180")} aria-hidden />
+                </span>
+              </button>
+              {estaAberto && lista.length > 0 && (
+                <div className="px-4 pb-4"><GradeHoras lista={lista} horario={horario} onHorario={onHorario} porPeriodo={false} colunas={4} pequeno /></div>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+      {data && aberto === data && !doDia.length && rodapeVazio}
+    </>
+  )
 }
 
 /** Calendário do mês (só os dias da janela de agendamento ficam clicáveis). */
