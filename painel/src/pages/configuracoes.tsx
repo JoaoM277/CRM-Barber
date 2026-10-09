@@ -200,44 +200,87 @@ function AbaHorarios() {
 
   if (isLoading) return <Skeleton className="h-96 w-full rounded-xl" />
 
-  const mudar = (id: number, campo: keyof Expediente, valor: string | boolean) =>
-    setLinhas((ls) => ls.map((l) => (l.id === id ? { ...l, [campo]: valor } : l)))
+  // horário do dia como um todo (expediente + almoço), para comparar dias
+  const chave = (l: Expediente) => [curta(l.start_time), curta(l.end_time), curta(l.waiting_start), curta(l.waiting_end)].join("|")
+  const anteriorAberto = (ls: Expediente[], i: number) => ls.slice(0, i).reverse().find((l) => l.active)
+
+  // muda um horário e leva junto os dias seguintes que estavam iguais a ele
+  // (dia alterado à mão fica diferente e para de acompanhar)
+  const mudarHorario = (id: number, campo: "start_time" | "end_time" | "waiting_start" | "waiting_end", valor: string) =>
+    setLinhas((ls) => {
+      const i = ls.findIndex((l) => l.id === id)
+      const antes = chave(ls[i])
+      return ls.map((l, j) => (j === i || (j > i && l.active && chave(l) === antes) ? { ...l, [campo]: valor } : l))
+    })
+
+  // abrir um dia fechado: já vem com o horário do dia aberto anterior
+  const abrirFechar = (id: number, aberto: boolean) =>
+    setLinhas((ls) => {
+      const i = ls.findIndex((l) => l.id === id)
+      const base = aberto ? anteriorAberto(ls, i) : undefined
+      return ls.map((l, j) => (j !== i ? l : base
+        ? { ...l, active: true, start_time: base.start_time, end_time: base.end_time, waiting_start: base.waiting_start, waiting_end: base.waiting_end }
+        : { ...l, active: aberto }))
+    })
+
+  const igualar = (id: number) =>
+    setLinhas((ls) => {
+      const i = ls.findIndex((l) => l.id === id)
+      const base = anteriorAberto(ls, i)
+      return base ? ls.map((l, j) => (j === i ? { ...l, start_time: base.start_time, end_time: base.end_time, waiting_start: base.waiting_start, waiting_end: base.waiting_end } : l)) : ls
+    })
 
   return (
     <Card id="horarios">
       <CardHeader>
         <CardTitle>Horários de funcionamento</CardTitle>
-        <CardDescription>Os clientes só conseguem marcar dentro destes horários. O almoço fica bloqueado.</CardDescription>
+        <CardDescription>
+          Os clientes só conseguem marcar dentro destes horários; o almoço fica bloqueado. Preencha a segunda: os dias seguintes que
+          estiverem iguais acompanham. Mude um dia à mão para ele ter horário próprio.
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-1">
         <div className="hidden grid-cols-[8rem_5rem_1fr_1fr] gap-3 px-1 pb-1 text-xs text-muted-foreground sm:grid">
           <span>Dia</span><span>Abre?</span><span>Expediente</span><span>Almoço (opcional)</span>
         </div>
-        {linhas.map((l) => (
+        {linhas.map((l, i) => {
+          const anterior = l.active ? anteriorAberto(linhas, i) : undefined
+          const segue = anterior && chave(anterior) === chave(l)
+          return (
           <div key={l.id} className="grid items-center gap-3 border-t py-3 sm:grid-cols-[8rem_5rem_1fr_1fr]">
-            <span className="font-medium">{DIAS[l.day_of_week]}</span>
+            <span>
+              <span className="block font-medium">{DIAS[l.day_of_week]}</span>
+              {anterior && (segue ? (
+                <span className="block text-xs text-muted-foreground">igual a {DIAS[anterior.day_of_week].toLowerCase()}</span>
+              ) : (
+                <button type="button" onClick={() => igualar(l.id)} className="block text-xs text-primary underline-offset-2 hover:underline">
+                  igualar a {DIAS[anterior.day_of_week].toLowerCase()}
+                </button>
+              ))}
+            </span>
             <label className="flex items-center gap-2 text-sm">
-              <Switch checked={l.active} onCheckedChange={(v) => mudar(l.id, "active", v)} aria-label={`${DIAS[l.day_of_week]} aberto`} />
+              <Switch checked={l.active} onCheckedChange={(v) => abrirFechar(l.id, v)} aria-label={`${DIAS[l.day_of_week]} aberto`} />
               <span className="sm:hidden">{l.active ? "Aberto" : "Fechado"}</span>
             </label>
             {l.active ? (
               <>
                 <div className="flex items-center gap-2">
-                  <Input type="time" value={curta(l.start_time)} onChange={(e) => mudar(l.id, "start_time", e.target.value)} aria-label={`${DIAS[l.day_of_week]}: abre às`} />
+                  <Input type="time" value={curta(l.start_time)} onChange={(e) => mudarHorario(l.id, "start_time", e.target.value)} aria-label={`${DIAS[l.day_of_week]}: abre às`} />
                   <span className="text-muted-foreground">às</span>
-                  <Input type="time" value={curta(l.end_time)} onChange={(e) => mudar(l.id, "end_time", e.target.value)} aria-label={`${DIAS[l.day_of_week]}: fecha às`} />
+                  <Input type="time" value={curta(l.end_time)} onChange={(e) => mudarHorario(l.id, "end_time", e.target.value)} aria-label={`${DIAS[l.day_of_week]}: fecha às`} />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Input type="time" value={curta(l.waiting_start)} onChange={(e) => mudar(l.id, "waiting_start", e.target.value)} aria-label={`${DIAS[l.day_of_week]}: almoço começa`} />
+                  <Input type="time" value={curta(l.waiting_start)} onChange={(e) => mudarHorario(l.id, "waiting_start", e.target.value)} aria-label={`${DIAS[l.day_of_week]}: almoço começa`} />
                   <span className="text-muted-foreground">às</span>
-                  <Input type="time" value={curta(l.waiting_end)} onChange={(e) => mudar(l.id, "waiting_end", e.target.value)} aria-label={`${DIAS[l.day_of_week]}: almoço termina`} />
+                  <Input type="time" value={curta(l.waiting_end)} onChange={(e) => mudarHorario(l.id, "waiting_end", e.target.value)} aria-label={`${DIAS[l.day_of_week]}: almoço termina`} />
                 </div>
               </>
             ) : (
               <span className="text-sm text-muted-foreground sm:col-span-2">Fechado</span>
             )}
           </div>
-        ))}
+          )
+        })}
       </CardContent>
       <CardFooter>
         <Button onClick={() => salvar.mutate()} disabled={salvar.isPending}>Salvar horários</Button>
