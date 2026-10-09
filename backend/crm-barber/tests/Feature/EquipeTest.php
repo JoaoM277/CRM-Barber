@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Barbershop;
-use App\Models\OperationTime;
 use App\Models\Schedule;
 use App\Models\Service;
 use App\Models\User;
