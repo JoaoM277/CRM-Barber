@@ -97,6 +97,24 @@ Recomendação: painel em **React + Vite + Tailwind + shadcn/ui** consumindo a A
 | 8 | ✅ Avaliação pós-atendimento (nota + Google), fidelidade (cartão de selos) e lista de espera — no ar em 08/10/2026 (cashback fica para depois) | Diferenciais |
 | 9 | Multi-unidade | Plano Premium |
 
+## Correções antes da Fase 6 (em andamento, 09/10/2026)
+
+O usuário passa as tasks uma a uma ("Correção N - Task M"). Todas abaixo estão no ar.
+
+**Correção 1 — Personalizar a página de agendamento (link do cliente)**
+- [x] Task 1: abertura com a logo da barbearia (inclusive antes do JS, pela logo guardada da última visita) e logo em destaque no cabeçalho; moldura da logo afinada a pedido (2px de respiro, `ring-1`)
+- [x] Task 2: personalização Pro/Premium (tela "Página de agendamento" no painel, com pré-visualização ao vivo por iframe + postMessage): 5 estilos, fonte dos títulos, modo claro/escuro, textura, capa, galeria (12 fotos), "sobre" com endereço/horários, textos próprios, serviços com foto/destaque/categoria/ordem, profissionais com bio/Instagram
+- [x] 10 modelos de seletor para serviços e profissionais (Lista, Compacta, Cards, Menu suspenso, Etiquetas no Pro; Carrossel, Mosaico, Cardápio, Vitrine, Sanfona no Premium). Vitrine de serviços padronizada com a de profissionais
+- [x] 10 modelos de seletor de dia/horário (Faixa de dias, Compacto, Calendário, Menu suspenso, Por período no Pro; Linha do tempo, Próximos horários, Semana, Cartões por dia, Sanfona no Premium). Sanfona abre e fecha na mesma seta
+- Regra de planos: Básico = cor + logo + modelos padrão; Pro (recurso `personalizacao`) = 5 modelos de cada; Premium (`seletores_premium`) = os 10. Plano rebaixado volta ao padrão sem perder a escolha salva
+
+**Próximos passos (retomar daqui)**
+- Aguardar as próximas tasks de correção do usuário
+- Depois: item 9 da Fase 5 (multi-unidade) ou Fase 6
+- Pendências do usuário: Resend (e-mail), Asaas em produção (CNPJ), textos legais, backup automático do banco
+- Testar todos os fluxos de WhatsApp com um número real conectado (nenhuma instância conectada até agora)
+- Ideia registrada: prévia do link (Open Graph) com logo/capa da barbearia ao compartilhar no WhatsApp
+
 ## Fase 6 — Lançamento
 
 - [ ] Beta fechado com 3-5 barbearias reais (desconto em troca de feedback/depoimento)
