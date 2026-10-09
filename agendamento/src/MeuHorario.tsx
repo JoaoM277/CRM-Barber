@@ -3,7 +3,7 @@ import { CalendarPlus, Check, ChevronLeft, Gift, Loader2, Scissors, Sparkles, Us
 import clsx from "clsx"
 import { api, ErroApi, slugDaPagina, type Identidade, type MeuHorario as Horario, type Profissional } from "./lib/api"
 import { deISO, horariosLivres, isoLocal, minutos, type Expediente, type Horario as Vaga, type Ocupado } from "./lib/horarios"
-import { baixarIcs, Cabecalho, dataLonga, moeda, Rodape, SeletorHorario, useMarca } from "./ui"
+import { Abertura, baixarIcs, Cabecalho, dataLonga, guardarMarca, marcaGuardada, moeda, Rodape, SeletorHorario, useAberturaMinima, useMarca } from "./ui"
 
 const DIAS_A_FRENTE = 14
 const QUALQUER = "qualquer" as const
@@ -45,6 +45,7 @@ export default function MeuHorario({ token }: { token: string }) {
   const slug = useMemo(slugDaPagina, [])
   const [base, setBase] = useState<Base | null>(null)
   const [falha, setFalha] = useState<string | null>(null)
+  const [identidade, setIdentidade] = useState<Identidade | null>(null)
   const [modo, setModo] = useState<"ver" | "cancelar" | "remarcar">("ver")
   const [feito, setFeito] = useState<"cancelado" | "remarcado" | null>(null)
   const [enviando, setEnviando] = useState(false)
@@ -62,8 +63,10 @@ export default function MeuHorario({ token }: { token: string }) {
       return
     }
     try {
+      const pId = api<Identidade>(slug, "/barbearia")
+      pId.then((id) => { setIdentidade(id); guardarMarca(slug, id) }).catch(() => {})
       const [id, horario, profissionais, disp] = await Promise.all([
-        api<Identidade>(slug, "/barbearia"),
+        pId,
         api<Horario>(slug, caminho),
         api<Profissional[]>(slug, "/profissionais"),
         api<{ data: Ocupado[]; expediente: Expediente[] }>(slug, "/disponibilidade"),
@@ -75,7 +78,9 @@ export default function MeuHorario({ token }: { token: string }) {
   }, [slug, caminho])
 
   useEffect(() => { carregar() }, [carregar])
-  useMarca(base?.id, "Meu horário")
+  const guardada = useMemo(() => marcaGuardada(slug), [slug])
+  const aberturaMinima = useAberturaMinima()
+  useMarca(base?.id ?? identidade ?? guardada, "Meu horário")
 
   const h = base?.horario
   const meuProf = h?.profissional?.id ?? null
@@ -136,20 +141,15 @@ export default function MeuHorario({ token }: { token: string }) {
       </main>
     )
   }
-  if (!base || !h) {
-    return (
-      <main className="mx-auto grid min-h-dvh max-w-lg place-items-center">
-        <Loader2 className="size-8 animate-spin text-suave" aria-label="Carregando" />
-      </main>
-    )
-  }
+  // abertura com a logo da barbearia até o horário carregar
+  if (!base || !h || aberturaMinima) return <Abertura id={base?.id ?? identidade ?? guardada} />
 
   const linkAgendar = `?b=${encodeURIComponent(slug!)}`
   const nomeProf = (id: number) => base.profissionais.find((p) => p.id === id)?.name ?? ""
 
   if (modo === "remarcar") {
     return (
-      <main className="mx-auto max-w-lg px-5 pb-40">
+      <main className="entrar mx-auto max-w-lg px-5 pb-40">
         <Cabecalho id={base.id} />
         <button type="button" onClick={() => { setModo("ver"); setErro(null) }} className="-ml-1 mb-3 inline-flex items-center gap-1 text-sm font-medium text-suave">
           <ChevronLeft className="size-4" aria-hidden /> Voltar
@@ -208,7 +208,7 @@ export default function MeuHorario({ token }: { token: string }) {
   const status = STATUS[h.status]
 
   return (
-    <main className="mx-auto max-w-lg px-5 pb-16">
+    <main className="entrar mx-auto max-w-lg px-5 pb-16">
       <Cabecalho id={base.id} />
       <section className="rounded-3xl border border-linha bg-cartao p-6">
         {feito ? (

@@ -23,6 +23,30 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // abertura imediata (antes do JavaScript da página baixar): logo e cor da
+      // barbearia guardadas na última visita; o React troca pela abertura dele
+      try {
+        var p = new URLSearchParams(location.search)
+        var slug = p.get("b") || p.get("barbershop")
+        var m = slug && JSON.parse(localStorage.getItem("vellis_marca:" + slug) || "null")
+        if (m) {
+          var cor = /^#[0-9a-f]{3,6}$/i.test(m.accent_color) ? m.accent_color : "#c89b3c"
+          document.documentElement.style.setProperty("--marca", cor)
+          var root = document.getElementById("root")
+          var box = document.createElement("div")
+          box.setAttribute("style", "min-height:100dvh;display:grid;place-items:center;background:linear-gradient(to bottom, color-mix(in srgb, " + cor + " 15%, transparent), transparent 60%)")
+          var inner = document.createElement("div")
+          inner.setAttribute("style", "display:grid;justify-items:center;gap:20px;font:700 20px system-ui,sans-serif")
+          var logo = document.createElement(m.logo_url ? "img" : "div")
+          logo.setAttribute("style", "width:128px;height:128px;border-radius:32px;padding:10px;box-sizing:border-box;object-fit:contain;background:" + (m.logo_url ? "#fff" : cor) + ";box-shadow:0 0 0 4px color-mix(in srgb, " + cor + " 25%, transparent)")
+          if (m.logo_url) { logo.src = m.logo_url; logo.alt = "" }
+          var nome = document.createElement("p")
+          nome.textContent = m.name || ""
+          inner.appendChild(logo); inner.appendChild(nome); box.appendChild(inner); root.appendChild(box)
+        }
+      } catch (e) {}
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

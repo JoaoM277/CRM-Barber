@@ -3,7 +3,7 @@ import { CalendarCog, CalendarPlus, Check, ChevronLeft, Clock, Loader2, Scissors
 import clsx from "clsx"
 import { api, ErroApi, slugDaPagina, type Aviso, type Identidade, type Profissional, type Servico } from "./lib/api"
 import { deISO, horariosLivres, isoLocal, type Expediente, type Horario, type Ocupado } from "./lib/horarios"
-import { baixarIcs, Cabecalho, dataLonga, moeda, Rodape, SeletorHorario, useMarca } from "./ui"
+import { Abertura, baixarIcs, Cabecalho, dataLonga, guardarMarca, marcaGuardada, moeda, Rodape, SeletorHorario, useAberturaMinima, useMarca } from "./ui"
 
 const QUALQUER = "qualquer" as const
 const DIAS_A_FRENTE = 14
@@ -128,6 +128,7 @@ export default function App() {
   const slug = useMemo(slugDaPagina, [])
   const [dados, setDados] = useState<Dados | null>(null)
   const [falha, setFalha] = useState<string | null>(null)
+  const [identidade, setIdentidade] = useState<Identidade | null>(null)
   const [avisoAberto, setAvisoAberto] = useState(true)
 
   const [etapa, setEtapa] = useState(0)
@@ -151,8 +152,11 @@ export default function App() {
       return
     }
     try {
+      // a identidade chega primeiro e já veste a tela de abertura com a logo
+      const pId = api<Identidade>(slug, "/barbearia")
+      pId.then((id) => { setIdentidade(id); guardarMarca(slug, id) }).catch(() => {})
       const [id, servicos, profissionais, disp, aviso] = await Promise.all([
-        api<Identidade>(slug, "/barbearia"),
+        pId,
         api<Servico[]>(slug, "/servicos"),
         api<Profissional[]>(slug, "/profissionais"),
         api<{ data: Ocupado[]; expediente: Expediente[] }>(slug, "/disponibilidade"),
@@ -166,7 +170,9 @@ export default function App() {
 
   useEffect(() => { carregar() }, [carregar])
 
-  useMarca(dados?.id, "Agendar horário")
+  const guardada = useMemo(() => marcaGuardada(slug), [slug])
+  const aberturaMinima = useAberturaMinima()
+  useMarca(dados?.id ?? identidade ?? guardada, "Agendar horário")
 
   const escolhidos = useMemo(() => dados?.servicos.filter((s) => servicosSel.includes(s.id)) ?? [], [dados, servicosSel])
   const total = escolhidos.reduce((t, s) => t + Number(s.price), 0)
@@ -250,17 +256,12 @@ export default function App() {
       </main>
     )
   }
-  if (!dados) {
-    return (
-      <main className="mx-auto grid min-h-dvh max-w-lg place-items-center">
-        <Loader2 className="size-8 animate-spin text-suave" aria-label="Carregando a agenda" />
-      </main>
-    )
-  }
+  // abertura com a logo da barbearia até a agenda carregar
+  if (!dados || aberturaMinima) return <Abertura id={dados?.id ?? identidade ?? guardada} />
 
   if (concluido && horario && data) {
     return (
-      <main className="mx-auto max-w-lg px-5 pb-16">
+      <main className="entrar mx-auto max-w-lg px-5 pb-16">
         <Cabecalho id={dados.id} />
         <section className="rounded-3xl border border-linha bg-cartao p-6 text-center">
           <div className="mx-auto mb-4 grid size-16 place-items-center rounded-full bg-marca text-sobre-marca">
@@ -301,7 +302,7 @@ export default function App() {
 
   /* ---------- etapas */
   return (
-    <main className="mx-auto max-w-lg px-5 pb-40">
+    <main className="entrar mx-auto max-w-lg px-5 pb-40">
       <Cabecalho id={dados.id} />
       <Progresso etapa={etapa} />
 
