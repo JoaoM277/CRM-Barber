@@ -123,7 +123,8 @@ class EquipeTest extends TestCase
         $this->postJson('/api/profissionais/eu-tambem-atendo')->assertCreated()
             ->assertJsonPath('worker.name', 'Léo Navalha')
             ->assertJsonPath('worker.payment_type', Worker::PAYMENT_PROPRIETARIO);
-        $this->getJson('/api/profissionais')->assertOk()->assertJsonPath('1.payment_type', Worker::PAYMENT_PROPRIETARIO);
+        $dono = collect($this->getJson('/api/profissionais')->assertOk()->json())->firstWhere('name', 'Léo Navalha');
+        $this->assertSame(Worker::PAYMENT_PROPRIETARIO, $dono['payment_type']);
 
         // um barbeiro (usuário comum) não vê como cada um recebe nem consegue mudar
         Sanctum::actingAs(User::factory()->create(['barbershop_id' => $bs->id, 'role' => 'user']));
