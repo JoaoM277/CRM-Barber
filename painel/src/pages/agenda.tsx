@@ -22,6 +22,7 @@ const COR_STATUS: Record<StatusAgendamento, string> = {
   confirmado: "border-l-success bg-success/10",
   concluido: "border-l-muted-foreground/40 bg-muted text-muted-foreground",
   cancelado: "border-l-destructive/50 bg-destructive/5 text-muted-foreground line-through opacity-70",
+  falta: "border-l-destructive bg-destructive/10 text-muted-foreground opacity-80",
 }
 
 /** Faixa de horário mostrada na grade: do primeiro ao último expediente ativo (padrão 8h–20h). */

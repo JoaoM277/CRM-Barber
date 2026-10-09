@@ -76,7 +76,7 @@ export type AvaliacaoPublica = { id: number; nota: number; comentario: string; c
 export type Servico = { id: number; name: string; description: string | null; duration_time: number | null; price: string | number; active: boolean; photo?: string | null; destaque?: "mais_pedido" | "novo" | null; categoria?: string | null }
 export type Profissional = { id: number; name: string; photo: string | null; speciality: string | null; active: boolean; bio?: string | null; instagram?: string | null }
 export type MeuHorario = {
-  status: "pendente" | "confirmado" | "concluido" | "cancelado"
+  status: "pendente" | "confirmado" | "concluido" | "cancelado" | "falta"
   date: string
   start_time: string
   end_time: string
@@ -86,6 +86,7 @@ export type MeuHorario = {
   servicos: string[]
   valor: number
   pode_alterar: boolean
+  pode_confirmar?: boolean
   motivo: string | null
   antecedencia_horas: number
   fidelidade: { selos: number; meta: number; premio: string | null; premio_disponivel: boolean } | null

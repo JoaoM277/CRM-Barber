@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useSearchParams } from "react-router"
 import { useQuery } from "@tanstack/react-query"
-import { CalendarPlus, Check, CheckCheck, Phone, X } from "lucide-react"
+import { CalendarPlus, CheckCheck, Phone, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -68,11 +68,6 @@ export function AgendaDoDia({ itens }: { itens: Agendamento[] }) {
                 </a>
               </Button>
             )}
-            {a.status === "pendente" && (
-              <Button variant="ghost" size="icon" title="Confirmar" aria-label="Confirmar agendamento" onClick={() => mudar.mutate({ id: a.id, status: "confirmado" })}>
-                <Check aria-hidden />
-              </Button>
-            )}
             {(a.status === "pendente" || a.status === "confirmado") && (
               <>
                 <Button variant="ghost" size="icon" title="Concluir atendimento" aria-label="Concluir atendimento" onClick={() => mudar.mutate({ id: a.id, status: "concluido" })}>
@@ -108,7 +103,7 @@ export default function VisaoGeral() {
     enabled: temFinanceiro,
   })
 
-  const ativos = (agenda ?? []).filter((a) => a.status !== "cancelado")
+  const ativos = (agenda ?? []).filter((a) => a.status !== "cancelado" && a.status !== "falta")
   const agora = new Date().toTimeString().slice(0, 5)
   const proximo = ativos.find((a) => a.status !== "concluido" && a.start_time >= agora)
   const aConfirmar = ativos.filter((a) => a.status === "pendente").length
@@ -128,7 +123,7 @@ export default function VisaoGeral() {
 
       <div className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Indicador rotulo="Atendimentos hoje" valor={isLoading ? <Skeleton className="h-8 w-10" /> : ativos.length} />
-        <Indicador rotulo="A confirmar" valor={isLoading ? <Skeleton className="h-8 w-10" /> : aConfirmar} />
+        <Indicador rotulo="Aguardando o cliente confirmar" valor={isLoading ? <Skeleton className="h-8 w-10" /> : aConfirmar} />
         <Indicador
           rotulo="Próximo cliente"
           valor={isLoading ? <Skeleton className="h-8 w-20" /> : proximo ? <span className="font-mono">{proximo.start_time}</span> : "—"}

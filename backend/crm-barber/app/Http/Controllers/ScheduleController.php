@@ -82,6 +82,7 @@ class ScheduleController extends Controller
             return [
                 'id' => $s->id,
                 'status' => $s->status,
+                'cancelado_por' => $s->cancelado_por,
                 'date' => (string) $s->date,
                 'data' => (string) $s->date,
                 'start_time' => substr((string) $s->start_time, 0, 5),

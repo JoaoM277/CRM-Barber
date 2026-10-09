@@ -3,6 +3,7 @@ import { useTheme } from "next-themes"
 import {
   CalendarDays,
   ChartColumn,
+  ClipboardList,
   CreditCard,
   LayoutDashboard,
   LogOut,
@@ -34,15 +35,17 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
-import { AvisoAssinatura, FaixaSuporte } from "@/components/banners"
+import { AvisoAssinatura, AvisoPendencias, FaixaSuporte } from "@/components/banners"
+import { useResumoPendencias } from "@/hooks/use-pendencias"
 import { useBarbearia, useMe } from "@/hooks/use-sessao"
 import { api, sair } from "@/lib/api"
 
-type Item = { to: string; titulo: string; icone: typeof Users; soAdmin?: boolean }
+type Item = { to: string; titulo: string; icone: typeof Users; soAdmin?: boolean; contador?: boolean }
 
 export const NAVEGACAO: Item[] = [
   { to: "/", titulo: "Visão geral", icone: LayoutDashboard },
   { to: "/agenda", titulo: "Agenda", icone: CalendarDays },
+  { to: "/pendencias", titulo: "Pendências", icone: ClipboardList, contador: true },
   { to: "/clientes", titulo: "Clientes", icone: Users },
   { to: "/servicos", titulo: "Serviços", icone: Scissors },
   { to: "/profissionais", titulo: "Profissionais", icone: UserRound },
@@ -63,6 +66,8 @@ function Menu() {
   const { setOpenMobile } = useSidebar()
   const { pathname } = useLocation()
   const itens = NAVEGACAO.filter((i) => !i.soAdmin || me?.role === "admin")
+  const { data: pend } = useResumoPendencias()
+  const totalPend = (pend?.nao_registrados ?? 0) + (pend?.faltas_para_revisar ?? 0)
 
   return (
     <SidebarMenu>
@@ -72,6 +77,11 @@ function Menu() {
             <NavLink to={i.to} end={i.to === "/"} onClick={() => setOpenMobile(false)}>
               <i.icone aria-hidden />
               <span>{i.titulo}</span>
+              {i.contador && totalPend > 0 && (
+                <span className="ml-auto rounded-full bg-warning px-1.5 py-0.5 text-[11px] leading-none font-semibold text-warning-foreground tabular-nums" aria-label={`${totalPend} pendências`}>
+                  {totalPend}
+                </span>
+              )}
             </NavLink>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -152,6 +162,7 @@ export function AppShell() {
         </header>
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 md:px-6 md:py-8">
           <AvisoAssinatura />
+          <AvisoPendencias />
           <Outlet />
         </main>
       </SidebarInset>

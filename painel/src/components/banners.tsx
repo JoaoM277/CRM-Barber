@@ -1,9 +1,50 @@
 import { Link, useLocation } from "react-router"
-import { LifeBuoy, TriangleAlert } from "lucide-react"
+import { ClipboardList, LifeBuoy, TriangleAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useResumoPendencias } from "@/hooks/use-pendencias"
 import { useMe } from "@/hooks/use-sessao"
 import { api, sair } from "@/lib/api"
 import { dataBR, diasAte } from "@/lib/format"
+
+const diaCurto = (iso: string) => {
+  const [a, m, d] = iso.split("-").map(Number)
+  const dt = new Date(a, m - 1, d)
+  return `${dt.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")} ${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}`
+}
+
+/**
+ * Atendimentos esquecidos: dias anteriores sem registro (acumulam) e faltas
+ * automáticas que ainda dá para corrigir. Some quando tudo está registrado.
+ */
+export function AvisoPendencias() {
+  const { data: r } = useResumoPendencias()
+  const { pathname } = useLocation()
+  if (!r || pathname.startsWith("/pendencias") || (!r.nao_registrados && !r.faltas_para_revisar)) return null
+
+  const partes: string[] = []
+  if (r.nao_registrados === 1 && r.por_dia[0]) {
+    const d = new Date(`${r.por_dia[0].data}T12:00`)
+    partes.push(`Atendimento de ${d.toLocaleDateString("pt-BR", { weekday: "long" })} (${dataBR(r.por_dia[0].data)}) não registrado`)
+  } else if (r.nao_registrados > 1) {
+    const dias = r.por_dia.map((d) => `${diaCurto(d.data)} (${d.total})`).join(", ")
+    partes.push(`${r.nao_registrados} atendimentos sem registro: ${dias}${r.dias > r.por_dia.length ? "…" : ""}`)
+  }
+  if (r.faltas_para_revisar) {
+    partes.push(`${r.faltas_para_revisar} falta${r.faltas_para_revisar > 1 ? "s" : ""} automática${r.faltas_para_revisar > 1 ? "s" : ""} para revisar`)
+  }
+
+  return (
+    <div role="status" className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
+      <span className="inline-flex items-start gap-2">
+        <ClipboardList className="mt-0.5 size-4 shrink-0" aria-hidden />
+        <span>{partes.join(" · ")}</span>
+      </span>
+      <Button size="sm" variant="outline" asChild>
+        <Link to="/pendencias">Registrar agora</Link>
+      </Button>
+    </div>
+  )
+}
 
 /** Faixa do acesso de suporte (aberto pelo painel da plataforma). */
 export function FaixaSuporte() {

@@ -11,10 +11,11 @@ const DIAS_A_FRENTE = 14
 const QUALQUER = "qualquer" as const
 
 const STATUS: Record<Horario["status"], { texto: string; classe: string }> = {
-  pendente: { texto: "Marcado", classe: "bg-marca/15 text-texto" },
+  pendente: { texto: "A confirmar", classe: "bg-marca/15 text-texto" },
   confirmado: { texto: "Confirmado", classe: "bg-marca text-sobre-marca" },
   concluido: { texto: "Concluído", classe: "bg-linha text-suave" },
   cancelado: { texto: "Cancelado", classe: "bg-erro/10 text-erro" },
+  falta: { texto: "Não compareceu", classe: "bg-erro/10 text-erro" },
 }
 
 type Base = { id: Identidade; horario: Horario; profissionais: Profissional[]; expediente: Expediente[]; ocupados: Ocupado[] }
@@ -49,7 +50,7 @@ export default function MeuHorario({ token }: { token: string }) {
   const [falha, setFalha] = useState<string | null>(null)
   const [identidade, setIdentidade] = useState<Identidade | null>(null)
   const [modo, setModo] = useState<"ver" | "cancelar" | "remarcar">("ver")
-  const [feito, setFeito] = useState<"cancelado" | "remarcado" | null>(null)
+  const [feito, setFeito] = useState<"cancelado" | "remarcado" | "confirmado" | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
@@ -111,6 +112,23 @@ export default function MeuHorario({ token }: { token: string }) {
   }, [modo, livresPorDia, dias, data])
 
   /* ---------- ações */
+  async function confirmar() {
+    if (!slug) return
+    setEnviando(true)
+    setErro(null)
+    try {
+      const r = await api<{ horario: Horario }>(slug, `${caminho}/confirmar`, {})
+      setBase((b) => (b ? { ...b, horario: r.horario } : b))
+      setFeito("confirmado")
+      window.scrollTo({ top: 0 })
+    } catch (e) {
+      setErro((e as ErroApi).message)
+      carregar()
+    } finally {
+      setEnviando(false)
+    }
+  }
+
   async function enviar(acao: "cancelar" | "remarcar") {
     if (!slug) return
     setEnviando(true)
@@ -219,8 +237,8 @@ export default function MeuHorario({ token }: { token: string }) {
             <div className={clsx("mx-auto mb-3 grid size-14 place-items-center rounded-full", feito === "cancelado" ? "bg-erro/10 text-erro" : "bg-marca text-sobre-marca")}>
               <Check className="size-8" strokeWidth={3} aria-hidden />
             </div>
-            <h2 className="text-2xl font-bold">{feito === "cancelado" ? "Horário cancelado" : "Horário remarcado!"}</h2>
-            <p className="mt-1 text-suave">{feito === "cancelado" ? "A barbearia já está sabendo." : "A agenda da barbearia já foi atualizada."}</p>
+            <h2 className="text-2xl font-bold">{{ cancelado: "Horário cancelado", remarcado: "Horário remarcado!", confirmado: "Presença confirmada!" }[feito]}</h2>
+            <p className="mt-1 text-suave">{{ cancelado: "A barbearia já está sabendo.", remarcado: "A agenda da barbearia já foi atualizada.", confirmado: "Obrigado! Te esperamos no horário." }[feito]}</p>
           </div>
         ) : (
           <div className="mb-4 flex items-center justify-between gap-3">
@@ -237,6 +255,17 @@ export default function MeuHorario({ token }: { token: string }) {
         </dl>
 
         {erro && modo === "ver" && <p role="alert" className="mt-4 rounded-2xl border border-erro/40 bg-erro/10 p-3 text-sm text-erro">{erro}</p>}
+
+        {h.pode_confirmar && modo === "ver" && (
+          // a confirmação é do cliente: sem ela, o horário pode cair como falta 1h depois
+          <div className="mt-5 rounded-2xl border border-marca/40 bg-marca/10 p-4">
+            <p className="font-semibold">Você vai?</p>
+            <p className="mt-0.5 text-sm text-suave">Confirme sua presença para a barbearia guardar o seu horário.</p>
+            <button type="button" onClick={confirmar} disabled={enviando} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-marca px-5 py-3.5 font-semibold text-sobre-marca disabled:opacity-50">
+              {enviando ? <Loader2 className="size-5 animate-spin" aria-label="Confirmando" /> : <><Check className="size-5" strokeWidth={3} aria-hidden /> Confirmar presença</>}
+            </button>
+          </div>
+        )}
 
         {h.status === "cancelado" ? (
           <a href={linkAgendar} className="mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-marca px-5 py-3.5 font-semibold text-sobre-marca">

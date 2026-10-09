@@ -7,6 +7,7 @@ import Clientes from "@/pages/clientes"
 import Configuracoes from "@/pages/configuracoes"
 import Financeiro from "@/pages/financeiro"
 import PaginaAgendamento from "@/pages/pagina"
+import Pendencias from "@/pages/pendencias"
 import Produtos from "@/pages/produtos"
 import Profissionais from "@/pages/profissionais"
 import Relatorios from "@/pages/relatorios"
@@ -29,6 +30,7 @@ export default function App() {
         <Route element={<AppShell />}>
           <Route index element={<VisaoGeral />} />
           <Route path="agenda" element={<Agenda />} />
+          <Route path="pendencias" element={<Pendencias />} />
           <Route path="clientes" element={<Clientes />} />
           <Route path="servicos" element={<Servicos />} />
           <Route path="profissionais" element={<Profissionais />} />

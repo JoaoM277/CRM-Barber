@@ -18,6 +18,7 @@ function useRecarregarAgenda() {
   return () => {
     qc.invalidateQueries({ queryKey: ["agendamentos"] })
     qc.invalidateQueries({ queryKey: ["lista-espera"] })
+    qc.invalidateQueries({ queryKey: ["pendencias"] })
     qc.invalidateQueries({ queryKey: ["faturamento"] })
     qc.invalidateQueries({ queryKey: ["onboarding"] })
   }
@@ -28,6 +29,7 @@ const MSG_STATUS: Record<StatusAgendamento, string> = {
   concluido: "Atendimento concluído.",
   cancelado: "Agendamento cancelado.",
   pendente: "Agendamento reaberto.",
+  falta: "Registrado como falta.",
 }
 
 export function useMudarStatus() {

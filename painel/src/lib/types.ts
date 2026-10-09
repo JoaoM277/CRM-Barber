@@ -64,7 +64,7 @@ export type Onboarding = {
   slug: string
 }
 
-export type StatusAgendamento = "pendente" | "confirmado" | "concluido" | "cancelado"
+export type StatusAgendamento = "pendente" | "confirmado" | "concluido" | "cancelado" | "falta"
 
 export type Agendamento = {
   id: number
@@ -83,6 +83,7 @@ export type Agendamento = {
   total_produtos?: number
   fidelidade?: Fidelidade | null
   client_id?: number | null
+  cancelado_por?: "cliente" | "barbearia" | "sistema" | null
 }
 
 export type Fidelidade = { selos: number; meta: number; premio: string | null; premio_disponivel: boolean }

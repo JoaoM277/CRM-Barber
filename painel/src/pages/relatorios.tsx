@@ -11,7 +11,7 @@ import { api } from "@/lib/api"
 import { dataBR } from "@/lib/format"
 
 type Relatorio = {
-  agenda: { total: number; concluidos: number; cancelados: number; cancelados_pelo_cliente: number; taxa_cancelamento: number }
+  agenda: { total: number; concluidos: number; cancelados: number; cancelados_pelo_cliente: number; taxa_cancelamento: number; faltas?: number; taxa_faltas?: number }
   clientes: { atendidos: number; novos: number; recorrentes: number }
   retorno: { janela_dias: number; coorte: number; voltaram: number; taxa: number | null; intervalo_medio_dias: number | null }
   ocupacao: {
@@ -149,7 +149,7 @@ export default function Relatorios() {
         <Skeleton className="h-96 w-full rounded-xl" />
       ) : (
         <div className="grid gap-6">
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
             <Indicador
               rotulo="Clientes atendidos"
               valor={String(data.clientes.atendidos)}
@@ -165,6 +165,11 @@ export default function Relatorios() {
               rotulo="Cancelamentos"
               valor={pct(data.agenda.taxa_cancelamento)}
               nota={`${data.agenda.cancelados} de ${data.agenda.total}${data.agenda.cancelados_pelo_cliente ? ` · ${data.agenda.cancelados_pelo_cliente} pelo cliente` : ""}`}
+            />
+            <Indicador
+              rotulo="Faltas"
+              valor={pct(data.agenda.taxa_faltas ?? 0)}
+              nota={`${data.agenda.faltas ?? 0} de ${data.agenda.total} · não confirmaram e não vieram`}
             />
           </div>
 

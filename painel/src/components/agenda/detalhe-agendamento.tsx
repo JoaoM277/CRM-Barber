@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
+import { Link } from "react-router"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Check, CheckCheck, MessageCircle, Minus, Plus, RotateCcw, Trash2, X } from "lucide-react"
+import { CheckCheck, MessageCircle, Minus, Plus, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -165,11 +166,6 @@ export function DetalheAgendamento({ agendamento: a, onFechar }: { agendamento: 
                 </a>
               </Button>
             )}
-            {a.status === "pendente" && (
-              <Button size="sm" onClick={() => mudar.mutate({ id: a.id, status: "confirmado" })}>
-                <Check aria-hidden /> Confirmar
-              </Button>
-            )}
             {aberto && (
               <Button size="sm" variant="secondary" onClick={() => mudar.mutate({ id: a.id, status: "concluido" }, { onSuccess: onFechar })}>
                 <CheckCheck aria-hidden /> Concluir atendimento
@@ -180,14 +176,24 @@ export function DetalheAgendamento({ agendamento: a, onFechar }: { agendamento: 
                 <X aria-hidden /> Cancelar
               </Button>
             )}
-            {!aberto && (
-              <Button size="sm" variant="outline" onClick={() => mudar.mutate({ id: a.id, status: "pendente" })}>
-                <RotateCcw aria-hidden /> Reabrir
-              </Button>
-            )}
           </div>
+          {a.status === "pendente" && (
+            <p className="text-xs text-muted-foreground">
+              A confirmação vem do cliente (resposta ao lembrete ou link). Você só registra se o atendimento aconteceu.
+            </p>
+          )}
+          {a.status === "cancelado" && a.cancelado_por && (
+            <p className="text-sm text-muted-foreground">{a.cancelado_por === "cliente" ? "Cancelado pelo cliente." : "Cancelado pela barbearia."}</p>
+          )}
+          {a.status === "falta" && (
+            <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+              {a.cancelado_por === "sistema"
+                ? <>Falta automática: o cliente não confirmou e o atendimento não foi registrado. Se ele veio, corrija em <Link to="/pendencias" className="font-medium underline underline-offset-2" onClick={onFechar}>Pendências</Link>.</>
+                : "Registrado como falta."}
+            </p>
+          )}
 
-          {vendeProdutos && a.status !== "cancelado" && (
+          {vendeProdutos && a.status !== "cancelado" && a.status !== "falta" && (
             <>
               <Separator />
               <ProdutosDoAtendimento a={a} />
