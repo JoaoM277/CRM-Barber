@@ -96,7 +96,7 @@ function Previa({ slug, pagina }: { slug: string; pagina: object }) {
 
   return (
     <div className="mx-auto w-full max-w-[380px]">
-      <div className="overflow-hidden rounded-[2.5rem] border-[10px] border-foreground/90 bg-background shadow-xl">
+      <div className="overflow-hidden rounded-[2.5rem] border-[8px] border-foreground/90 bg-background shadow-xl">
         <iframe ref={frame} src={src} title="Pré-visualização da página de agendamento" className="h-[720px] w-full" onLoad={enviar} />
       </div>
       <p className="mt-2 text-center text-xs text-muted-foreground">Pré-visualização ao vivo. Agendar por aqui não marca nada.</p>
