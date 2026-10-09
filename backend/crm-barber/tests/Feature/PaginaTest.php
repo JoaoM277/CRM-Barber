@@ -38,7 +38,8 @@ class PaginaTest extends TestCase
         Subscription::create([
             'barbershop_id' => $this->bs->id,
             'plan_id' => Plan::where('slug', $plano)->value('id'),
-            'status' => Subscription::STATUS_ACTIVE,
+            'status' => Subscription::STATUS_TRIALING,
+            'trial_ends_at' => now()->addDays(10),
         ]);
     }
 
