@@ -25,6 +25,7 @@ use App\Http\Controllers\ReativacaoController;
 use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AvaliacaoController;
+use App\Http\Controllers\AvaliacoesController;
 use App\Http\Controllers\FidelidadeController;
 use App\Http\Controllers\ListaEsperaController;
 use App\Http\Controllers\PaginaController;
@@ -66,6 +67,9 @@ Route::middleware('tenant')->group(function () {
         Route::get('/disponibilidade', [ScheduleController::class, 'disponibilidade'])->name('agendamentos.disponibilidade');
         Route::get('/avisos/ativo', [AvisoController::class, 'ativo'])->name('avisos.ativo');
         Route::get('/barbearia', [BarbershopController::class, 'publicIdentity'])->name('barbearia.identidade');
+
+        // Avaliações publicadas (nota 4–5 com comentário, não escondidas)
+        Route::get('/avaliacoes', [AvaliacoesController::class, 'publicas'])->name('avaliacoes.publicas');
 
         // Lista de espera: "me avise se abrir vaga neste dia"
         Route::post('/lista-espera', [ListaEsperaController::class, 'store'])->middleware('throttle:10,1')->name('lista-espera.store');
@@ -189,6 +193,10 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
         // Reativação de clientes sumidos (convite automático no WhatsApp)
         Route::get('/whatsapp/reativacao', [ReativacaoController::class, 'show'])->name('whatsapp.reativacao');
         Route::put('/whatsapp/reativacao', [ReativacaoController::class, 'update'])->name('whatsapp.reativacao.update');
+
+        // Aba "Avaliações": lista, responder e esconder
+        Route::get('/avaliacoes', [AvaliacoesController::class, 'index'])->name('avaliacoes.index');
+        Route::put('/avaliacoes/{schedule}', [AvaliacoesController::class, 'update'])->name('avaliacoes.update');
 
         // Avaliação pós-atendimento (pedido de nota + link do Google)
         Route::get('/whatsapp/avaliacao', [AvaliacaoController::class, 'show'])->name('whatsapp.avaliacao');

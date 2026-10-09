@@ -64,7 +64,7 @@ messageList.AVALIACAO_PEDIDO = (name, a) =>
 messageList.AVALIACAO_ALTA = (name, a) =>
   a?.reviewLink
     ? `Que bom saber, ${name}! ⭐ Se puder, deixe sua avaliação no Google. Leva 1 minuto e ajuda muito a barbearia:\n\n${a.reviewLink}`
-    : `Que bom saber, ${name}! ⭐ Obrigado pela avaliação. Até a próxima!`;
+    : `Que bom saber, ${name}! ⭐ Se quiser, conte em uma frase o que mais gostou: seu comentário aparece na página da barbearia e ajuda quem ainda não conhece.`;
 
 messageList.AVALIACAO_BAIXA = (name) =>
   `Obrigado pela sinceridade, ${name}. Se quiser, conte aqui o que aconteceu: a barbearia vai ler e melhorar.`;

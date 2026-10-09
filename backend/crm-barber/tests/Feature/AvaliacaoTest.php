@@ -31,7 +31,7 @@ class AvaliacaoTest extends TestCase
         Carbon::setTestNow('2026-10-08 15:00:00');
         config(['services.evolution.webhook_token' => 'tok-evo']);
 
-        $this->bs = Barbershop::factory()->create(['google_review_url' => 'https://g.page/r/loja/review']);
+        $this->bs = Barbershop::factory()->create(['google_review_url' => 'https://g.page/r/loja/review', 'avaliacao_google' => true]);
         $this->cliente = Client::factory()->create(['barbershop_id' => $this->bs->id, 'phone' => '5511987654321']);
         Instance::create(['barbershop_id' => $this->bs->id, 'name' => 'loja-x1', 'status' => Instance::STATUS_CONECTADO]);
     }

@@ -3,7 +3,7 @@ import { CalendarCog, CalendarPlus, Check, ChevronLeft, Loader2, Scissors, X } f
 import clsx from "clsx"
 import { api, ErroApi, slugDaPagina, type Aviso, type Identidade, type Profissional, type Servico } from "./lib/api"
 import { deISO, horariosLivres, isoLocal, type Expediente, type Horario, type Ocupado } from "./lib/horarios"
-import { emPrevia, Galeria, Sobre, usePagina, usePreviaDoPainel } from "./pagina"
+import { AvaliacoesClientes, emPrevia, Galeria, Sobre, usePagina, usePreviaDoPainel } from "./pagina"
 import { QUALQUER, SeletorProfissionais, SeletorServicos } from "./seletores"
 import { SeletorDeHorario } from "./seletor-horario"
 import { Abertura, baixarIcs, Cabecalho, dataLonga, guardarMarca, marcaGuardada, moeda, Rodape, useAberturaMinima, useMarca } from "./ui"
@@ -330,6 +330,7 @@ export default function App() {
             />
           )}
           {pagina && <Sobre p={pagina} expediente={dados.expediente} />}
+          {dados.id.avaliacoes && <AvaliacoesClientes slug={slug!} resumo={dados.id.avaliacoes} />}
         </section>
       )}
 

@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router"
 import { AppShell } from "@/components/app-shell"
 import Agenda from "@/pages/agenda"
 import AssinaturaPage from "@/pages/assinatura"
+import Avaliacoes from "@/pages/avaliacoes"
 import Clientes from "@/pages/clientes"
 import Configuracoes from "@/pages/configuracoes"
 import Financeiro from "@/pages/financeiro"
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="profissionais" element={<Profissionais />} />
           <Route path="financeiro" element={<SoAdmin><Financeiro /></SoAdmin>} />
           <Route path="relatorios" element={<SoAdmin><Relatorios /></SoAdmin>} />
+          <Route path="avaliacoes" element={<SoAdmin><Avaliacoes /></SoAdmin>} />
           <Route path="produtos" element={<SoAdmin><Produtos /></SoAdmin>} />
           <Route path="pagina" element={<SoAdmin><PaginaAgendamento /></SoAdmin>} />
           <Route path="whatsapp" element={<SoAdmin><WhatsApp /></SoAdmin>} />

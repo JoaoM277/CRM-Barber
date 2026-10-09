@@ -96,7 +96,7 @@ class SendAppointmentWhatsapp implements ShouldQueue
             'meta' => $this->trigger === self::FIDELIDADE_PREMIO ? (int) $schedule->barbershop?->fidelidade_meta : null,
             'premio' => $this->trigger === self::FIDELIDADE_PREMIO ? $schedule->barbershop?->fidelidade_premio : null,
             // avaliação no Google (agradecimento de nota alta)
-            'review_link' => $this->trigger === self::AVALIACAO_ALTA ? ($schedule->barbershop?->google_review_url ?: null) : null,
+            'review_link' => $this->trigger === self::AVALIACAO_ALTA && $schedule->barbershop?->avaliacao_google ? ($schedule->barbershop->google_review_url ?: null) : null,
             // link para o próprio cliente cancelar/remarcar, se ainda pode
             'manage_link' => in_array($this->trigger, self::COM_LINK_DO_CLIENTE, true) && $schedule->bloqueioAlteracaoCliente() === null
                 ? $schedule->linkCliente()

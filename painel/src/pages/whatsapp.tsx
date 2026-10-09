@@ -158,14 +158,14 @@ function Reativacao() {
   )
 }
 
-/** Pedido de nota depois do atendimento + link do Google para quem gostou. */
+/** Pedido de nota depois do atendimento (as avaliações ficam na própria Vellis; Google é opcional). */
 function Avaliacao() {
   const qc = useQueryClient()
-  const { data } = useQuery({ queryKey: ["avaliacao"], queryFn: () => api<{ ativo: boolean; google_review_url: string | null }>("/whatsapp/avaliacao"), retry: false })
+  const { data } = useQuery({ queryKey: ["avaliacao"], queryFn: () => api<{ ativo: boolean; google: boolean; google_review_url: string | null }>("/whatsapp/avaliacao"), retry: false })
   const [link, setLink] = useState<string | null>(null)
   const salvar = useMutation({
-    mutationFn: (body: { ativo?: boolean; google_review_url?: string | null }) =>
-      api<{ message: string; ativo: boolean; google_review_url: string | null }>("/whatsapp/avaliacao", { method: "PUT", body }),
+    mutationFn: (body: { ativo?: boolean; google?: boolean; google_review_url?: string | null }) =>
+      api<{ message: string; ativo: boolean; google: boolean; google_review_url: string | null }>("/whatsapp/avaliacao", { method: "PUT", body }),
     onSuccess: (r) => {
       qc.setQueryData(["avaliacao"], r)
       setLink(null)
@@ -183,23 +183,32 @@ function Avaliacao() {
         <div>
           <CardTitle>Avaliação pós-atendimento</CardTitle>
           <CardDescription>
-            1h depois de você marcar o atendimento como <strong>concluído</strong>, o cliente recebe "de 1 a 5, como foi?". Nota 4 ou 5
-            recebe o link de avaliação do Google; nota baixa pode contar o que houve, e você lê em Relatórios. No máximo um pedido
-            por cliente a cada 30 dias.
+            1h depois de você marcar o atendimento como <strong>concluído</strong>, o cliente recebe "de 1 a 5, como foi?" e pode deixar um
+            comentário. Tudo fica na aba <Link to="/avaliacoes" className="underline underline-offset-2">Avaliações</Link>; notas 4 e 5 com
+            comentário aparecem na sua página de agendamento. No máximo um pedido por cliente a cada 30 dias.
           </CardDescription>
         </div>
         <Switch checked={data.ativo} disabled={salvar.isPending} onCheckedChange={(v) => salvar.mutate({ ativo: v })} aria-label="Avaliação pós-atendimento" />
       </CardHeader>
       {data.ativo && (
-        <CardContent>
+        <CardContent className="grid gap-4">
+          <label className="flex items-start justify-between gap-3">
+            <span className="text-sm">
+              <span className="font-medium">Também pedir avaliação no Google</span>
+              <span className="block text-muted-foreground">Nota 4 ou 5 recebe o link do Google em vez do pedido de comentário.</span>
+            </span>
+            <Switch checked={data.google} disabled={salvar.isPending} onCheckedChange={(v) => salvar.mutate({ google: v })} aria-label="Também pedir avaliação no Google" />
+          </label>
+          {data.google && (
           <form className="grid gap-1.5" onSubmit={(e) => { e.preventDefault(); salvar.mutate({ google_review_url: valorLink.trim() || null }) }}>
-            <Label htmlFor="google-review">Link de avaliação no Google (opcional)</Label>
+            <Label htmlFor="google-review">Link de avaliação no Google</Label>
             <div className="flex flex-wrap gap-2">
               <Input id="google-review" type="url" value={valorLink} onChange={(e) => setLink(e.target.value)} placeholder="https://g.page/r/.../review" className="min-w-0 flex-1 basis-64" />
               <Button type="submit" variant="outline" disabled={salvar.isPending || valorLink === (data.google_review_url ?? "")}>Salvar link</Button>
             </div>
-            <p className="text-xs text-muted-foreground">No Perfil da Empresa no Google, use "Pedir avaliações" e copie o link.</p>
+            <p className="text-xs text-muted-foreground">No Perfil da Empresa no Google, use "Pedir avaliações" e copie o link. Sem link, segue o pedido de comentário.</p>
           </form>
+          )}
         </CardContent>
       )}
     </Card>

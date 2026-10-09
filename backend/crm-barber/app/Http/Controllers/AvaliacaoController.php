@@ -23,6 +23,7 @@ class AvaliacaoController extends Controller
         $data = $request->validate([
             'ativo' => 'sometimes|boolean',
             'google_review_url' => ['sometimes', 'nullable', 'url:https', 'max:500'],
+            'google' => 'sometimes|boolean',
         ]);
 
         $bs = $this->tenant->barbershop();
@@ -31,6 +32,9 @@ class AvaliacaoController extends Controller
         $campos = [];
         if (array_key_exists('ativo', $data)) {
             $campos['avaliacao_whatsapp'] = $data['ativo'];
+        }
+        if (array_key_exists('google', $data)) {
+            $campos['avaliacao_google'] = $data['google'];
         }
         if (array_key_exists('google_review_url', $data)) {
             $campos['google_review_url'] = $data['google_review_url'] ?: null;
@@ -45,6 +49,6 @@ class AvaliacaoController extends Controller
         $bs = $this->tenant->barbershop();
         abort_unless($bs, 404);
 
-        return ['ativo' => (bool) $bs->avaliacao_whatsapp, 'google_review_url' => $bs->google_review_url];
+        return ['ativo' => (bool) $bs->avaliacao_whatsapp, 'google' => (bool) $bs->avaliacao_google, 'google_review_url' => $bs->google_review_url];
     }
 }

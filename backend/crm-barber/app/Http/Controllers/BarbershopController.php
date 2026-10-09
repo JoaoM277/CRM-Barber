@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBarbershopRequest;
 use App\Models\Barbershop;
+use App\Support\Avaliacoes;
 use App\Support\PaginaPersonalizada;
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
@@ -71,6 +72,8 @@ class BarbershopController extends Controller
             'lista_espera' => (bool) $bs->lista_espera_ativa,
             // estilo, capa, galeria, textos e contato (null = plano sem personalização)
             'pagina' => PaginaPersonalizada::publica($bs),
+            // nota média e total (selo no topo da página); null sem avaliações
+            'avaliacoes' => Avaliacoes::resumo($bs),
         ]);
     }
 

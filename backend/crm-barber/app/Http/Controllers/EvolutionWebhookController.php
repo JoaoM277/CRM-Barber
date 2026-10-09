@@ -137,13 +137,13 @@ class EvolutionWebhookController extends Controller
         return $this->ok('avaliacao');
     }
 
-    /** Depois de uma nota baixa, a próxima mensagem (em até 24h) vira o comentário. */
+    /** Depois da nota, a próxima mensagem (em até 24h) vira o comentário. */
     private function comentario(int $barbershopId, int $clienteId, string $texto): JsonResponse
     {
         $s = Schedule::withoutGlobalScopes()
             ->where('barbershop_id', $barbershopId)
             ->where('client_id', $clienteId)
-            ->where('avaliacao_nota', '<=', 3)
+            ->whereNotNull('avaliacao_nota')
             ->where('avaliacao_em', '>=', now()->subHours(24))
             ->whereNull('avaliacao_comentario')
             ->latest('avaliacao_em')

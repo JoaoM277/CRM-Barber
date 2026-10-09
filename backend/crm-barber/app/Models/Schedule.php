@@ -53,6 +53,9 @@ class Schedule extends Model
         'avaliacao_nota',
         'avaliacao_em',
         'avaliacao_comentario',
+        'avaliacao_oculta',
+        'avaliacao_resposta',
+        'avaliacao_respondida_em',
     ];
 
     /** Chave do link "meu horário": só vai para o cliente (WhatsApp / tela de sucesso). */
@@ -115,6 +118,8 @@ class Schedule extends Model
         'avaliacao_pedida_em' => 'datetime',
         'avaliacao_nota' => 'integer',
         'avaliacao_em' => 'datetime',
+        'avaliacao_oculta' => 'boolean',
+        'avaliacao_respondida_em' => 'datetime',
     ];
 
     // withTrashed(): histórico não pode sumir quando cliente/profissional/

@@ -2,7 +2,7 @@
 // galeria e "sobre". Sem personalização (pagina = null) tudo fica no visual padrão.
 import { useEffect, useState } from "react"
 import { AtSign, ChevronLeft, ChevronRight, Clock, MapPin, MessageCircle, X } from "lucide-react"
-import type { Pagina } from "./lib/api"
+import { api, type AvaliacaoPublica, type Pagina } from "./lib/api"
 import type { Expediente } from "./lib/horarios"
 
 const FAMILIAS: Record<Pagina["fonte"], string> = {
@@ -160,5 +160,63 @@ export function Sobre({ p, expediente }: { p: Pagina; expediente: Expediente[] }
         )}
       </div>
     </details>
+  )
+}
+
+const estrelas = (n: number) => "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n)
+const dataCurta = (iso: string) => iso.split("-").reverse().join("/")
+
+/** "O que dizem os clientes": nota média e comentários publicados (4–5 estrelas). */
+export function AvaliacoesClientes({ slug, resumo }: { slug: string; resumo: { media: number; total: number } }) {
+  const [itens, setItens] = useState<AvaliacaoPublica[]>([])
+  const [pagina, setPagina] = useState(1)
+  const [mais, setMais] = useState(false)
+  const [carregando, setCarregando] = useState(true)
+
+  useEffect(() => {
+    let vivo = true
+    setCarregando(true)
+    api<{ data: AvaliacaoPublica[]; mais: boolean }>(slug, `/avaliacoes?page=${pagina}`)
+      .then((r) => { if (vivo) { setItens((x) => (pagina === 1 ? r.data : [...x, ...r.data])); setMais(r.mais) } })
+      .catch(() => {})
+      .finally(() => vivo && setCarregando(false))
+    return () => { vivo = false }
+  }, [slug, pagina])
+
+  return (
+    <section id="avaliacoes" className="mt-8 scroll-mt-4" aria-labelledby="avaliacoes-titulo">
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <h2 id="avaliacoes-titulo" className="text-lg font-bold">O que dizem os clientes</h2>
+        <p className="text-right text-sm">
+          <span className="text-lg font-bold tabular">{resumo.media.toLocaleString("pt-BR", { minimumFractionDigits: 1 })}</span>
+          <span className="ml-1 text-amber-500" aria-hidden>{estrelas(Math.round(resumo.media))}</span>
+          <span className="block text-xs text-suave">{resumo.total} {resumo.total === 1 ? "avaliação" : "avaliações"}</span>
+        </p>
+      </div>
+      {itens.length === 0 && !carregando ? (
+        <p className="rounded-2xl border border-dashed border-linha p-5 text-center text-sm text-suave">Ainda sem comentários publicados.</p>
+      ) : (
+        <ul className="grid gap-2.5">
+          {itens.map((a) => (
+            <li key={a.id} className="rounded-2xl border border-linha bg-cartao p-4">
+              <p className="text-amber-500" aria-label={`Nota ${a.nota} de 5`}>{estrelas(a.nota)}</p>
+              <p className="mt-1 whitespace-pre-line">{a.comentario}</p>
+              <p className="mt-2 text-xs text-suave">{a.cliente}{a.profissional ? ` · com ${a.profissional}` : ""} · {dataCurta(a.em)}</p>
+              {a.resposta && (
+                <div className="mt-3 rounded-xl bg-fundo p-3 text-sm">
+                  <p className="text-xs font-semibold text-marca">Resposta da barbearia</p>
+                  <p className="mt-0.5 whitespace-pre-line text-suave">{a.resposta}</p>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {mais && (
+        <button type="button" onClick={() => setPagina(pagina + 1)} disabled={carregando} className="mt-3 w-full rounded-2xl border border-linha py-3 font-medium disabled:opacity-50">
+          {carregando ? "Carregando…" : "Ver mais avaliações"}
+        </button>
+      )}
+    </section>
   )
 }

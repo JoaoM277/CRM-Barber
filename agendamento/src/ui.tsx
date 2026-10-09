@@ -124,6 +124,14 @@ export function Cabecalho({ id, comContatos }: { id: Identidade; comContatos?: b
         </div>
         <h1 className="text-2xl font-bold tracking-tight">{id.name}</h1>
         {id.subtitle && id.subtitle !== "BARBEARIA" && <p className="mt-0.5 text-suave">{id.subtitle}</p>}
+        {id.avaliacoes && (
+          // nota média: no 1º passo leva até os comentários
+          <a href={comContatos ? "#avaliacoes" : undefined} className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium" aria-label={`Nota ${id.avaliacoes.media} de 5, ${id.avaliacoes.total} avaliações`}>
+            <span className="text-amber-500" aria-hidden>★</span>
+            <span className="tabular">{id.avaliacoes.media.toLocaleString("pt-BR", { minimumFractionDigits: 1 })}</span>
+            <span className="text-suave">· {id.avaliacoes.total} {id.avaliacoes.total === 1 ? "avaliação" : "avaliações"}</span>
+          </a>
+        )}
         {id.city && !p?.endereco && (
           <p className="mt-1 inline-flex items-center gap-1 text-sm text-suave">
             <MapPin className="size-3.5" aria-hidden /> {id.city}{id.state ? ` · ${id.state}` : ""}
