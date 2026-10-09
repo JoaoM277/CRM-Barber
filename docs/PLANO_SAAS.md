@@ -108,6 +108,20 @@ O usuário passa as tasks uma a uma ("Correção N - Task M"). Todas abaixo est�
 - [x] 10 modelos de seletor de dia/horário (Faixa de dias, Compacto, Calendário, Menu suspenso, Por período no Pro; Linha do tempo, Próximos horários, Semana, Cartões por dia, Sanfona no Premium). Sanfona abre e fecha na mesma seta
 - Regra de planos: Básico = cor + logo + modelos padrão; Pro (recurso `personalizacao`) = 5 modelos de cada; Premium (`seletores_premium`) = os 10. Plano rebaixado volta ao padrão sem perder a escolha salva
 
+**Correção 2 — Avaliações dentro da Vellis** (10/10/2026)
+- [x] Nota 4–5 pede comentário (Google virou opção, desligada); comentário vale para qualquer nota
+- [x] Página de agendamento: selo com a média e "O que dizem os clientes" (4–5 com comentário, nome abreviado, resposta da barbearia)
+- [x] Aba "Avaliações" no painel: média, distribuição, filtros, responder e esconder
+
+**Correção 3 — Horários** (10/10/2026)
+- [x] Dias seguintes acompanham o horário do dia anterior que estava igual; dia alterado à mão fica próprio; "igualar a …"
+
+**Correção 4 — Barbeiro solo ou equipe** (10/10/2026)
+- [x] Cadastro pergunta "Como você trabalha?"; solo cria o dono como profissional "Dono" (sem comissão/repasse; financeiro mostra "Seu resultado")
+- [x] Cadastrar um barbeiro vira equipe sozinho; troca manual em Configurações > Barbearia
+- [x] Dono da equipe que atende: "Eu também atendo"; tipo de pagamento só o admin vê/altera (API esconde dos outros usuários)
+- [x] Página de agendamento pula "Com quem?" quando há um profissional só
+
 **Próximos passos (retomar daqui)**
 - Aguardar as próximas tasks de correção do usuário
 - Depois: item 9 da Fase 5 (multi-unidade) ou Fase 6
