@@ -238,33 +238,25 @@ export function SeletorServicos({ modelo, grupos, selecionados, alternar }: {
         </div>
       )
 
-    case "vitrine": {
-      const capa = todos.find((s) => s.destaque) ?? todos[0]
-      const resto = todos.filter((s) => s.id !== capa?.id)
-      return (
-        <div className="grid gap-2.5">
-          {capa && (
-            <button type="button" onClick={() => alternar(capa.id)} aria-pressed={sel(capa)} className={clsx("relative overflow-hidden rounded-3xl border text-left transition", sel(capa) ? "border-marca ring-2 ring-marca/40" : "border-linha")}>
-              <FotoServico s={capa} className="aspect-[16/9] w-full" />
-              <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" aria-hidden />
-              <span className="absolute inset-x-0 bottom-0 p-4 text-white">
-                {capa.destaque && <span className="mb-1 inline-block rounded-full bg-marca px-2 py-0.5 text-[11px] font-semibold text-sobre-marca">{capa.destaque === "novo" ? "Novo" : "Mais pedido"}</span>}
-                <span className="block text-xl font-bold">{capa.name}</span>
-                <span className="text-sm opacity-90">{minutosDe(capa)} min · <strong className="tabular">{precoDe(capa)}</strong></span>
-              </span>
-              <SeloEscolhido ativo={sel(capa)} />
-            </button>
-          )}
-          {resto.map((s) => (
-            <Escolha key={s.id} selecionado={sel(s)} onClick={() => alternar(s.id)} className="py-3">
-              <Marcador ativo={sel(s)} />
-              <span className="min-w-0 flex-1 font-semibold">{s.name}<Destaque s={s} /></span>
-              <span className="font-semibold tabular">{precoDe(s)}</span>
-            </Escolha>
+    case "vitrine":
+      // mesmo cartão de perfil dos profissionais: foto grande, nome, tempo/preço e descrição
+      return comTitulos((lista) => (
+        <ul className="grid gap-3">
+          {lista.map((s) => (
+            <li key={s.id}>
+              <button type="button" onClick={() => alternar(s.id)} aria-pressed={sel(s)} className={clsx("relative flex w-full items-stretch overflow-hidden rounded-3xl border bg-cartao text-left transition", sel(s) ? "border-marca ring-2 ring-marca/40" : "border-linha")}>
+                <FotoServico s={s} className="w-28 shrink-0" />
+                <span className="min-w-0 flex-1 p-4">
+                  <span className="block text-lg font-bold leading-tight">{s.name}<Destaque s={s} /></span>
+                  <span className="block text-sm font-medium text-marca">{minutosDe(s)} min · <span className="tabular">{precoDe(s)}</span></span>
+                  {s.description && <span className="mt-1 line-clamp-3 block text-sm text-suave">{s.description}</span>}
+                </span>
+                <SeloEscolhido ativo={sel(s)} />
+              </button>
+            </li>
           ))}
-        </div>
-      )
-    }
+        </ul>
+      ))
 
     case "sanfona":
       return <Sanfona grupos={grupos.length === 1 && !grupos[0][0] ? [["Serviços", grupos[0][1]]] : grupos} sel={sel} alternar={alternar} />

@@ -72,7 +72,7 @@ const SELETORES: { id: Seletor; nome: string; descricao: string; Icone: typeof L
   { id: "carrossel", nome: "Carrossel", descricao: "Cards grandes rolando de lado", Icone: GalleryHorizontal },
   { id: "mosaico", nome: "Mosaico", descricao: "Grade de 3 fotos com nome", Icone: Grid3x3 },
   { id: "cardapio", nome: "Cardápio", descricao: "Estilo menu: nome ..... preço", Icone: BookOpen },
-  { id: "vitrine", nome: "Vitrine", descricao: "Destaque grande, perfis com bio", Icone: Presentation },
+  { id: "vitrine", nome: "Vitrine", descricao: "Cartões com foto grande e descrição", Icone: Presentation },
   { id: "sanfona", nome: "Sanfona", descricao: "Abre e fecha por categoria", Icone: ListCollapse },
 ]
 
