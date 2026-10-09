@@ -16,6 +16,7 @@ class RequirePlanFeature
     private const LABELS = [
         'whatsapp' => 'WhatsApp automático',
         'financeiro' => 'Financeiro e comissões',
+        'personalizacao' => 'Personalização da página de agendamento',
     ];
 
     public function __construct(protected TenantContext $tenant) {}

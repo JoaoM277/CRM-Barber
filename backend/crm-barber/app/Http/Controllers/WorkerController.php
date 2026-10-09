@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreWorkerRequest;
 use App\Models\Worker;
 use App\Support\Audit;
+use App\Support\PaginaPersonalizada;
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -20,8 +21,16 @@ class WorkerController extends Controller
         // atendendo e só o que o cliente precisa ver. Telefone, Pix, salário e
         // comissão ficam para o painel autenticado.
         if ($request->routeIs('profissionais.index')) {
+            // bio e Instagram são da personalização (Pro/Premium)
+            $extras = PaginaPersonalizada::liberada(app(TenantContext::class)->barbershop());
+
             return response()->json(
-                Worker::where('active', true)->orderBy('name')->get(['id', 'name', 'photo', 'speciality', 'active']),
+                Worker::where('active', true)->orderBy('name')->get(['id', 'name', 'photo', 'speciality', 'active', 'bio', 'instagram'])
+                    ->map(function (Worker $w) use ($extras) {
+                        $w->setAttribute('instagram', $extras ? PaginaPersonalizada::instagram($w->instagram) : null);
+
+                        return $extras ? $w : $w->setAttribute('bio', null);
+                    }),
                 200
             );
         }
@@ -92,6 +101,8 @@ class WorkerController extends Controller
             'commission_percent' => 'sometimes|nullable|numeric|min:0|max:100',
             'fixed_salary' => 'sometimes|nullable|numeric|min:0',
             'pix_key' => 'sometimes|nullable|string|max:255',
+            'bio' => 'sometimes|nullable|string|max:160',
+            'instagram' => 'sometimes|nullable|string|max:60',
         ]);
 
         $worker->update($data);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBarbershopRequest;
 use App\Models\Barbershop;
+use App\Support\PaginaPersonalizada;
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -68,6 +69,8 @@ class BarbershopController extends Controller
             'secondary_color' => $bs->secondary_color ?: ($bs->accent_color ?: $accentPadrao),
             // a página mostra "me avise se abrir vaga" nos dias lotados
             'lista_espera' => (bool) $bs->lista_espera_ativa,
+            // estilo, capa, galeria, textos e contato (null = plano sem personalização)
+            'pagina' => PaginaPersonalizada::publica($bs),
         ]);
     }
 

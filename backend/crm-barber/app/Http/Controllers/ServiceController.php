@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Service;
 use App\Http\Requests\StoreServiceRequest;
 use App\Support\Audit;
+use App\Support\PaginaPersonalizada;
+use App\Support\TenantContext;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
@@ -16,13 +18,18 @@ class ServiceController extends Controller
     {
         // página pública de agendamento: só os serviços oferecidos
         if ($request->routeIs('servicos.index')) {
+            // foto, destaque e categoria são da personalização (Pro/Premium)
+            $extras = PaginaPersonalizada::liberada(app(TenantContext::class)->barbershop());
+
             return response()->json(
-                Service::where('active', true)->orderBy('name')->get(['id', 'name', 'description', 'duration_time', 'price', 'active']),
+                Service::where('active', true)->orderBy('ordem')->orderBy('name')
+                    ->get(['id', 'name', 'description', 'duration_time', 'price', 'active', 'photo', 'destaque', 'categoria'])
+                    ->map(fn (Service $s) => $extras ? $s : $s->setAttribute('photo', null)->setAttribute('destaque', null)->setAttribute('categoria', null)),
                 200
             );
         }
 
-        return response()->json(Service::all(), 200);
+        return response()->json(Service::orderBy('ordem')->orderBy('name')->get(), 200);
     }
 
     /**
@@ -57,6 +64,8 @@ class ServiceController extends Controller
             'duration_time' => 'sometimes|nullable|integer|min:1',
             'price' => 'sometimes|numeric',
             'active' => 'sometimes|boolean',
+            'destaque' => ['sometimes', 'nullable', 'in:mais_pedido,novo'],
+            'categoria' => 'sometimes|nullable|string|max:40',
         ]);
 
         $service->update($data);

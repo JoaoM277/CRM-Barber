@@ -35,6 +35,8 @@ class StoreWorkerRequest extends FormRequest
             'commission_percent' => 'sometimes|nullable|numeric|min:0|max:100',
             'fixed_salary' => 'sometimes|nullable|numeric|min:0',
             'pix_key' => 'sometimes|nullable|string|max:255',
+            'bio' => 'sometimes|nullable|string|max:160',
+            'instagram' => 'sometimes|nullable|string|max:60',
         ];
     }
 }

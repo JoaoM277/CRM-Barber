@@ -17,7 +17,7 @@ export function useBarbearia() {
 }
 
 /** O plano atual libera o recurso? Sem assinatura registrada = liberado (contas antigas). */
-export function useRecurso(recurso: "whatsapp" | "financeiro") {
+export function useRecurso(recurso: "whatsapp" | "financeiro" | "personalizacao") {
   const { data: me } = useMe()
   const plano = me?.assinatura?.plano
   return !me?.assinatura || !!plano?.recursos.includes(recurso)

@@ -4,6 +4,7 @@ import { MapPin } from "lucide-react"
 import clsx from "clsx"
 import type { Identidade } from "./lib/api"
 import { deISO, isoLocal, minutos, type Horario } from "./lib/horarios"
+import { Contatos } from "./pagina"
 
 export const moeda = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
 export const dataLonga = (iso: string) => deISO(iso).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })
@@ -106,19 +107,31 @@ export function Abertura({ id }: { id: Pick<Identidade, "name" | "logo_url"> | n
   )
 }
 
-export function Cabecalho({ id }: { id: Identidade }) {
+export function Cabecalho({ id, comContatos }: { id: Identidade; comContatos?: boolean }) {
+  const p = id.pagina
   return (
-    <header className="-mx-5 mb-2 rounded-b-[2rem] bg-gradient-to-b from-marca/15 to-transparent px-5 pt-10 pb-6 text-center">
-      <div className="mb-4">
-        <Logo id={id} tamanho="cabecalho" />
-      </div>
-      <h1 className="text-2xl font-bold tracking-tight">{id.name}</h1>
-      {id.subtitle && id.subtitle !== "BARBEARIA" && <p className="mt-0.5 text-suave">{id.subtitle}</p>}
-      {id.city && (
-        <p className="mt-1 inline-flex items-center gap-1 text-sm text-suave">
-          <MapPin className="size-3.5" aria-hidden /> {id.city}{id.state ? ` · ${id.state}` : ""}
-        </p>
+    <header className={clsx("-mx-5 mb-2 text-center", p?.capa_url ? "pb-6" : "rounded-b-[2rem] bg-gradient-to-b from-marca/15 to-transparent px-5 pt-10 pb-6")}>
+      {p?.capa_url && (
+        // foto de capa: a logo "sobe" por cima, com degradê para o texto não brigar com a foto
+        <div className="relative h-44 sm:h-52">
+          <img src={p.capa_url} alt="" className="size-full object-cover" fetchPriority="high" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-fundo" aria-hidden />
+        </div>
       )}
+      <div className={clsx(p?.capa_url && "relative -mt-14 px-5")}>
+        <div className="mb-4">
+          <Logo id={id} tamanho="cabecalho" />
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight">{id.name}</h1>
+        {id.subtitle && id.subtitle !== "BARBEARIA" && <p className="mt-0.5 text-suave">{id.subtitle}</p>}
+        {id.city && !p?.endereco && (
+          <p className="mt-1 inline-flex items-center gap-1 text-sm text-suave">
+            <MapPin className="size-3.5" aria-hidden /> {id.city}{id.state ? ` · ${id.state}` : ""}
+          </p>
+        )}
+        {p?.boas_vindas && <p className="mx-auto mt-3 max-w-sm text-balance text-texto/90">{p.boas_vindas}</p>}
+        {p && comContatos && <Contatos p={p} />}
+      </div>
     </header>
   )
 }

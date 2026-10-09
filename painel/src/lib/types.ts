@@ -123,6 +123,8 @@ export type Profissional = {
   commission_percent: number | string | null
   fixed_salary: number | string | null
   pix_key: string | null
+  bio?: string | null
+  instagram?: string | null
 }
 
 export type Servico = {
@@ -132,6 +134,10 @@ export type Servico = {
   duration_time: number
   price: number | string
   active: boolean
+  photo?: string | null
+  destaque?: "mais_pedido" | "novo" | null
+  categoria?: string | null
+  ordem?: number
 }
 
 /** Horário de funcionamento de um dia da semana (0 = domingo … 6 = sábado). */

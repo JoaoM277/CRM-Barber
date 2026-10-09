@@ -28,6 +28,8 @@ class StoreServiceRequest extends FormRequest
             'duration_time' => 'nullable|integer|min:1',
             'price' => 'required|numeric|min:0',
             'active' => 'boolean',
+            'destaque' => ['nullable', 'in:mais_pedido,novo'],
+            'categoria' => 'nullable|string|max:40',
         ];
     }
 }

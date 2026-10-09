@@ -50,6 +50,7 @@ class Barbershop extends Model
         'fidelidade_premio',
         'fidelidade_desde',
         'lista_espera_ativa',
+        'pagina',
     ];
 
     /** URL pública do logo (o banco guarda só o caminho no disco "public"). */
@@ -82,6 +83,7 @@ class Barbershop extends Model
         'fidelidade_meta' => 'integer',
         'fidelidade_desde' => 'date',
         'lista_espera_ativa' => 'boolean',
+        'pagina' => 'array',
     ];
 
     public function users()

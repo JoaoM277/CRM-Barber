@@ -3,6 +3,7 @@ import { CalendarPlus, Check, ChevronLeft, Gift, Loader2, Scissors, Sparkles, Us
 import clsx from "clsx"
 import { api, ErroApi, slugDaPagina, type Identidade, type MeuHorario as Horario, type Profissional } from "./lib/api"
 import { deISO, horariosLivres, isoLocal, minutos, type Expediente, type Horario as Vaga, type Ocupado } from "./lib/horarios"
+import { usePagina } from "./pagina"
 import { Abertura, baixarIcs, Cabecalho, dataLonga, guardarMarca, marcaGuardada, moeda, Rodape, SeletorHorario, useAberturaMinima, useMarca } from "./ui"
 
 const DIAS_A_FRENTE = 14
@@ -81,6 +82,7 @@ export default function MeuHorario({ token }: { token: string }) {
   const guardada = useMemo(() => marcaGuardada(slug), [slug])
   const aberturaMinima = useAberturaMinima()
   useMarca(base?.id ?? identidade ?? guardada, "Meu horário")
+  usePagina(base?.id.pagina ?? identidade?.pagina)
 
   const h = base?.horario
   const meuProf = h?.profissional?.id ?? null

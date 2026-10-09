@@ -5,6 +5,7 @@
    só aparece no rodapé. --marca e --sobre-marca são definidas em runtime. */
 @theme inline {
   --font-sans: "Figtree Variable", system-ui, sans-serif;
+  --font-titulo: var(--fonte-titulo, "Figtree Variable", system-ui, sans-serif);
   --color-fundo: var(--fundo);
   --color-cartao: var(--cartao);
   --color-texto: var(--texto);
@@ -27,21 +28,64 @@
   color-scheme: light;
 }
 
+/* modo escuro: automático (sistema) ou escolhido pela barbearia (data-modo) */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-modo="claro"]) {
     --fundo: #0e1513;
     --cartao: #161f1c;
     --texto: #eeeae2;
     --suave: #9fb0aa;
     --linha: rgb(238 234 226 / 12%);
     --erro: #e0605a;
+    --tinta-textura: rgb(255 255 255 / 4%);
     color-scheme: dark;
   }
+}
+:root[data-modo="escuro"] {
+  --fundo: #0e1513;
+  --cartao: #161f1c;
+  --texto: #eeeae2;
+  --suave: #9fb0aa;
+  --linha: rgb(238 234 226 / 12%);
+  --erro: #e0605a;
+  --tinta-textura: rgb(255 255 255 / 4%);
+  color-scheme: dark;
+}
+
+/* ---------- estilos prontos (personalização da barbearia) ----------
+   mexem só em cantos, títulos e cartões; a cor continua a da marca */
+:root[data-estilo="classico"] { --radius-xl: .375rem; --radius-2xl: .5rem; --radius-3xl: .75rem; }
+:root[data-estilo="vintage"] { --radius-xl: .5rem; --radius-2xl: .75rem; --radius-3xl: 1rem; }
+:root[data-estilo="urbano"] { --radius-xl: 0; --radius-2xl: .125rem; --radius-3xl: .25rem; }
+:root[data-estilo="minimalista"] { --radius-xl: .375rem; --radius-2xl: .5rem; --radius-3xl: .625rem; }
+:root[data-estilo="urbano"] :is(h1, h2) { text-transform: uppercase; letter-spacing: .04em; }
+:root[data-estilo="classico"] :is(h1, h2), :root[data-estilo="vintage"] :is(h1, h2) { letter-spacing: .01em; }
+:root[data-estilo="minimalista"] .shadow-lg { box-shadow: none; }
+:root[data-estilo="vintage"]:not([data-modo="escuro"]) { --fundo: #f3ece0; --linha: #ded3c0; }
+
+/* ---------- texturas de fundo (sutis, só CSS) ---------- */
+:root { --tinta-textura: rgb(0 0 0 / 4.5%); }
+:root[data-textura="couro"] body {
+  background-image: radial-gradient(circle at 1px 1px, var(--tinta-textura) 1px, transparent 0);
+  background-size: 5px 5px;
+}
+:root[data-textura="madeira"] body {
+  background-image:
+    repeating-linear-gradient(90deg, var(--tinta-textura) 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(90deg, transparent 0 37px, var(--tinta-textura) 37px 39px, transparent 39px 83px);
+}
+:root[data-textura="concreto"] body {
+  background-image:
+    radial-gradient(var(--tinta-textura) 1px, transparent 1px),
+    radial-gradient(var(--tinta-textura) 1.5px, transparent 1.5px);
+  background-size: 7px 7px, 13px 13px;
+  background-position: 0 0, 3px 5px;
 }
 
 @layer base {
   html { -webkit-tap-highlight-color: transparent; }
   body { @apply bg-fundo font-sans text-texto antialiased; }
+  h1, h2 { font-family: var(--font-titulo); }
   button { cursor: pointer; }
   :focus-visible { outline: 3px solid var(--marca); outline-offset: 2px; border-radius: 8px; }
   .tabular { font-variant-numeric: tabular-nums; }
@@ -57,3 +101,7 @@
 .abertura { animation: abertura .45s cubic-bezier(.2, .8, .2, 1) both; }
 .carregando { animation: carregando 1.1s ease-in-out infinite; }
 .entrar { animation: entrar .35s ease-out both; }
+
+/* fontes de título com um peso só: sem "negrito falso" */
+:root:is([data-fonte="bebas"], [data-fonte="dm-serif"]) :is(h1, h2) { font-weight: 400; }
+:root[data-fonte="bebas"] :is(h1, h2) { letter-spacing: .03em; }

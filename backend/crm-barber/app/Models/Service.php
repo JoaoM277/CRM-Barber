@@ -18,7 +18,11 @@ class Service extends Model
         'description',
         'duration_time',
         'price',
-        'active'
+        'active',
+        'photo',
+        'destaque',
+        'categoria',
+        'ordem',
     ];
 
     public function schedules() {

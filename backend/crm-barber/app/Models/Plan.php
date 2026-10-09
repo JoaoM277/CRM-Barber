@@ -11,6 +11,9 @@ class Plan extends Model
 
     public const FEATURE_FINANCEIRO = 'financeiro';
 
+    /** Personalização da página de agendamento (estilo, capa, galeria...). */
+    public const FEATURE_PERSONALIZACAO = 'personalizacao';
+
     protected $fillable = [
         'slug',
         'name',

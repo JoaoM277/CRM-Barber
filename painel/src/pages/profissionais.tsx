@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch"
 import { Confirmar } from "@/components/confirmar"
 import { EnviarImagem } from "@/components/enviar-imagem"
 import { useProfissionais } from "@/hooks/use-cadastros"
-import { useMe } from "@/hooks/use-sessao"
+import { useMe, useRecurso } from "@/hooks/use-sessao"
 import { api, ApiError } from "@/lib/api"
 import { fone, moeda } from "@/lib/format"
 import type { Profissional } from "@/lib/types"
@@ -25,7 +25,7 @@ const PAGAMENTO: Record<string, string> = {
   comissao_mais_fixo: "Comissão + fixo",
 }
 
-type Form = { name: string; phone: string; speciality: string; payment_type: string; commission_percent: string; fixed_salary: string; pix_key: string }
+type Form = { name: string; phone: string; speciality: string; payment_type: string; commission_percent: string; fixed_salary: string; pix_key: string; bio: string; instagram: string }
 
 const deProf = (p: Profissional | null): Form => ({
   name: p?.name ?? "",
@@ -35,6 +35,8 @@ const deProf = (p: Profissional | null): Form => ({
   commission_percent: p?.commission_percent != null ? String(Number(p.commission_percent)) : "40",
   fixed_salary: p?.fixed_salary != null ? String(Number(p.fixed_salary)) : "",
   pix_key: p?.pix_key ?? "",
+  bio: p?.bio ?? "",
+  instagram: p?.instagram ?? "",
 })
 
 function resumoPagamento(p: Profissional) {
@@ -62,6 +64,7 @@ function FormProfissional({ prof, aberto, onFechar }: { prof: Profissional | nul
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aberto, prof?.id])
 
+  const personaliza = useRecurso("personalizacao")
   const comComissao = f.payment_type !== "fixo"
   const comFixo = f.payment_type !== "comissao"
 
@@ -75,6 +78,7 @@ function FormProfissional({ prof, aberto, onFechar }: { prof: Profissional | nul
         commission_percent: comComissao ? Number(f.commission_percent || 0) : 0,
         fixed_salary: comFixo ? Number((f.fixed_salary || "0").replace(",", ".")) : 0,
         pix_key: f.pix_key.trim() || null,
+        ...(personaliza ? { bio: f.bio.trim() || null, instagram: f.instagram.trim() || null } : {}),
       }
       return prof ? api(`/profissionais/${prof.id}`, { method: "PUT", body }) : api("/profissionais", { method: "POST", body: { ...body, active: true } })
     },
@@ -131,6 +135,20 @@ function FormProfissional({ prof, aberto, onFechar }: { prof: Profissional | nul
             <Label htmlFor="p-esp">Especialidade (opcional)</Label>
             <Input id="p-esp" value={f.speciality} onChange={set("speciality")} placeholder="Ex.: Degradê e barba" />
           </div>
+          {personaliza && (
+            <div className="grid gap-4 sm:grid-cols-[1fr_12rem]">
+              <div className="grid gap-1.5">
+                <Label htmlFor="p-bio">Sobre (aparece na página de agendamento)</Label>
+                <Input id="p-bio" maxLength={160} value={f.bio} onChange={set("bio")} placeholder="Ex.: 10 anos de navalha, especialista em barba" />
+                {erro("bio")}
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="p-ig">Instagram</Label>
+                <Input id="p-ig" maxLength={60} value={f.instagram} onChange={set("instagram")} placeholder="@usuario" />
+                {erro("instagram")}
+              </div>
+            </div>
+          )}
 
           <fieldset className="grid gap-4 rounded-lg border p-4">
             <legend className="px-1 text-sm font-medium">Pagamento</legend>

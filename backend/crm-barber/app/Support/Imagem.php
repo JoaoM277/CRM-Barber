@@ -51,6 +51,40 @@ class Imagem
         return $caminho;
     }
 
+    /**
+     * Mantém a proporção (capa, galeria): reduz para caber em $maxLado no lado
+     * maior. Mesmo cuidado da quadrada: re-codifica em WebP e tira o EXIF.
+     */
+    public static function salvarRedimensionada(UploadedFile $arquivo, string $pasta, int $maxLado = 1600): string
+    {
+        $origem = @imagecreatefromstring((string) file_get_contents($arquivo->getRealPath()));
+        if (! $origem) {
+            throw ValidationException::withMessages(['arquivo' => 'Não foi possível ler a imagem. Envie um JPG, PNG ou WebP.']);
+        }
+        $origem = self::corrigirRotacao($origem, $arquivo);
+
+        $w = imagesx($origem);
+        $h = imagesy($origem);
+        $escala = min(1, $maxLado / max($w, $h));
+        $nw = max(1, (int) round($w * $escala));
+        $nh = max(1, (int) round($h * $escala));
+        $destino = imagecreatetruecolor($nw, $nh);
+        imagealphablending($destino, false);
+        imagesavealpha($destino, true);
+        imagecopyresampled($destino, $origem, 0, 0, 0, 0, $nw, $nh, $w, $h);
+
+        ob_start();
+        imagewebp($destino, null, 80);
+        $bytes = (string) ob_get_clean();
+        imagedestroy($origem);
+        imagedestroy($destino);
+
+        $caminho = trim($pasta, '/').'/'.Str::uuid().'.webp';
+        Storage::disk('public')->put($caminho, $bytes);
+
+        return $caminho;
+    }
+
     /** Apaga uma imagem salva por esta classe (aceita o caminho ou a URL pública). */
     public static function apagar(?string $caminhoOuUrl): void
     {
@@ -60,8 +94,8 @@ class Imagem
         $base = rtrim(Storage::disk('public')->url(''), '/').'/';
         $caminho = str_starts_with($caminhoOuUrl, $base) ? substr($caminhoOuUrl, strlen($base)) : $caminhoOuUrl;
 
-        // só apaga o que esta classe gravou: {logos|profissionais}/{barbearia}/{uuid}.webp
-        if (preg_match('#^(logos|profissionais)/\d+/[0-9a-f-]+\.webp$#', $caminho)) {
+        // só apaga o que esta classe gravou: {pasta}/{barbearia}/{uuid}.webp
+        if (preg_match('#^(logos|profissionais|capas|galeria|servicos)/\d+/[0-9a-f-]+\.webp$#', $caminho)) {
             Storage::disk('public')->delete($caminho);
         }
     }

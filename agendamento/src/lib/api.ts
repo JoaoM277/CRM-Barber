@@ -52,9 +52,25 @@ export async function api<T>(slug: string, caminho: string, corpo?: unknown): Pr
   return data as T
 }
 
-export type Identidade = { name: string; subtitle: string | null; logo_url: string | null; city: string | null; state: string | null; accent_color: string; secondary_color: string; lista_espera?: boolean }
-export type Servico = { id: number; name: string; description: string | null; duration_time: number | null; price: string | number; active: boolean }
-export type Profissional = { id: number; name: string; photo: string | null; speciality: string | null; active: boolean }
+export type Pagina = {
+  estilo: "moderno" | "classico" | "vintage" | "urbano" | "minimalista"
+  fonte: "figtree" | "bebas" | "playfair" | "oswald" | "dm-serif" | "archivo"
+  modo: "auto" | "claro" | "escuro"
+  textura: "liso" | "couro" | "madeira" | "concreto"
+  capa_url: string | null
+  boas_vindas: string | null
+  sobre: string | null
+  mensagem_sucesso: string | null
+  endereco: string | null
+  mapa_url: string | null
+  mostrar_horarios: boolean
+  instagram: string | null
+  whatsapp: string | null
+  galeria: { id: number; url: string; legenda: string | null }[]
+}
+export type Identidade = { name: string; subtitle: string | null; logo_url: string | null; city: string | null; state: string | null; accent_color: string; secondary_color: string; lista_espera?: boolean; pagina?: Pagina | null }
+export type Servico = { id: number; name: string; description: string | null; duration_time: number | null; price: string | number; active: boolean; photo?: string | null; destaque?: "mais_pedido" | "novo" | null; categoria?: string | null }
+export type Profissional = { id: number; name: string; photo: string | null; speciality: string | null; active: boolean; bio?: string | null; instagram?: string | null }
 export type MeuHorario = {
   status: "pendente" | "confirmado" | "concluido" | "cancelado"
   date: string

@@ -27,6 +27,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AvaliacaoController;
 use App\Http\Controllers\FidelidadeController;
 use App\Http\Controllers\ListaEsperaController;
+use App\Http\Controllers\PaginaController;
 use App\Http\Controllers\Platform\PlatformBarbershopController;
 use App\Http\Controllers\Platform\PlatformMetricsController;
 use App\Http\Controllers\Platform\PlatformSettingsController;
@@ -192,6 +193,20 @@ Route::middleware(['auth:sanctum', 'tenant.user', 'subscription', 'support.restr
         // Avaliação pós-atendimento (pedido de nota + link do Google)
         Route::get('/whatsapp/avaliacao', [AvaliacaoController::class, 'show'])->name('whatsapp.avaliacao');
         Route::put('/whatsapp/avaliacao', [AvaliacaoController::class, 'update'])->name('whatsapp.avaliacao.update');
+
+        // Personalizar a página de agendamento (Pro/Premium)
+        Route::middleware('feature:personalizacao')->group(function () {
+            Route::get('/pagina', [PaginaController::class, 'show'])->name('pagina.show');
+            Route::put('/pagina', [PaginaController::class, 'update'])->name('pagina.update');
+            Route::post('/pagina/capa', [PaginaController::class, 'capa'])->middleware('throttle:20,1')->name('pagina.capa');
+            Route::delete('/pagina/capa', [PaginaController::class, 'removerCapa'])->name('pagina.capa.remover');
+            Route::post('/pagina/galeria', [PaginaController::class, 'adicionarFoto'])->middleware('throttle:30,1')->name('pagina.galeria.adicionar');
+            Route::put('/pagina/galeria/ordem', [PaginaController::class, 'ordenarGaleria'])->name('pagina.galeria.ordem');
+            Route::delete('/pagina/galeria/{foto}', [PaginaController::class, 'removerFoto'])->name('pagina.galeria.remover');
+            Route::put('/pagina/servicos/ordem', [PaginaController::class, 'ordenarServicos'])->name('servicos.ordem');
+            Route::post('/servicos/{service}/foto', [PaginaController::class, 'fotoServico'])->middleware('throttle:30,1')->name('servicos.foto');
+            Route::delete('/servicos/{service}/foto', [PaginaController::class, 'removerFotoServico'])->name('servicos.foto.remover');
+        });
 
         // Fidelidade (cartão de selos): meta e prêmio
         Route::put('/fidelidade', [FidelidadeController::class, 'update'])->name('fidelidade.update');

@@ -3,6 +3,7 @@ import { CalendarCog, CalendarPlus, Check, ChevronLeft, Clock, Loader2, Scissors
 import clsx from "clsx"
 import { api, ErroApi, slugDaPagina, type Aviso, type Identidade, type Profissional, type Servico } from "./lib/api"
 import { deISO, horariosLivres, isoLocal, type Expediente, type Horario, type Ocupado } from "./lib/horarios"
+import { emPrevia, Galeria, Sobre, usePagina, usePreviaDoPainel } from "./pagina"
 import { Abertura, baixarIcs, Cabecalho, dataLonga, guardarMarca, marcaGuardada, moeda, Rodape, SeletorHorario, useAberturaMinima, useMarca } from "./ui"
 
 const QUALQUER = "qualquer" as const
@@ -174,6 +175,22 @@ export default function App() {
   const aberturaMinima = useAberturaMinima()
   useMarca(dados?.id ?? identidade ?? guardada, "Agendar horário")
 
+  // personalização (Pro/Premium); no painel, a prévia ao vivo troca as escolhas
+  const previa = usePreviaDoPainel()
+  const idVisivel = dados ? (previa ? { ...dados.id, pagina: previa } : dados.id) : null
+  const pagina = idVisivel?.pagina ?? identidade?.pagina ?? null
+  usePagina(pagina)
+
+  // serviços agrupados por categoria (na ordem escolhida pela barbearia)
+  const grupos = useMemo(() => {
+    const mapa = new Map<string, Servico[]>()
+    for (const s of dados?.servicos ?? []) {
+      const c = s.categoria?.trim() || ""
+      mapa.set(c, [...(mapa.get(c) ?? []), s])
+    }
+    return [...mapa.entries()]
+  }, [dados])
+
   const escolhidos = useMemo(() => dados?.servicos.filter((s) => servicosSel.includes(s.id)) ?? [], [dados, servicosSel])
   const total = escolhidos.reduce((t, s) => t + Number(s.price), 0)
   const duracao = escolhidos.reduce((t, s) => t + (Number(s.duration_time) || 30), 0)
@@ -203,6 +220,10 @@ export default function App() {
 
   async function confirmar() {
     if (!dados || !horario || !data) return
+    if (emPrevia) {
+      setErroEnvio("Pré-visualização do painel: o agendamento não é enviado.")
+      return
+    }
     setEnviando(true)
     setErroEnvio(null)
     try {
@@ -257,18 +278,19 @@ export default function App() {
     )
   }
   // abertura com a logo da barbearia até a agenda carregar
-  if (!dados || aberturaMinima) return <Abertura id={dados?.id ?? identidade ?? guardada} />
+  if (!dados || !idVisivel || (aberturaMinima && !emPrevia)) return <Abertura id={dados?.id ?? identidade ?? guardada} />
 
   if (concluido && horario && data) {
     return (
       <main className="entrar mx-auto max-w-lg px-5 pb-16">
-        <Cabecalho id={dados.id} />
+        <Cabecalho id={idVisivel} />
         <section className="rounded-3xl border border-linha bg-cartao p-6 text-center">
           <div className="mx-auto mb-4 grid size-16 place-items-center rounded-full bg-marca text-sobre-marca">
             <Check className="size-9" strokeWidth={3} aria-hidden />
           </div>
           <h2 className="text-2xl font-bold">Horário marcado!</h2>
           <p className="mt-1 text-suave">Você vai receber a confirmação no WhatsApp.</p>
+          {pagina?.mensagem_sucesso && <p className="mt-3 whitespace-pre-line text-texto/90">{pagina.mensagem_sucesso}</p>}
           <dl className="mt-6 grid gap-2 rounded-2xl bg-fundo p-4 text-left text-sm">
             <div className="flex justify-between gap-3"><dt className="text-suave">Quando</dt><dd className="text-right font-medium first-letter:uppercase">{dataLonga(data)}, {horario.hora}</dd></div>
             <div className="flex justify-between gap-3"><dt className="text-suave">Com</dt><dd className="font-medium">{nomeProf(horario.profissionalId)}</dd></div>
@@ -303,7 +325,8 @@ export default function App() {
   /* ---------- etapas */
   return (
     <main className="entrar mx-auto max-w-lg px-5 pb-40">
-      <Cabecalho id={dados.id} />
+      <Cabecalho id={idVisivel} comContatos={etapa === 0} />
+      {etapa === 0 && pagina && <Galeria fotos={pagina.galeria} />}
       <Progresso etapa={etapa} />
 
       {etapa > 0 && (
@@ -321,15 +344,22 @@ export default function App() {
           {dados.servicos.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-linha p-6 text-center text-suave">Esta barbearia ainda não cadastrou serviços para agendamento online.</p>
           ) : (
+            grupos.map(([categoria, lista]) => (
+            <div key={categoria || "-"}>
+            {categoria && <h3 className="mt-5 mb-2 text-sm font-semibold tracking-wide text-suave uppercase">{categoria}</h3>}
             <ul className="grid gap-2.5">
-              {dados.servicos.map((s) => {
+              {lista.map((s) => {
                 const sel = servicosSel.includes(s.id)
                 return (
                   <li key={s.id}>
                     <Escolha selecionado={sel} onClick={() => { setServicosSel((x) => (sel ? x.filter((i) => i !== s.id) : [...x, s.id])); setHorario(null) }}>
                       <Marcador ativo={sel} />
+                      {s.photo && <img src={s.photo} alt="" loading="lazy" decoding="async" className="size-14 shrink-0 rounded-xl object-cover" />}
                       <span className="min-w-0 flex-1">
-                        <span className="block font-semibold">{s.name}</span>
+                        <span className="block font-semibold">
+                          {s.name}
+                          {s.destaque && <span className="ml-2 inline-block rounded-full bg-marca/15 px-2 py-0.5 align-middle text-[11px] font-semibold text-marca">{s.destaque === "novo" ? "Novo" : "Mais pedido"}</span>}
+                        </span>
                         {s.description && <span className="block truncate text-sm text-suave">{s.description}</span>}
                         <span className="mt-0.5 inline-flex items-center gap-1 text-sm text-suave"><Clock className="size-3.5" aria-hidden /> {Number(s.duration_time) || 30} min</span>
                       </span>
@@ -339,7 +369,10 @@ export default function App() {
                 )
               })}
             </ul>
+            </div>
+            ))
           )}
+          {pagina && <Sobre p={pagina} expediente={dados.expediente} />}
         </section>
       )}
 
@@ -370,9 +403,15 @@ export default function App() {
                   <span className="min-w-0 flex-1">
                     <span className="block font-semibold">{p.name}</span>
                     {p.speciality && <span className="block truncate text-sm text-suave">{p.speciality}</span>}
+                    {p.bio && <span className="mt-0.5 line-clamp-2 block text-sm text-suave">{p.bio}</span>}
                   </span>
                   <Marcador ativo={prof === p.id} redondo />
                 </Escolha>
+                {p.instagram && (
+                  <a href={p.instagram} target="_blank" rel="noopener" className="mt-1 ml-4 inline-flex text-xs font-medium text-suave underline-offset-2 hover:underline">
+                    Ver trabalhos de {p.name.split(" ")[0]} no Instagram
+                  </a>
+                )}
               </li>
             ))}
           </ul>

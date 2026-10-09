@@ -35,6 +35,8 @@ class Worker extends Model
         'commission_percent',
         'fixed_salary',
         'pix_key',
+        'bio',
+        'instagram',
     ];
 
     protected $casts = [
