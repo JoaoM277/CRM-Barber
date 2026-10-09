@@ -82,11 +82,11 @@ export function useAberturaMinima(ms = 700) {
 export function Logo({ id, tamanho }: { id: Pick<Identidade, "name" | "logo_url">; tamanho: "cabecalho" | "abertura" }) {
   const caixa = tamanho === "abertura" ? "size-32 rounded-[2rem] p-2.5" : "size-24 rounded-3xl p-2"
   return id.logo_url ? (
-    <div className={clsx("mx-auto grid place-items-center bg-white shadow-lg shadow-marca/20 ring-4 ring-marca/25", caixa)}>
+    <div className={clsx("mx-auto grid place-items-center bg-white shadow-lg shadow-marca/20 ring-2 ring-marca/25", caixa)}>
       <img src={id.logo_url} alt={`Logo ${id.name}`} className="size-full rounded-[inherit] object-contain" decoding="async" />
     </div>
   ) : (
-    <div className={clsx("mx-auto grid place-items-center bg-marca font-bold text-sobre-marca shadow-lg shadow-marca/30 ring-4 ring-marca/25", caixa, tamanho === "abertura" ? "text-5xl" : "text-4xl")} aria-hidden>
+    <div className={clsx("mx-auto grid place-items-center bg-marca font-bold text-sobre-marca shadow-lg shadow-marca/30 ring-2 ring-marca/25", caixa, tamanho === "abertura" ? "text-5xl" : "text-4xl")} aria-hidden>
       {id.name.slice(0, 1).toUpperCase()}
     </div>
   )
