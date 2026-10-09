@@ -122,6 +122,12 @@ O usuário passa as tasks uma a uma ("Correção N - Task M"). Todas abaixo est�
 - [x] Dono da equipe que atende: "Eu também atendo"; tipo de pagamento só o admin vê/altera (API esconde dos outros usuários)
 - [x] Página de agendamento pula "Com quem?" quando há um profissional só
 
+**Correção 5 — Confirmação, faltas e pendências** (10/10/2026)
+- [x] Dono não confirma: painel só conclui/cancela; cliente confirma pelo "1" ou pelo botão no link "meu horário"
+- [x] Falta automática 1h depois (só quem recebeu o pedido e não confirmou; nunca com produto lançado; só daqui para frente); apoio às 10h do dia seguinte se não revertida
+- [x] Status "falta" ≠ "cancelado" e cancelado_por; falta não conta como visita
+- [x] Aba "Pendências" + aviso no topo: não registrados por dia (acumulados, filtro por mês) e faltas revertíveis por 3 dias ("compareceu" / "faltou mesmo")
+
 **Próximos passos (retomar daqui)**
 - Aguardar as próximas tasks de correção do usuário
 - Depois: item 9 da Fase 5 (multi-unidade) ou Fase 6
