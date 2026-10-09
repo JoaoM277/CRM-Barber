@@ -17,6 +17,7 @@ class RequirePlanFeature
         'whatsapp' => 'WhatsApp automático',
         'financeiro' => 'Financeiro e comissões',
         'personalizacao' => 'Personalização da página de agendamento',
+        'seletores_premium' => 'Modelos de seletor do plano Premium',
     ];
 
     public function __construct(protected TenantContext $tenant) {}

@@ -2,7 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Link } from "react-router"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { ArrowLeft, ArrowRight, Check, ExternalLink, ImagePlus, Loader2, Palette, Trash2 } from "lucide-react"
+import {
+  ArrowLeft, ArrowRight, BookOpen, Check, ChevronsUpDown, ExternalLink, GalleryHorizontal, Grid3x3, ImagePlus, LayoutGrid, List,
+  ListCollapse, Loader2, Lock, Palette, Presentation, Rows3, Tags, Trash2,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -28,14 +31,17 @@ type Config = {
   mostrar_endereco: boolean
   mostrar_horarios: boolean
   capa_url: string | null
+  seletor_servicos: Seletor
+  seletor_profissionais: Seletor
 }
+type Seletor = "lista" | "compacta" | "cards" | "dropdown" | "chips" | "carrossel" | "mosaico" | "cardapio" | "vitrine" | "sanfona"
 type Foto = { id: number; url: string; legenda: string | null; ordem: number }
 type Estado = {
   pagina: Config
   galeria: Foto[]
   contato: { endereco: string | null; mapa_url: string | null; instagram: string | null; whatsapp: string | null }
   slug: string
-  opcoes: { max_fotos: number }
+  opcoes: { max_fotos: number; seletores: Seletor[]; seletores_liberados: Seletor[] }
 }
 
 /** Estilos prontos: cada um sugere fonte, fundo e modo que combinam (dá para ajustar depois). */
@@ -55,6 +61,59 @@ const FONTES: { id: Fonte; nome: string }[] = [
   { id: "dm-serif", nome: "DM Serif (vintage)" },
   { id: "archivo", nome: "Archivo (neutra)" },
 ]
+
+/** Os 10 modelos de seletor (Pro: os 5 primeiros; Premium: todos). */
+const SELETORES: { id: Seletor; nome: string; descricao: string; Icone: typeof List }[] = [
+  { id: "lista", nome: "Lista", descricao: "Linhas com foto e detalhes", Icone: List },
+  { id: "compacta", nome: "Lista compacta", descricao: "Linhas finas, tudo à vista", Icone: Rows3 },
+  { id: "cards", nome: "Cards", descricao: "Grade de 2 com foto", Icone: LayoutGrid },
+  { id: "dropdown", nome: "Menu suspenso", descricao: "Abre ao tocar, ocupa pouco", Icone: ChevronsUpDown },
+  { id: "chips", nome: "Etiquetas", descricao: "Botões em formato de pílula", Icone: Tags },
+  { id: "carrossel", nome: "Carrossel", descricao: "Cards grandes rolando de lado", Icone: GalleryHorizontal },
+  { id: "mosaico", nome: "Mosaico", descricao: "Grade de 3 fotos com nome", Icone: Grid3x3 },
+  { id: "cardapio", nome: "Cardápio", descricao: "Estilo menu: nome ..... preço", Icone: BookOpen },
+  { id: "vitrine", nome: "Vitrine", descricao: "Destaque grande, perfis com bio", Icone: Presentation },
+  { id: "sanfona", nome: "Sanfona", descricao: "Abre e fecha por categoria", Icone: ListCollapse },
+]
+
+function EscolhaSeletor({ titulo, valor, liberados, onMudar }: { titulo: string; valor: Seletor; liberados: Seletor[]; onMudar: (v: Seletor) => void }) {
+  return (
+    <div className="grid gap-2">
+      <Label>{titulo}</Label>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5" role="radiogroup" aria-label={titulo}>
+        {SELETORES.map(({ id, nome, descricao, Icone }) => {
+          const livre = liberados.includes(id)
+          const ativo = valor === id
+          return (
+            <button
+              key={id}
+              type="button"
+              role="radio"
+              aria-checked={ativo}
+              disabled={!livre}
+              title={livre ? descricao : "Disponível no plano Premium"}
+              onClick={() => onMudar(id)}
+              className={cn(
+                "relative grid justify-items-center gap-1 rounded-lg border p-3 text-center transition",
+                ativo ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "hover:bg-muted",
+                !livre && "cursor-not-allowed opacity-50 hover:bg-transparent",
+              )}
+            >
+              <Icone className={cn("size-6", ativo ? "text-primary" : "text-muted-foreground")} aria-hidden />
+              <span className="text-sm font-medium leading-tight">{nome}</span>
+              <span className="text-[11px] leading-tight text-muted-foreground">{descricao}</span>
+              {!livre && (
+                <span className="absolute top-1.5 right-1.5 inline-flex items-center gap-0.5 rounded bg-muted px-1 text-[10px] font-semibold text-muted-foreground">
+                  <Lock className="size-2.5" aria-hidden /> Premium
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 function Opcoes<T extends string>({ valor, opcoes, onMudar, rotulo }: { valor: T; opcoes: { id: T; nome: string }[]; onMudar: (v: T) => void; rotulo: string }) {
   return (
@@ -249,6 +308,22 @@ export default function PaginaAgendamento() {
             <p className="text-xs text-muted-foreground">
               A cor e a logo ficam em <Link to="/configuracoes" className="underline underline-offset-2">Configurações → Barbearia</Link>.
             </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Como o cliente escolhe</CardTitle>
+            <CardDescription>
+              O jeito de mostrar os serviços e os profissionais na hora de agendar.
+              {data.opcoes.seletores_liberados.length < data.opcoes.seletores.length && (
+                <> No seu plano são {data.opcoes.seletores_liberados.length} modelos; o <Link to="/assinatura" className="underline underline-offset-2">Premium</Link> libera os {data.opcoes.seletores.length}.</>
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-6">
+            <EscolhaSeletor titulo="Serviços" valor={rascunho.seletor_servicos} liberados={data.opcoes.seletores_liberados} onMudar={(v) => set("seletor_servicos", v)} />
+            <EscolhaSeletor titulo="Profissionais" valor={rascunho.seletor_profissionais} liberados={data.opcoes.seletores_liberados} onMudar={(v) => set("seletor_profissionais", v)} />
           </CardContent>
         </Card>
 

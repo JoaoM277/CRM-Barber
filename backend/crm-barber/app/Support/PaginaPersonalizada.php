@@ -23,6 +23,11 @@ class PaginaPersonalizada
 
     public const MAX_FOTOS = 12;
 
+    /** Como o cliente escolhe serviços e profissionais: 5 no Pro, os 10 no Premium. */
+    public const SELETORES_PRO = ['lista', 'compacta', 'cards', 'dropdown', 'chips'];
+
+    public const SELETORES_PREMIUM = ['carrossel', 'mosaico', 'cardapio', 'vitrine', 'sanfona'];
+
     public const PADRAO = [
         'estilo' => 'moderno',
         'fonte' => 'figtree',
@@ -34,6 +39,8 @@ class PaginaPersonalizada
         'mensagem_sucesso' => null,
         'mostrar_endereco' => true,
         'mostrar_horarios' => true,
+        'seletor_servicos' => 'lista',
+        'seletor_profissionais' => 'lista',
     ];
 
     /** O plano libera? (sem assinatura registrada = conta antiga, libera) */
@@ -45,6 +52,18 @@ class PaginaPersonalizada
         $sub = Subscription::with('plan')->where('barbershop_id', $bs->id)->first();
 
         return ! $sub || $sub->hasFeature(Plan::FEATURE_PERSONALIZACAO);
+    }
+
+    /** Modelos de seletor que o plano da barbearia libera. */
+    public static function seletores(?Barbershop $bs): array
+    {
+        if (! self::liberada($bs)) {
+            return ['lista'];
+        }
+        $sub = Subscription::with('plan')->where('barbershop_id', $bs->id)->first();
+        $premium = ! $sub || $sub->hasFeature(Plan::FEATURE_SELETORES_PREMIUM);
+
+        return $premium ? [...self::SELETORES_PRO, ...self::SELETORES_PREMIUM] : self::SELETORES_PRO;
     }
 
     /** Configuração completa (para o painel), com os padrões preenchidos. */
@@ -61,6 +80,8 @@ class PaginaPersonalizada
         }
         $c = self::config($bs);
         $contato = self::contato($bs);
+        // plano rebaixado: modelo que não é mais do plano volta para a lista
+        $permitidos = self::seletores($bs);
 
         return [
             'estilo' => $c['estilo'],
@@ -74,6 +95,8 @@ class PaginaPersonalizada
             'endereco' => $c['mostrar_endereco'] ? $contato['endereco'] : null,
             'mapa_url' => $c['mostrar_endereco'] ? $contato['mapa_url'] : null,
             'mostrar_horarios' => (bool) $c['mostrar_horarios'],
+            'seletor_servicos' => in_array($c['seletor_servicos'], $permitidos, true) ? $c['seletor_servicos'] : 'lista',
+            'seletor_profissionais' => in_array($c['seletor_profissionais'], $permitidos, true) ? $c['seletor_profissionais'] : 'lista',
             'instagram' => $contato['instagram'],
             'whatsapp' => $contato['whatsapp'],
             'galeria' => BarbershopPhoto::withoutGlobalScopes()->where('barbershop_id', $bs->id)->orderBy('ordem')->orderBy('id')

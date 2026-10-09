@@ -38,6 +38,12 @@ class PaginaController extends Controller
             'mensagem_sucesso' => 'sometimes|nullable|string|max:200',
             'mostrar_endereco' => 'sometimes|boolean',
             'mostrar_horarios' => 'sometimes|boolean',
+            // modelos de seletor: o Premium tem os 10; o Pro, 5
+            'seletor_servicos' => ['sometimes', Rule::in(PaginaPersonalizada::seletores($this->tenant->barbershop()))],
+            'seletor_profissionais' => ['sometimes', Rule::in(PaginaPersonalizada::seletores($this->tenant->barbershop()))],
+        ], [
+            'seletor_servicos.in' => 'Esse modelo é do plano Premium.',
+            'seletor_profissionais.in' => 'Esse modelo é do plano Premium.',
         ]);
 
         // textos vazios voltam ao padrão
@@ -172,6 +178,8 @@ class PaginaController extends Controller
                 'modos' => PaginaPersonalizada::MODOS,
                 'texturas' => PaginaPersonalizada::TEXTURAS,
                 'max_fotos' => PaginaPersonalizada::MAX_FOTOS,
+                'seletores' => [...PaginaPersonalizada::SELETORES_PRO, ...PaginaPersonalizada::SELETORES_PREMIUM],
+                'seletores_liberados' => PaginaPersonalizada::seletores($bs),
             ],
         ];
     }

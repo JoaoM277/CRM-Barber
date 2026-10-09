@@ -67,6 +67,8 @@ export type Pagina = {
   instagram: string | null
   whatsapp: string | null
   galeria: { id: number; url: string; legenda: string | null }[]
+  seletor_servicos?: "lista" | "compacta" | "cards" | "dropdown" | "chips" | "carrossel" | "mosaico" | "cardapio" | "vitrine" | "sanfona"
+  seletor_profissionais?: Pagina["seletor_servicos"]
 }
 export type Identidade = { name: string; subtitle: string | null; logo_url: string | null; city: string | null; state: string | null; accent_color: string; secondary_color: string; lista_espera?: boolean; pagina?: Pagina | null }
 export type Servico = { id: number; name: string; description: string | null; duration_time: number | null; price: string | number; active: boolean; photo?: string | null; destaque?: "mais_pedido" | "novo" | null; categoria?: string | null }

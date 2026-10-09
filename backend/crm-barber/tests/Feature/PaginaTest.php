@@ -135,6 +135,34 @@ class PaginaTest extends TestCase
         $this->assertNotNull($corte->fresh()->photo);
     }
 
+    public function test_seletores_cinco_no_pro_e_dez_no_premium(): void
+    {
+        $this->assertFalse(Plan::where('slug', 'pro')->first()->hasFeature(Plan::FEATURE_SELETORES_PREMIUM));
+        $this->assertTrue(Plan::where('slug', 'premium')->first()->hasFeature(Plan::FEATURE_SELETORES_PREMIUM));
+
+        $this->assinar('pro');
+        $this->getJson('/api/pagina')->assertOk()->assertJsonCount(5, 'opcoes.seletores_liberados')->assertJsonCount(10, 'opcoes.seletores');
+
+        $this->putJson('/api/pagina', ['seletor_servicos' => 'cards', 'seletor_profissionais' => 'chips'])->assertOk();
+        $this->putJson('/api/pagina', ['seletor_servicos' => 'carrossel'])->assertStatus(422)
+            ->assertJsonPath('errors.seletor_servicos.0', 'Esse modelo é do plano Premium.');
+        $this->getJson('/api/b/loja/barbearia')
+            ->assertJsonPath('pagina.seletor_servicos', 'cards')
+            ->assertJsonPath('pagina.seletor_profissionais', 'chips');
+
+        // no Premium, os 10
+        Subscription::where('barbershop_id', $this->bs->id)->update(['plan_id' => Plan::where('slug', 'premium')->value('id')]);
+        $this->putJson('/api/pagina', ['seletor_servicos' => 'carrossel', 'seletor_profissionais' => 'sanfona'])->assertOk();
+        $this->getJson('/api/b/loja/barbearia')->assertJsonPath('pagina.seletor_servicos', 'carrossel');
+
+        // voltou para o Pro: o modelo Premium cai para a lista (o salvo continua lá)
+        Subscription::where('barbershop_id', $this->bs->id)->update(['plan_id' => Plan::where('slug', 'pro')->value('id')]);
+        $this->getJson('/api/b/loja/barbearia')
+            ->assertJsonPath('pagina.seletor_servicos', 'lista')
+            ->assertJsonPath('pagina.seletor_profissionais', 'lista');
+        $this->assertSame('carrossel', $this->bs->fresh()->pagina['seletor_servicos']);
+    }
+
     public function test_bio_e_instagram_do_profissional(): void
     {
         $w = Worker::factory()->create(['barbershop_id' => $this->bs->id, 'active' => true]);

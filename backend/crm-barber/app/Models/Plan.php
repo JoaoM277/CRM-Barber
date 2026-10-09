@@ -14,6 +14,9 @@ class Plan extends Model
     /** Personalização da página de agendamento (estilo, capa, galeria...). */
     public const FEATURE_PERSONALIZACAO = 'personalizacao';
 
+    /** Os 10 modelos de seletor de serviços/profissionais (no Pro são 5). */
+    public const FEATURE_SELETORES_PREMIUM = 'seletores_premium';
+
     protected $fillable = [
         'slug',
         'name',

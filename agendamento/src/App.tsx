@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { CalendarCog, CalendarPlus, Check, ChevronLeft, Clock, Loader2, Scissors, Sparkles, UserRound, X } from "lucide-react"
+import { CalendarCog, CalendarPlus, Check, ChevronLeft, Loader2, Scissors, X } from "lucide-react"
 import clsx from "clsx"
 import { api, ErroApi, slugDaPagina, type Aviso, type Identidade, type Profissional, type Servico } from "./lib/api"
 import { deISO, horariosLivres, isoLocal, type Expediente, type Horario, type Ocupado } from "./lib/horarios"
 import { emPrevia, Galeria, Sobre, usePagina, usePreviaDoPainel } from "./pagina"
+import { QUALQUER, SeletorProfissionais, SeletorServicos } from "./seletores"
 import { Abertura, baixarIcs, Cabecalho, dataLonga, guardarMarca, marcaGuardada, moeda, Rodape, SeletorHorario, useAberturaMinima, useMarca } from "./ui"
 
-const QUALQUER = "qualquer" as const
 const DIAS_A_FRENTE = 14
 
 /* --------------------------------------------------------------- utilidades */
@@ -45,22 +45,6 @@ function Progresso({ etapa }: { etapa: number }) {
   )
 }
 
-function Escolha({ selecionado, onClick, children, rotulo }: { selecionado: boolean; onClick: () => void; children: React.ReactNode; rotulo?: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={selecionado}
-      aria-label={rotulo}
-      className={clsx(
-        "flex w-full items-center gap-3 rounded-2xl border bg-cartao p-4 text-left transition active:scale-[.99]",
-        selecionado ? "border-marca ring-2 ring-marca/40" : "border-linha hover:border-suave/50",
-      )}
-    >
-      {children}
-    </button>
-  )
-}
 
 /** "Me avise se abrir vaga": entra na lista de espera do dia lotado. */
 function ListaEsperaBox({ slug, data, barbeiroId, servicosIds, nomeInicial, telefoneInicial }: {
@@ -113,13 +97,6 @@ function ListaEsperaBox({ slug, data, barbeiroId, servicosIds, nomeInicial, tele
   )
 }
 
-function Marcador({ ativo, redondo }: { ativo: boolean; redondo?: boolean }) {
-  return (
-    <span className={clsx("grid size-6 shrink-0 place-items-center border-2 transition", redondo ? "rounded-full" : "rounded-md", ativo ? "border-marca bg-marca text-sobre-marca" : "border-linha")} aria-hidden>
-      {ativo && <Check className="size-4" strokeWidth={3} />}
-    </span>
-  )
-}
 
 /* --------------------------------------------------------------- página */
 
@@ -344,33 +321,12 @@ export default function App() {
           {dados.servicos.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-linha p-6 text-center text-suave">Esta barbearia ainda não cadastrou serviços para agendamento online.</p>
           ) : (
-            grupos.map(([categoria, lista]) => (
-            <div key={categoria || "-"}>
-            {categoria && <h3 className="mt-5 mb-2 text-sm font-semibold tracking-wide text-suave uppercase">{categoria}</h3>}
-            <ul className="grid gap-2.5">
-              {lista.map((s) => {
-                const sel = servicosSel.includes(s.id)
-                return (
-                  <li key={s.id}>
-                    <Escolha selecionado={sel} onClick={() => { setServicosSel((x) => (sel ? x.filter((i) => i !== s.id) : [...x, s.id])); setHorario(null) }}>
-                      <Marcador ativo={sel} />
-                      {s.photo && <img src={s.photo} alt="" loading="lazy" decoding="async" className="size-14 shrink-0 rounded-xl object-cover" />}
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-semibold">
-                          {s.name}
-                          {s.destaque && <span className="ml-2 inline-block rounded-full bg-marca/15 px-2 py-0.5 align-middle text-[11px] font-semibold text-marca">{s.destaque === "novo" ? "Novo" : "Mais pedido"}</span>}
-                        </span>
-                        {s.description && <span className="block truncate text-sm text-suave">{s.description}</span>}
-                        <span className="mt-0.5 inline-flex items-center gap-1 text-sm text-suave"><Clock className="size-3.5" aria-hidden /> {Number(s.duration_time) || 30} min</span>
-                      </span>
-                      <span className="font-semibold tabular">{moeda(Number(s.price))}</span>
-                    </Escolha>
-                  </li>
-                )
-              })}
-            </ul>
-            </div>
-            ))
+            <SeletorServicos
+              modelo={pagina?.seletor_servicos ?? "lista"}
+              grupos={grupos}
+              selecionados={servicosSel}
+              alternar={(id) => { setServicosSel((x) => (x.includes(id) ? x.filter((i) => i !== id) : [...x, id])); setHorario(null) }}
+            />
           )}
           {pagina && <Sobre p={pagina} expediente={dados.expediente} />}
         </section>
@@ -379,42 +335,12 @@ export default function App() {
       {etapa === 1 && (
         <section>
           <h2 className="mb-4 text-xl font-bold">Com quem?</h2>
-          <ul className="grid gap-2.5">
-            <li>
-              <Escolha selecionado={prof === QUALQUER} onClick={() => { setProf(QUALQUER); setHorario(null) }}>
-                <span className="grid size-12 shrink-0 place-items-center rounded-full bg-marca/15 text-marca" aria-hidden><Sparkles className="size-5" /></span>
-                <span className="flex-1">
-                  <span className="block font-semibold">Sem preferência</span>
-                  <span className="text-sm text-suave">Mais horários disponíveis</span>
-                </span>
-                <Marcador ativo={prof === QUALQUER} redondo />
-              </Escolha>
-            </li>
-            {dados.profissionais.map((p) => (
-              <li key={p.id}>
-                <Escolha selecionado={prof === p.id} onClick={() => { setProf(p.id); setHorario(null) }}>
-                  {p.photo ? (
-                    <img src={p.photo} alt="" className="size-12 shrink-0 rounded-full object-cover" />
-                  ) : (
-                    <span className="grid size-12 shrink-0 place-items-center rounded-full bg-fundo text-lg font-semibold" aria-hidden>
-                      {p.name.slice(0, 1).toUpperCase() || <UserRound className="size-5" />}
-                    </span>
-                  )}
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-semibold">{p.name}</span>
-                    {p.speciality && <span className="block truncate text-sm text-suave">{p.speciality}</span>}
-                    {p.bio && <span className="mt-0.5 line-clamp-2 block text-sm text-suave">{p.bio}</span>}
-                  </span>
-                  <Marcador ativo={prof === p.id} redondo />
-                </Escolha>
-                {p.instagram && (
-                  <a href={p.instagram} target="_blank" rel="noopener" className="mt-1 ml-4 inline-flex text-xs font-medium text-suave underline-offset-2 hover:underline">
-                    Ver trabalhos de {p.name.split(" ")[0]} no Instagram
-                  </a>
-                )}
-              </li>
-            ))}
-          </ul>
+          <SeletorProfissionais
+            modelo={pagina?.seletor_profissionais ?? "lista"}
+            profissionais={dados.profissionais}
+            valor={prof}
+            escolher={(v) => { setProf(v); setHorario(null) }}
+          />
         </section>
       )}
 
